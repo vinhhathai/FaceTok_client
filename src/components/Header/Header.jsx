@@ -10,6 +10,7 @@ import avatarMessage from "../../assets/images/users/user-6.png";
 import Search from "../../sub_components/Search/SearchForm/SearchForm";
 import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
 import "./Header.css";
+import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
 
 function Header() {
   return (
@@ -79,56 +80,7 @@ function Header() {
                   avatarFriend2={avatarFriend2}
                   avatarGroup={avatarGroup}
                 />
-                <li class="nav-item s-nav dropdown d-mobile">
-                  <a
-                    href="#"
-                    class="nav-link nav-icon nav-links drop-w-tooltip"
-                    data-toggle="dropdown"
-                    data-placement="bottom"
-                    data-title="Create"
-                    role="button"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    <img src={createIcon} alt="navbar icon" />
-                  </a>
-                  <div class="dropdown-menu dropdown-menu-right nav-dropdown-menu show">
-                    <a
-                      href="#"
-                      class="dropdown-item"
-                      aria-describedby="createGroup"
-                    >
-                      <div class="row">
-                        <div class="col-md-2">
-                          <i class="bx bx-group post-option-icon"></i>
-                        </div>
-                        <div class="col-md-10">
-                          <span class="fs-9">Group</span>
-                          <small id="createGroup" class="form-text text-muted">
-                            Bring people together
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      href="#"
-                      class="dropdown-item"
-                      aria-describedby="createEvent"
-                    >
-                      <div class="row">
-                        <div class="col-md-2">
-                          <i class="bx bx-calendar post-option-icon"></i>
-                        </div>
-                        <div class="col-md-10">
-                          <span class="fs-9">Post</span>
-                          <small id="createEvent" class="form-text text-muted">
-                            Share your interested things to other peoples today
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                </li>
+                <CreateNavbar/>
                 <li class="nav-item s-nav dropdown message-drop-li">
                   <a
                     href="#"

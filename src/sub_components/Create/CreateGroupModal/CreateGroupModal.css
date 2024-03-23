@@ -1,0 +1,23 @@
+.modal.fade {
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    opacity: 0;
+    visibility: hidden;
+  }
+  
+  .modal.fade.show {
+    transition: opacity 0.3s ease;
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .modal-backdrop.fade {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+  }
+  
+  .modal-backdrop.fade.show {
+    opacity: 0.5;
+    visibility: visible;
+  }
+  
