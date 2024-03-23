@@ -1,22 +1,21 @@
-import logo from '../../assets/images/logo-64x64.png'
-import createIcon from '../../assets/images/icons/navbar/create.png'
-import message from '../../assets/images/icons/navbar/message.png'
-import notificationIcon from '../../assets/images/icons/navbar/notification.png'
-import profileImage from '../../assets/images/users/user-4.jpg'
-import settingIcon from '../../assets/images/icons/navbar/settings.png'
-import avatarFriend1 from '../../assets/images/users/user-6.png'
-import avatarFriend2 from '../../assets/images/users/user-5.png'
-import avatarGroup from '../../assets/images/groups/group-2.jpg'
-import avatarMessage from '../../assets/images/users/user-6.png'
-import Search from '../../sub_components/Search/SearchForm/SearchForm'
-import SearchForm from '../../sub_components/Search/SearchForm/SearchForm'
+import createIcon from "../../assets/images/icons/navbar/create.png";
+import message from "../../assets/images/icons/navbar/message.png";
+import notificationIcon from "../../assets/images/icons/navbar/notification.png";
+import profileImage from "../../assets/images/users/user-4.jpg";
+import settingIcon from "../../assets/images/icons/navbar/settings.png";
+import avatarFriend1 from "../../assets/images/users/user-6.png";
+import avatarFriend2 from "../../assets/images/users/user-5.png";
+import avatarGroup from "../../assets/images/groups/group-2.jpg";
+import avatarMessage from "../../assets/images/users/user-6.png";
+import Search from "../../sub_components/Search/SearchForm/SearchForm";
+import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
+import "./Header.css";
 
 function Header() {
   return (
     <>
       <div class="container-fluid" id="wrapper">
         <div class="row newsfeed-size">
-
           <nav
             id="navbar-main"
             class="navbar navbar-expand-lg shadow-sm sticky-top"
@@ -68,14 +67,18 @@ function Header() {
               <ul class="navbar-nav mr-5 flex-row" id="main_menu">
                 <a class="navbar-brand nav-item mr-lg-5" href="index.html">
                   <img
-                    src={logo}
+                    src="/assets/images/FaceTokIcon.jpeg"
                     width="40"
                     height="40"
-                    class="mr-3"
+                    class="mr-3 logo__icon"
                     alt="Logo"
                   />
                 </a>
-                <SearchForm  avatarFriend1 = {avatarFriend1} avatarFriend2 = {avatarFriend2} avatarGroup = {avatarGroup}/>
+                <SearchForm
+                  avatarFriend1={avatarFriend1}
+                  avatarFriend2={avatarFriend2}
+                  avatarGroup={avatarGroup}
+                />
                 <li class="nav-item s-nav dropdown d-mobile">
                   <a
                     href="#"
@@ -87,12 +90,9 @@ function Header() {
                     aria-haspopup="true"
                     aria-expanded="false"
                   >
-                    <img
-                      src={createIcon}
-                      alt="navbar icon"
-                    />
+                    <img src={createIcon} alt="navbar icon" />
                   </a>
-                  <div class="dropdown-menu dropdown-menu-right nav-dropdown-menu ">
+                  <div class="dropdown-menu dropdown-menu-right nav-dropdown-menu show">
                     <a
                       href="#"
                       class="dropdown-item"
@@ -104,11 +104,8 @@ function Header() {
                         </div>
                         <div class="col-md-10">
                           <span class="fs-9">Group</span>
-                          <small
-                            id="createGroup"
-                            class="form-text text-muted"
-                          >
-                            Find people with shared interests
+                          <small id="createGroup" class="form-text text-muted">
+                            Bring people together
                           </small>
                         </div>
                       </div>
@@ -123,13 +120,9 @@ function Header() {
                           <i class="bx bx-calendar post-option-icon"></i>
                         </div>
                         <div class="col-md-10">
-                          <span class="fs-9">Event</span>
-                          <small
-                            id="createEvent"
-                            class="form-text text-muted"
-                          >
-                            bring people together with a public or private
-                            event
+                          <span class="fs-9">Post</span>
+                          <small id="createEvent" class="form-text text-muted">
+                            Share your interested things to other peoples today
                           </small>
                         </div>
                       </div>
@@ -154,7 +147,7 @@ function Header() {
                     />
                     <span class="badge badge-pill badge-primary">1</span>
                   </a>
-                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm show">
+                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm ">
                     <div class="notify-drop-title">
                       <div class="row">
                         <div class="col-md-6 col-sm-6 col-xs-6 fs-8">
@@ -312,8 +305,8 @@ function Header() {
                     />
                     <span class="badge badge-pill badge-primary">3</span>
                   </a>
-                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm show">
-                    <div class="notify-drop-title">
+                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm ">
+                    <div class="notify-drop-title ">
                       <div class="row">
                         <div class="col-md-6 col-sm-6 col-xs-6 fs-8">
                           Notifications
@@ -398,8 +391,8 @@ function Header() {
                         </div>
                         <div class="col-md-10 col-sm-10 col-xs-10">
                           <span class="notification-type">
-                            10 people saw your story before it disappeared.
-                            See who saw it.
+                            10 people saw your story before it disappeared. See
+                            who saw it.
                           </span>
                           <a href="#" class="notify-right-icon">
                             <i class="bx bx-radio-circle-marked"></i>
@@ -501,7 +494,6 @@ function Header() {
                     </div>
                   </ul>
                 </li>
-
 
                 <li class="nav-item s-nav">
                   <a href="profile.html" class="nav-link nav-links">

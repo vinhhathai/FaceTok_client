@@ -9,11 +9,20 @@ import './assets/css/chat.css'
 import './assets/css/video.css'
 // import './assets/js/video.js'
 import './assets/js/load.js'
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import HomePage from './pages/HomePage/HomePage.jsx';
 
 function App() {
   return (
     <div className="App">
-     <Header/>
+     
+     <BrowserRouter>
+     <Routes>
+     <Route path='/' element={<HomePage/>}/>
+      <Route path='/search/see-more' element={''}/>
+     </Routes>
+     </BrowserRouter>
+     
     </div>
   );
 }
