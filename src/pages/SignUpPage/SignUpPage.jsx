@@ -1,8 +1,53 @@
-import React from "react";
-import logo from "../../assets/images/logo-64x64.png"
-import './SignUpPage.css'
+// Code đã được chỉnh sửa để thêm dấu sao (*) vào các placeholder và thêm chú thích dưới biểu mẫu
+import React, { useState } from "react";
+import logo from "../../assets/images/logo-64x64.png";
+import "./SignUpPage.css";
+import DayMonthYear from "../../sub_components/DayMonthYear/DayMonthYear";
+import signUpApi from "../../api/signUpApi";
+import moment from "moment";
 
 function SignUpPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [dayMonthYear, setDayMonthYear] = useState("");
+
+  const handleDayMonthYearChange = (newDayMonthYear) => {
+    setDayMonthYear(newDayMonthYear); // Lưu giá trị dayMonthYear vào state
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    // Thực hiện kiểm tra xem các trường đã được điền đầy đủ hay chưa
+    if (!username || !password || !confirmPassword || !email) {
+      alert("Please enter all input!");
+      return;
+    }
+
+    // Thực hiện kiểm tra mật khẩu và mật khẩu xác nhận có khớp nhau hay không
+    if (password !== confirmPassword) {
+      alert("Password and confirm password is invalid!");
+      return;
+    }
+
+    // Nếu thông tin hợp lệ, bạn có thể gửi dữ liệu đăng ký tại đây
+    console.log("Thông tin đăng ký:", {
+      username,
+      password,
+      confirmPassword,
+      email,
+      dayMonthYear,
+    });
+    const originalDate = dayMonthYear;
+    const formattedDate = moment(originalDate, "DD/MM/YYYY").format(
+      "DD-MM-YYYY"
+    );
+    console.log(formattedDate); // Kết quả: "17-10-2008"
+    signUpApi(username, password, confirmPassword, email, formattedDate);
+  };
+
   return (
     <>
       <div className="row ht-100v flex-row-reverse no-gutters">
@@ -23,115 +68,62 @@ function SignUpPage() {
                 </div>
               </div>
             </div>
-            <form action="" method="" className="pt-5">
+            <form onSubmit={handleSubmit} className="pt-5" action="/">
               <div className="row">
                 <div className="col-md-12">
                   <div className="form-group">
                     <input
                       type="text"
                       className="form-control"
-                      name=""
-                      placeholder="Username"
+                      name="username"
+                      placeholder="Username *"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
                     />
                   </div>
-
                 </div>
-
                 <div className="col-md-12">
                   <div className="form-group">
                     <input
                       type="password"
                       className="form-control"
-                      name=""
-                      placeholder="Password"
+                      name="password"
+                      placeholder="Password *"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
-
                 <div className="col-md-12">
                   <div className="form-group">
                     <input
                       type="password"
                       className="form-control"
-                      name=""
-                      placeholder="Confirm Password"
-                    />
-                  </div>
-                </div>
-               
-                <div className="col-md-12">
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      className="form-control"
-                      name=""
-                      placeholder="Email Address"
+                      name="confirmPassword"
+                      placeholder="Confirm Password *"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
                 <div className="col-md-12">
                   <div className="form-group">
                     <input
-                      type="text"
+                      type="email"
                       className="form-control"
-                      name=""
-                      placeholder="Phone Number"
+                      name="email"
+                      placeholder="Email Address *"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <select name="" id="" className="form-control">
-                      <option value="">- Select Day -</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                      <option value="5">5</option>
-                      <option value="6">6</option>
-                      <option value="7">7</option>
-                      <option value="8">8</option>
-                      <option value="9">9</option>
-                      <option value="10">10</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <select name="" id="" className="form-control">
-                      <option value="">- Select Month -</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                      <option value="5">5</option>
-                      <option value="6">6</option>
-                      <option value="7">7</option>
-                      <option value="8">8</option>
-                      <option value="9">9</option>
-                      <option value="10">10</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="form-group">
-                    <select name="" id="" className="form-control">
-                      <option value="">- Select Year -</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                      <option value="5">5</option>
-                      <option value="6">6</option>
-                      <option value="7">7</option>
-                      <option value="8">8</option>
-                      <option value="9">9</option>
-                      <option value="10">10</option>
-                    </select>
-                  </div>
-                </div>
-                
-                
+
+                <DayMonthYear onDayMonthYearChange={handleDayMonthYearChange} />
                 <div className="col-md-12">
                   <p className="agree-privacy">
                     By clicking the Sign Up button below you agreed to our
@@ -145,7 +137,7 @@ function SignUpPage() {
                 </div>
                 <div className="col-md-6 text-right">
                   <div className="form-group">
-                    <button type="button" className="btn btn-primary sign-up">
+                    <button type="submit" className="btn btn-primary sign-up">
                       Sign Up
                     </button>
                   </div>
@@ -154,9 +146,7 @@ function SignUpPage() {
             </form>
           </div>
         </div>
-        <div className="col-md-6 auth-bg-image d-flex justify-content-center align-items-center">
-          
-        </div>
+        <div className="col-md-6 auth-bg-image d-flex justify-content-center align-items-center"></div>
       </div>
     </>
   );
