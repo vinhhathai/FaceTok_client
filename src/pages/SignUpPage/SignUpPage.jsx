@@ -44,7 +44,7 @@ function SignUpPage() {
     const formattedDate = moment(originalDate, "DD/MM/YYYY").format(
       "DD-MM-YYYY"
     );
-    console.log(formattedDate); // Kết quả: "17-10-2008"
+    console.log(formattedDate); 
     signUpApi(username, password, confirmPassword, email, formattedDate);
   };
 
