@@ -5,6 +5,7 @@ import "./SignUpPage.css";
 import DayMonthYear from "../../sub_components/DayMonthYear/DayMonthYear";
 import signUpApi from "../../api/signUpApi";
 import moment from "moment";
+import { useNavigate } from "react-router";
 
 function SignUpPage() {
   const [username, setUsername] = useState("");
@@ -12,12 +13,13 @@ function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
   const [dayMonthYear, setDayMonthYear] = useState("");
+  const navigate = useNavigate();
 
   const handleDayMonthYearChange = (newDayMonthYear) => {
     setDayMonthYear(newDayMonthYear); // Lưu giá trị dayMonthYear vào state
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     // Thực hiện kiểm tra xem các trường đã được điền đầy đủ hay chưa
@@ -44,8 +46,19 @@ function SignUpPage() {
     const formattedDate = moment(originalDate, "DD/MM/YYYY").format(
       "DD-MM-YYYY"
     );
-    console.log(formattedDate); 
-    signUpApi(username, password, confirmPassword, email, formattedDate);
+    console.log(formattedDate);
+    const isSignUp = await signUpApi(
+      username,
+      password,
+      confirmPassword,
+      email,
+      formattedDate
+    );
+    console.log(isSignUp.user);
+
+     if(isSignUp.user) {
+      navigate('/');
+     }
   };
 
   return (

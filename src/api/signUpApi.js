@@ -1,7 +1,7 @@
 import axios from 'axios';
-
-function signUpApi(username, password,confirmPassword, email, birthday) {
-    return axios.post('http://localhost:9999/sign-up', {
+ 
+async function signUpApi(username, password,confirmPassword, email, birthday) {
+    return await axios.post('http://localhost:9999/sign-up', {
         username: username,
         password: password,
         confirmPassword,
@@ -10,13 +10,14 @@ function signUpApi(username, password,confirmPassword, email, birthday) {
     })
     .then(response => {
         // Handle successful response
-        console.log(response.data.message);
+        console.log(response.data);
        
         return response.data;
     })
     .catch(error => {
         // Handle error
-        console.log(error);
+        console.log(error.response.data);
+        return error.response.data;
         
     });
 }

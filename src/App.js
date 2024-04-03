@@ -8,11 +8,14 @@ import './assets/css/media.css'
 import './assets/css/chat.css'
 import './assets/css/video.css'
 import './assets/css/auth.css'
+import './assets/css/forms.css'
 // import './assets/js/video.js'
 import './assets/js/load.js'
+
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HomePage from './pages/HomePage/HomePage.jsx';
 import SignUpPage from './pages/SignUpPage/SignUpPage.jsx';
+import LoginPage from './pages/LoginPage/LoginPage.jsx';
 
 function App() {
   return (
@@ -23,6 +26,7 @@ function App() {
      <Route path='/' element={<HomePage/>}/>
       <Route path='/search/see-more' element={''}/>
       <Route path='/sign-up' element={<SignUpPage/>}/>
+      <Route path='/login' element={<LoginPage/>}/>
      </Routes>
      </BrowserRouter>
      
