@@ -474,7 +474,7 @@ function Header() {
                     />
                   </a>
                   <div
-                    class="dropdown-menu dropdown-menu-right settings-dropdown shadow-sm show"
+                    class="dropdown-menu dropdown-menu-right settings-dropdown shadow-sm " //add show to show
                     aria-labelledby="settings-dropdown"
                   >
                     <a class="dropdown-item" href="#">
