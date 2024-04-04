@@ -6,6 +6,9 @@ import DayMonthYear from "../../sub_components/DayMonthYear/DayMonthYear";
 import signUpApi from "../../api/signUpApi";
 import moment from "moment";
 import { useNavigate } from "react-router";
+import { Link } from "react-router-dom";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function SignUpPage() {
   const [username, setUsername] = useState("");
@@ -56,8 +59,9 @@ function SignUpPage() {
     );
     console.log(isSignUp.user);
 
+    toast.success("Sign up successful!"); // Hiển thị toast message
      if(isSignUp.user) {
-      navigate('/');
+      navigate('/login');
      }
   };
 
@@ -145,7 +149,7 @@ function SignUpPage() {
                 </div>
                 <div className="col-md-6">
                   <span className="go-login">
-                    Already a member? <a href="sign-in.html">Sign In</a>
+                    Already a member? <Link to={"/login"}>Login</Link>
                   </span>
                 </div>
                 <div className="col-md-6 text-right">

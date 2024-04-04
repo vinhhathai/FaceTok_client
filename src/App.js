@@ -16,9 +16,11 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HomePage from './pages/HomePage/HomePage.jsx';
 import SignUpPage from './pages/SignUpPage/SignUpPage.jsx';
 import LoginPage from './pages/LoginPage/LoginPage.jsx';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
-  return (
+  return (<>
     <div className="App">
      
      <BrowserRouter>
@@ -31,6 +33,8 @@ function App() {
      </BrowserRouter>
      
     </div>
+    <ToastContainer /> {/* Đặt ToastContainer ở đây */}
+    </>
   );
 }
 
