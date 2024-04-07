@@ -11,7 +11,7 @@ function CreatePost() {
                 className="form-control"
                 id="postForm"
                 rows="2"
-                placeholder="What's on your mind, Arthur?"
+                placeholder={`What's on your mind, ${'Vinh đẹp trai'}?`}
               ></textarea>
             </div>
             <div className="row post-form-group">

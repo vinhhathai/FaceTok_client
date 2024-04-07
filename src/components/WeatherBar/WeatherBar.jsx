@@ -1,3 +1,4 @@
+import weatherIcon from "../../assets/images/icons/weather/sun.png"
 function WeatherBar() {
     return ( 
         <>
@@ -11,7 +12,7 @@ function WeatherBar() {
                 <div className="weather-quick align-items-center mt-4">
                   <div className="row">
                     <div className="col-md-8">
-                      <img src="assets/images/icons/weather/sun.png" width="40" height="40" alt="Weather icon" />
+                      <img src={weatherIcon} width="40" height="40" alt="Weather icon" />
                       <h1 className="weather-card display-4 ml-3">
                         28<span className="text-muted">&deg;</span>
                       </h1>

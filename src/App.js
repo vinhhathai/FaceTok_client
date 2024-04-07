@@ -18,23 +18,25 @@ import SignUpPage from './pages/SignUpPage/SignUpPage.jsx';
 import LoginPage from './pages/LoginPage/LoginPage.jsx';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ProfilePage from './pages/ProfilePage/ProfilePage.jsx';
 
 function App() {
   return (<>
     <div className="App">
-     
-     <BrowserRouter>
-     <Routes>
-     <Route path='/' element={<HomePage/>}/>
-      <Route path='/search/see-more' element={''}/>
-      <Route path='/sign-up' element={<SignUpPage/>}/>
-      <Route path='/login' element={<LoginPage/>}/>
-     </Routes>
-     </BrowserRouter>
-     
+
+      <BrowserRouter>
+        <Routes>
+          <Route path='/' element={<HomePage />} />
+          <Route path='/search/see-more' element={''} />
+          <Route path='/sign-up' element={<SignUpPage />} />
+          <Route path='/login' element={<LoginPage />} />
+          <Route path='/profile/:id' element={<ProfilePage/>} />
+        </Routes>
+      </BrowserRouter>
+
     </div>
     <ToastContainer /> {/* Đặt ToastContainer ở đây */}
-    </>
+  </>
   );
 }
 

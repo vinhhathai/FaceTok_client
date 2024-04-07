@@ -11,11 +11,13 @@ import Search from "../../sub_components/Search/SearchForm/SearchForm";
 import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
 import "./Header.css";
 import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
-
+import { Link } from "react-router-dom";
+import { useState } from "react";
 function Header() {
+  const [id, setId] = useState('121212');
   return (
     <>
-      <div class="container-fluid" id="wrapper">
+      <div class="container-fluid sticky-top" id="wrapper">
         <div class="row newsfeed-size">
           <nav
             id="navbar-main"
@@ -448,7 +450,7 @@ function Header() {
                 </li>
 
                 <li class="nav-item s-nav">
-                  <a href="profile.html" class="nav-link nav-links">
+                  <Link to={`/profile/${id}`} className="nav-link nav-links">
                     <div class="menu-user-image">
                       <img
                         src={profileImage}
@@ -456,7 +458,7 @@ function Header() {
                         alt="Menu Image"
                       />
                     </div>
-                  </a>
+                  </Link>
                 </li>
                 <li class="nav-item s-nav nav-icon dropdown">
                   <a
