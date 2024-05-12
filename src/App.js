@@ -13,25 +13,21 @@ import './assets/css/forms.css'
 import './assets/js/load.js'
 
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import HomePage from './pages/HomePage/HomePage.jsx';
-import SignUpPage from './pages/SignUpPage/SignUpPage.jsx';
-import LoginPage from './pages/LoginPage/LoginPage.jsx';
+
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ProfilePage from './pages/ProfilePage/ProfilePage.jsx';
+import IndexRoutes from './routes/IndexRoutes.jsx';
+import AuthenticatedRoutes from './routes/AuthenticatedRoutes.jsx';
 
 function App() {
   return (<>
     <div className="App">
 
       <BrowserRouter>
-        <Routes>
-          <Route path='/' element={<HomePage />} />
-          <Route path='/search/see-more' element={''} />
-          <Route path='/sign-up' element={<SignUpPage />} />
-          <Route path='/login' element={<LoginPage />} />
-          <Route path='/profile/:id' element={<ProfilePage/>} />
-        </Routes>
+     
+          <IndexRoutes/>
+          <AuthenticatedRoutes/>
+      
       </BrowserRouter>
 
     </div>

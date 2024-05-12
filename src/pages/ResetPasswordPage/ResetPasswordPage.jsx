@@ -1,30 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import loginApi from "../../api/loginApi";
-import { useNavigate } from "react-router-dom";
-import saveDataToCookie from "../../utils/saveDataToCookie";
 
- function LoginPage() {
+function ResetPasswordPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const navigate = useNavigate();
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            // Gọi hàm loginApi và xử lý kết quả
-            const loginResult = await loginApi(username, password);
-            console.log(loginResult);
-            console.log(loginResult.token);
-            await saveDataToCookie(loginResult, 'accountInformation', 1500)
-            
-            await saveDataToCookie(loginResult.token, 'token', 1500); // Chuyển 'token' thành chuỗi để làm tên cho cookie
-            navigate('/');
-        } catch (error) {
-            console.error("Login failed:", error);
-        }
-    };
-
 
     return (
         <>
@@ -41,8 +20,8 @@ import saveDataToCookie from "../../utils/saveDataToCookie";
                                     />
                                 </div>
                                 <div className="col-md-10">
-                                    <p>LOGIN </p>
-                                    <span>Let's discovery interested things</span>
+                                    <p>Reset Password </p>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -51,48 +30,32 @@ import saveDataToCookie from "../../utils/saveDataToCookie";
                                 <div className="col-md-12">
                                     <div className="form-group">
                                         <input
-                                            type="text"
+                                            type="email"
                                             className="form-control"
-                                            name="username"
-                                            placeholder="username"
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
+                                            name="email"
+                                            placeholder="Email Address"
+                                            
                                         />
                                     </div>
                                 </div>
-                                <div className="col-md-12">
-                                    <div className="form-group">
-                                        <input
-                                            type="password"
-                                            className="form-control"
-                                            name="password"
-                                            placeholder="Password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
+                               
                                 <div className="col-md-12 text-center">
                                     <div className="form-group">
                                         <button
                                             type="submit"
                                             className="btn btn-primary btn-block"
-                                            onClick={handleSubmit}
+                                          
                                         >
-                                            Login
+                                            Send
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="col-md-12 text-center mt-5">
-                                    <span className="go-login">
-                                        Not yet a member? <Link to={"/sign-up"}>Sign Up</Link>
-                                    </span>
-                                </div>
+                                
 
                                 <div className="col-md-12 text-center mt-5">
                                     <span className="login__reset_password">
-                                        Can not remember password? <Link to={"/reset-password"}>Reset Password</Link>
+                                        Back to login page? <Link to={"/login"}>Login</Link>
                                     </span>
                                 </div>
                             </div>
@@ -116,6 +79,7 @@ import saveDataToCookie from "../../utils/saveDataToCookie";
             </div>
         </>
     );
+
 }
 
-export default LoginPage;
+export default ResetPasswordPage;
