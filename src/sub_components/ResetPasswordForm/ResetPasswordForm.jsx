@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 
-function ResetPasswordForm({handleShowOtpForm}) {
+function ResetPasswordForm({handleShowChangePasswordForm}) {
   const [email, setEmail] = useState("");
 
   const handleSubmitToEmail = (e) => {
@@ -10,7 +10,7 @@ function ResetPasswordForm({handleShowOtpForm}) {
       alert("Invalid email");
       return;
     }
-    handleShowOtpForm()
+    handleShowChangePasswordForm()
     console.log(email); // Log the email value
   };
 

@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import OTPForm from "../../sub_components/OTPForm/OTPForm";
 import ResetPasswordForm from "../../sub_components/ResetPasswordForm/ResetPasswordForm";
+import ChangePasswordForm from "../../sub_components/ChangePasswordForm/ChangePasswordForm";
 
 function ResetPasswordPage() {
-  const [showOtpForm, setShowOtpForm] = useState(false)
+  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false)
 
-  const handleShowOtpForm = () => {
-    setShowOtpForm(true)
+  const handleShowChangePasswordForm = () => {
+    setShowChangePasswordForm(true)
   }
   return (
     <>
@@ -29,7 +29,7 @@ function ResetPasswordPage() {
               </div>
             </div>
             <form>
-              {!showOtpForm ? <ResetPasswordForm  handleShowOtpForm={handleShowOtpForm}/> :   <OTPForm/>}
+              {!showChangePasswordForm ? <ResetPasswordForm  handleShowChangePasswordForm={handleShowChangePasswordForm}/> :   <ChangePasswordForm/>}
                 
            
               <div className="col-md-12 text-center mt-5">
