@@ -29,7 +29,7 @@
 .dropdown-menu.notify-drop.show {
     min-width: 330px;
     background-color: #fff;
-    min-height: 375px;
+    min-height: 0;
     max-height: 375px;
     border-radius: 20px;
     border-color: #e8e8e8;
@@ -50,7 +50,7 @@
 }
 
 .dropdown-menu.notify-drop .drop-content {
-    min-height: 280px;
+    min-height: 0;
     max-height: 280px;
     overflow-y: auto;
 }

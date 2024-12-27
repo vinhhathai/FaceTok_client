@@ -16,7 +16,7 @@
 }
 
 .auth-bg-image {
-    background: url(../images/background/auth-bg.png) no-repeat;
+    background: url(../../../public/assets/images/FaceTokIcon.jpeg) no-repeat;
     background-size: cover;
 }
 

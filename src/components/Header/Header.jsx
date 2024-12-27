@@ -1,22 +1,25 @@
-import logo from '../../assets/images/logo-64x64.png'
-import createIcon from '../../assets/images/icons/navbar/create.png'
-import message from '../../assets/images/icons/navbar/message.png'
-import notificationIcon from '../../assets/images/icons/navbar/notification.png'
-import profileImage from '../../assets/images/users/user-4.jpg'
-import settingIcon from '../../assets/images/icons/navbar/settings.png'
-import avatarFriend1 from '../../assets/images/users/user-6.png'
-import avatarFriend2 from '../../assets/images/users/user-5.png'
-import avatarGroup from '../../assets/images/groups/group-2.jpg'
-import avatarMessage from '../../assets/images/users/user-6.png'
-import Search from '../../sub_components/Search/SearchForm/SearchForm'
-import SearchForm from '../../sub_components/Search/SearchForm/SearchForm'
-
+import createIcon from "../../assets/images/icons/navbar/create.png";
+import message from "../../assets/images/icons/navbar/message.png";
+import notificationIcon from "../../assets/images/icons/navbar/notification.png";
+import profileImage from "../../assets/images/users/user-4.jpg";
+import settingIcon from "../../assets/images/icons/navbar/settings.png";
+import avatarFriend1 from "../../assets/images/users/user-6.png";
+import avatarFriend2 from "../../assets/images/users/user-5.png";
+import avatarGroup from "../../assets/images/groups/group-2.jpg";
+import avatarMessage from "../../assets/images/users/user-6.png";
+import Search from "../../sub_components/Search/SearchForm/SearchForm";
+import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
+import "./Header.css";
+import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
+import { Link } from "react-router-dom";
+import { useState } from "react";
+import LogoHeader from "../../sub_components/LogoHeader/LogoHeader";
 function Header() {
+  const [id, setId] = useState('121212');
   return (
     <>
-      <div class="container-fluid" id="wrapper">
+      <div class="container-fluid sticky-top" id="wrapper">
         <div class="row newsfeed-size">
-
           <nav
             id="navbar-main"
             class="navbar navbar-expand-lg shadow-sm sticky-top"
@@ -66,76 +69,13 @@ function Header() {
                 </li>
               </ul>
               <ul class="navbar-nav mr-5 flex-row" id="main_menu">
-                <a class="navbar-brand nav-item mr-lg-5" href="index.html">
-                  <img
-                    src={logo}
-                    width="40"
-                    height="40"
-                    class="mr-3"
-                    alt="Logo"
-                  />
-                </a>
-                <SearchForm  avatarFriend1 = {avatarFriend1} avatarFriend2 = {avatarFriend2} avatarGroup = {avatarGroup}/>
-                <li class="nav-item s-nav dropdown d-mobile">
-                  <a
-                    href="#"
-                    class="nav-link nav-icon nav-links drop-w-tooltip"
-                    data-toggle="dropdown"
-                    data-placement="bottom"
-                    data-title="Create"
-                    role="button"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    <img
-                      src={createIcon}
-                      alt="navbar icon"
-                    />
-                  </a>
-                  <div class="dropdown-menu dropdown-menu-right nav-dropdown-menu ">
-                    <a
-                      href="#"
-                      class="dropdown-item"
-                      aria-describedby="createGroup"
-                    >
-                      <div class="row">
-                        <div class="col-md-2">
-                          <i class="bx bx-group post-option-icon"></i>
-                        </div>
-                        <div class="col-md-10">
-                          <span class="fs-9">Group</span>
-                          <small
-                            id="createGroup"
-                            class="form-text text-muted"
-                          >
-                            Find people with shared interests
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      href="#"
-                      class="dropdown-item"
-                      aria-describedby="createEvent"
-                    >
-                      <div class="row">
-                        <div class="col-md-2">
-                          <i class="bx bx-calendar post-option-icon"></i>
-                        </div>
-                        <div class="col-md-10">
-                          <span class="fs-9">Event</span>
-                          <small
-                            id="createEvent"
-                            class="form-text text-muted"
-                          >
-                            bring people together with a public or private
-                            event
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                </li>
+              <LogoHeader/>
+                <SearchForm
+                  avatarFriend1={avatarFriend1}
+                  avatarFriend2={avatarFriend2}
+                  avatarGroup={avatarGroup}
+                />
+                <CreateNavbar/>
                 <li class="nav-item s-nav dropdown message-drop-li">
                   <a
                     href="#"
@@ -154,7 +94,7 @@ function Header() {
                     />
                     <span class="badge badge-pill badge-primary">1</span>
                   </a>
-                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm show">
+                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm ">
                     <div class="notify-drop-title">
                       <div class="row">
                         <div class="col-md-6 col-sm-6 col-xs-6 fs-8">
@@ -312,8 +252,8 @@ function Header() {
                     />
                     <span class="badge badge-pill badge-primary">3</span>
                   </a>
-                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm show">
-                    <div class="notify-drop-title">
+                  <ul class="dropdown-menu notify-drop dropdown-menu-right nav-drop shadow-sm ">
+                    <div class="notify-drop-title ">
                       <div class="row">
                         <div class="col-md-6 col-sm-6 col-xs-6 fs-8">
                           Notifications
@@ -398,8 +338,8 @@ function Header() {
                         </div>
                         <div class="col-md-10 col-sm-10 col-xs-10">
                           <span class="notification-type">
-                            10 people saw your story before it disappeared.
-                            See who saw it.
+                            10 people saw your story before it disappeared. See
+                            who saw it.
                           </span>
                           <a href="#" class="notify-right-icon">
                             <i class="bx bx-radio-circle-marked"></i>
@@ -502,9 +442,8 @@ function Header() {
                   </ul>
                 </li>
 
-
                 <li class="nav-item s-nav">
-                  <a href="profile.html" class="nav-link nav-links">
+                  <Link to={`/profile/${id}`} className="nav-link nav-links">
                     <div class="menu-user-image">
                       <img
                         src={profileImage}
@@ -512,7 +451,7 @@ function Header() {
                         alt="Menu Image"
                       />
                     </div>
-                  </a>
+                  </Link>
                 </li>
                 <li class="nav-item s-nav nav-icon dropdown">
                   <a
@@ -530,7 +469,7 @@ function Header() {
                     />
                   </a>
                   <div
-                    class="dropdown-menu dropdown-menu-right settings-dropdown shadow-sm show"
+                    class="dropdown-menu dropdown-menu-right settings-dropdown shadow-sm " //add show to show
                     aria-labelledby="settings-dropdown"
                   >
                     <a class="dropdown-item" href="#">
