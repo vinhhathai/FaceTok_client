@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import ResetPasswordForm from "../../sub_components/ResetPasswordForm/ResetPasswordForm";
 import ChangePasswordForm from "../../sub_components/ChangePasswordForm/ChangePasswordForm";
+import OTPForm from "../../sub_components/OTPForm/OTPForm";
 
 function ResetPasswordPage() {
-  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false)
+  const [step, setStep] = useState(1);
 
-  const handleShowChangePasswordForm = () => {
-    setShowChangePasswordForm(true)
-  }
+  const handleShowOTPForm = () => setStep(2);
+  const handleShowChangePasswordForm = () => setStep(3);
+
   return (
     <>
       <div className="row ht-100v flex-row-reverse no-gutters">
@@ -18,7 +19,7 @@ function ResetPasswordPage() {
               <div className="row">
                 <div className="col-md-2">
                   <img
-                    src="assets/images/FaceTokIcon.jpeg"
+                    src="/assets/images/FaceTokIcon.jpeg"
                     className="logo-img"
                     alt="Logo"
                   />
@@ -29,12 +30,14 @@ function ResetPasswordPage() {
               </div>
             </div>
             <form>
-              {!showChangePasswordForm ? <ResetPasswordForm  handleShowChangePasswordForm={handleShowChangePasswordForm}/> :   <ChangePasswordForm/>}
+            {step === 1 && <ResetPasswordForm handleShowOTPForm={handleShowOTPForm} />}
+          {step === 2 && <OTPForm handleShowChangePasswordForm={handleShowChangePasswordForm} />}
+          {step === 3 && <ChangePasswordForm />}
                 
            
               <div className="col-md-12 text-center mt-5">
                   <span className="login__reset_password">
-                    Back to login page? <Link to={"/login"}>Login</Link>
+                    Back to login page? <Link to={"/auth/login"}>Login</Link>
                   </span>
                 </div>
             </form>

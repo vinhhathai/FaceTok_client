@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { link_api } from '../config/api-config';
 
-async function loginApi(username, password) {
-    return await axios.post('http://localhost:9999/login', { username, password })
+async function loginApi(email, password) {
+    return await axios.post(link_api.LOGIN_LINK, { email, password })
         .then(response => {
             // Xử lý dữ liệu phản hồi nếu cần
             return response.data;

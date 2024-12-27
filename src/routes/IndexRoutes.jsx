@@ -6,9 +6,9 @@ function IndexRoutes(props) {
   return (
     <>
       <Routes>
-        <Route path="/sign-up" element={<SignUpPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage/>} />
+        <Route path="/auth/sign-up" element={<SignUpPage />} />
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage/>} />
       </Routes>
     </>
   );

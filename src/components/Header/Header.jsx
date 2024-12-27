@@ -13,6 +13,7 @@ import "./Header.css";
 import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import LogoHeader from "../../sub_components/LogoHeader/LogoHeader";
 function Header() {
   const [id, setId] = useState('121212');
   return (
@@ -68,15 +69,7 @@ function Header() {
                 </li>
               </ul>
               <ul class="navbar-nav mr-5 flex-row" id="main_menu">
-                <a class="navbar-brand nav-item mr-lg-5" href="index.html">
-                  <img
-                    src="/assets/images/FaceTokIcon.jpeg"
-                    width="40"
-                    height="40"
-                    class="mr-3 logo__icon"
-                    alt="Logo"
-                  />
-                </a>
+              <LogoHeader/>
                 <SearchForm
                   avatarFriend1={avatarFriend1}
                   avatarFriend2={avatarFriend2}

@@ -74,7 +74,7 @@ function SignUpPage() {
               <div className="row">
                 <div className="col-md-2">
                   <img
-                    src={"./assets/images/FaceTokIcon.jpeg"}
+                    src={"/assets/images/FaceTokIcon.jpeg"}
                     className="logo-img"
                     alt="Logo"
                   />
@@ -149,7 +149,7 @@ function SignUpPage() {
                 </div>
                 <div className="col-md-6">
                   <span className="go-login">
-                    Already a member? <Link to={"/login"}>Login</Link>
+                    Already a member? <Link to={"/auth/login"}>Login</Link>
                   </span>
                 </div>
                 <div className="col-md-6 text-right">

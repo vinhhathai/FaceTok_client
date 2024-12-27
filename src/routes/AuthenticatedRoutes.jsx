@@ -14,7 +14,7 @@ function AuthenticatedRoutes(props) {
         const token = Cookies.get('token');
        
         if (!token) {
-            navigate('/login');
+            navigate('/auth/login');
         } 
     },[])
   return (

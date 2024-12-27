@@ -1,4 +1,3 @@
-import './App.css';
 import Header from './components/Header/Header';
 import './assets/css/bootstrap/bootstrap.min.css';
 import './assets/css/boxicons.min.css'
@@ -18,6 +17,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import IndexRoutes from './routes/IndexRoutes.jsx';
 import AuthenticatedRoutes from './routes/AuthenticatedRoutes.jsx';
+
+
 
 function App() {
   return (<>
