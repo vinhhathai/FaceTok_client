@@ -1,0 +1,7 @@
+.profile-info {
+    background-color: white; /* Nền trắng */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Thêm shadow */
+    padding: 16px; /* Thêm padding nếu cần */
+    border-radius: 8px; /* Bo góc nhẹ nếu muốn */
+  }
+  

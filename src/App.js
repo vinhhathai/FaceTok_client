@@ -8,6 +8,7 @@ import './assets/css/chat.css'
 import './assets/css/video.css'
 import './assets/css/auth.css'
 import './assets/css/forms.css'
+import './assets/css/profile.css'
 // import './assets/js/video.js'
 import './assets/js/load.js'
 
