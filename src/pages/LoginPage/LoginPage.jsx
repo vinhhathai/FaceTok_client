@@ -14,11 +14,14 @@ function LoginPage() {
         try {
             // Gọi API login với email và password
             const loginResult = await loginApi(email, password);
-            console.log("Login success:", loginResult);
             
             // Lưu thông tin vào cookie
             await saveDataToCookie(loginResult, "accountInformation", 1500);
-            await saveDataToCookie(loginResult.token, "token", 1500);
+            
+            // Giả sử loginResult là một đối tượng, bạn có thể truy cập accessToken trực tiếp
+            if (loginResult.accessToken) {
+                localStorage.setItem("accessToken", loginResult.accessToken); // Lưu accessToken vào localStorage
+            }
             
             // Điều hướng người dùng đến trang chính
             navigate("/");

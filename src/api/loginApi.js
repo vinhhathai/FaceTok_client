@@ -4,7 +4,7 @@ import { link_api } from '../config/api-config';
 async function loginApi(email, password) {
     return await axios.post(link_api.LOGIN_LINK, { email, password })
         .then(response => {
-            // Xử lý dữ liệu phản hồi nếu cần
+            console.log(response.data)
             return response.data;
         })
         .catch(error => {

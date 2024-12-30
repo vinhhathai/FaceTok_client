@@ -11,59 +11,49 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function SignUpPage() {
-  const [username, setUsername] = useState("");
+  const [fullName, setFullname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [dayMonthYear, setDayMonthYear] = useState("");
   const navigate = useNavigate();
 
-  const handleDayMonthYearChange = (newDayMonthYear) => {
-    setDayMonthYear(newDayMonthYear); // Lưu giá trị dayMonthYear vào state
-  };
+ 
+
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     // Thực hiện kiểm tra xem các trường đã được điền đầy đủ hay chưa
-    if (!username || !password || !confirmPassword || !email) {
-      alert("Please enter all input!");
+    if (!fullName || !password || !confirmPassword || !email) {
+      toast.error("Please enter all fields!"); // Show error toast
       return;
     }
-
+  
     // Thực hiện kiểm tra mật khẩu và mật khẩu xác nhận có khớp nhau hay không
     if (password !== confirmPassword) {
-      alert("Password and confirm password is invalid!");
+      toast.error("Password and confirm password do not match!"); // Show error toast
       return;
     }
-
-    // Nếu thông tin hợp lệ, bạn có thể gửi dữ liệu đăng ký tại đây
-    console.log("Thông tin đăng ký:", {
-      username,
-      password,
-      confirmPassword,
-      email,
-      dayMonthYear,
-    });
-    const originalDate = dayMonthYear;
-    const formattedDate = moment(originalDate, "DD/MM/YYYY").format(
-      "DD-MM-YYYY"
-    );
-    console.log(formattedDate);
-    const isSignUp = await signUpApi(
-      username,
-      password,
-      confirmPassword,
-      email,
-      formattedDate
-    );
-    console.log(isSignUp.user);
-
-    toast.success("Sign up successful!"); // Hiển thị toast message
-     if(isSignUp.user) {
-      navigate('/login');
-     }
+  
+    try {
+      // Gọi API đăng ký
+      const isSignUp = await signUpApi(fullName, password, confirmPassword, email);
+      console.log(isSignUp)
+      if (isSignUp && isSignUp.status === true) {
+        toast.success("Sign up successful!"); // Hiển thị toast thông báo thành công
+        navigate('/auth/login');
+      } else if (isSignUp && isSignUp.error) {
+        toast.error(isSignUp.error.name); // Hiển thị thông báo lỗi nếu API trả về lỗi
+      } else {
+        toast.error("Unexpected response format"); // Thông báo lỗi khi có vấn đề với phản hồi từ API
+      }
+    } catch (error) {
+      console.error("Sign up failed:", error);
+      toast.error(`Sign up failed: ${error.message || "An error occurred"}`); // Hiển thị toast thông báo lỗi từ catch
+    }
   };
+  
+  
 
   return (
     <>
@@ -92,10 +82,10 @@ function SignUpPage() {
                     <input
                       type="text"
                       className="form-control"
-                      name="username"
-                      placeholder="Username *"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      name="fullName"
+                      placeholder="Fullname *"
+                      value={fullName}
+                      onChange={(e) => setFullname(e.target.value)}
                       required
                     />
                   </div>
@@ -140,7 +130,6 @@ function SignUpPage() {
                   </div>
                 </div>
 
-                <DayMonthYear onDayMonthYearChange={handleDayMonthYearChange} />
                 <div className="col-md-12">
                   <p className="agree-privacy">
                     By clicking the Sign Up button below you agreed to our

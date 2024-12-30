@@ -12,10 +12,34 @@ import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
 import "./Header.css";
 import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LogoHeader from "../../sub_components/LogoHeader/LogoHeader";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode"; // Cập nhật import này
 function Header() {
-  const [id, setId] = useState('121212');
+  const [id, setId] = useState("");
+  useEffect(() => {
+    // Kiểm tra sự tồn tại của cookie có tên là 'accountInformation'
+    const accountInfo = Cookies.get("accountInformation");
+
+    // Nếu token tồn tại, parse chuỗi JSON để lấy accessToken
+    if (accountInfo) {
+      const parsedAccountInfo = JSON.parse(accountInfo); // Parse chuỗi JSON nếu có
+
+      if (parsedAccountInfo.accessToken) {
+        try {
+          // Giải mã token để lấy thông tin userId
+          const decoded = jwtDecode(parsedAccountInfo.accessToken);
+
+          const userId = decoded._id; // Giả sử userId nằm trong payload của token
+          setId(userId); // Cập nhật ID sau khi giải mã thành công
+        } catch (error) {
+          console.error("Token is invalid or expired", error);
+        }
+      }
+    }
+  }, []);
+
   return (
     <>
       <div class="container-fluid sticky-top" id="wrapper">
@@ -69,13 +93,13 @@ function Header() {
                 </li>
               </ul>
               <ul class="navbar-nav mr-5 flex-row" id="main_menu">
-              <LogoHeader/>
+                <LogoHeader />
                 <SearchForm
                   avatarFriend1={avatarFriend1}
                   avatarFriend2={avatarFriend2}
                   avatarGroup={avatarGroup}
                 />
-                <CreateNavbar/>
+                <CreateNavbar />
                 <li class="nav-item s-nav dropdown message-drop-li">
                   <a
                     href="#"

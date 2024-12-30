@@ -1,17 +1,14 @@
 import axios from 'axios';
 import { link_api } from '../config/api-config';
  
-async function signUpApi(username, password,confirmPassword, email, birthday) {
+async function signUpApi(fullName, password,confirmPassword, email) {
     return await axios.post(link_api.REGISTER_LINK, {
-        username: username,
+        fullName: fullName,
         password: password,
         confirmPassword,
         email: email,
-        birthday: birthday
     })
     .then(response => {
-        // Handle successful response
-        console.log(response.data);
        
         return response.data;
     })
