@@ -1,7 +1,6 @@
 import createIcon from "../../assets/images/icons/navbar/create.png";
 import message from "../../assets/images/icons/navbar/message.png";
 import notificationIcon from "../../assets/images/icons/navbar/notification.png";
-import profileImage from "../../assets/images/users/user-4.jpg";
 import settingIcon from "../../assets/images/icons/navbar/settings.png";
 import avatarFriend1 from "../../assets/images/users/user-6.png";
 import avatarFriend2 from "../../assets/images/users/user-5.png";
@@ -16,7 +15,7 @@ import { useEffect, useState } from "react";
 import LogoHeader from "../../sub_components/LogoHeader/LogoHeader";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode"; // Cập nhật import này
-function Header() {
+function Header({avatar}) {
   const [id, setId] = useState("");
   useEffect(() => {
     // Kiểm tra sự tồn tại của cookie có tên là 'accountInformation'
@@ -470,7 +469,7 @@ function Header() {
                   <Link to={`/profile/${id}`} className="nav-link nav-links">
                     <div class="menu-user-image">
                       <img
-                        src={profileImage}
+                        src={avatar ? avatar : '/assets/images/avatar_default.jpg'}
                         class="menu-user-img ml-1"
                         alt="Menu Image"
                       />
