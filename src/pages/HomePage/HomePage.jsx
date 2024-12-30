@@ -1,16 +1,18 @@
 import Content from "../../components/Content/Content";
 import Header from "../../components/Header/Header";
+import Sidebar from "../../components/Sidebar/Sidebar";
+import WeatherBar from "../../components/WeatherBar/WeatherBar";
+import MainLayout from "../../layout/MainLayout/MainLayout";
 import CreateGroupModal from "../../sub_components/Create/CreateGroupModal/CreateGroupModal";
 
-
 function HomePage() {
-    return ( 
-        <>
-        <Header/>
-        <Content/>
-        <CreateGroupModal/>
-        </>
-     );
+  return (
+    <>
+      <Header />
+      <MainLayout  leftSidebar={<Sidebar/>} content={<Content/>} rightSidebar={<WeatherBar/>}/>
+      <CreateGroupModal />
+    </>
+  );
 }
 
 export default HomePage;
