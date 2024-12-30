@@ -1,30 +1,6 @@
-import { useEffect, useState } from "react";
 import "./ProfileInfo.css";
-import getProfileApi from "../../api/getProfileApi";
 
-function ProfileInfo({ id }) {
-  console.log(id);
-
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getProfileApi(id);
-        setProfile(data.data); // Dữ liệu trả về từ API
-        console.log(data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message || "Unable to fetch profile");
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [id]); // Dùng userId từ URL để tái gọi API khi thay đổi
-
+function ProfileInfo({ profile, loading, error }) {
   if (loading) {
     return <p>Loading...</p>;
   }
