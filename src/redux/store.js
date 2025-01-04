@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import emailReducer from './features/emailSlice'; // Đường dẫn chính xác đến emailSlice
+import emailReducer from './features/emailSlice'; 
 
 const store = configureStore({
   reducer: {

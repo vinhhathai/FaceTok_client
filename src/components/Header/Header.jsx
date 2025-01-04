@@ -10,13 +10,15 @@ import Search from "../../sub_components/Search/SearchForm/SearchForm";
 import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
 import "./Header.css";
 import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import LogoHeader from "../../sub_components/LogoHeader/LogoHeader";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode"; // Cập nhật import này
-function Header({avatar}) {
+import UserDropdown from "../../sub_components/UserDropdown/UserDropdown";
+function Header({ avatar }) {
   const [id, setId] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
   useEffect(() => {
     // Kiểm tra sự tồn tại của cookie có tên là 'accountInformation'
     const accountInfo = Cookies.get("accountInformation");
@@ -29,15 +31,25 @@ function Header({avatar}) {
         try {
           // Giải mã token để lấy thông tin userId
           const decoded = jwtDecode(parsedAccountInfo.accessToken);
-
           const userId = decoded._id; // Giả sử userId nằm trong payload của token
           setId(userId); // Cập nhật ID sau khi giải mã thành công
+          setProfilePicture(decoded.profilePicture);
         } catch (error) {
           console.error("Token is invalid or expired", error);
         }
       }
     }
   }, []);
+
+  const navigate = useNavigate();
+  const handleLogout = () => {
+  
+    // Xử lý logic đăng xuất
+    localStorage.removeItem("accessToken");
+  
+    // Điều hướng đến trang đăng nhập
+    navigate("/auth/login");
+  };
 
   return (
     <>
@@ -465,17 +477,12 @@ function Header({avatar}) {
                   </ul>
                 </li>
 
-                <li class="nav-item s-nav">
-                  <Link to={`/profile/${id}`} className="nav-link nav-links">
-                    <div class="menu-user-image">
-                      <img
-                        src={avatar ? avatar : '/assets/images/avatar_default.jpg'}
-                        class="menu-user-img ml-1"
-                        alt="Menu Image"
-                      />
-                    </div>
-                  </Link>
-                </li>
+                <UserDropdown
+                  id={id}
+                  profilePicture={profilePicture}
+                  handleLogout={handleLogout}
+                />
+
                 <li class="nav-item s-nav nav-icon dropdown">
                   <a
                     href="settings.html"
