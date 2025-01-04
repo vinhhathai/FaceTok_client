@@ -30,11 +30,12 @@ function ProfilePage() {
     };
 
     fetchProfile();
-  }, [id]); // Dùng userId từ URL để tái gọi API khi thay đổi
+  }, [id]);
 
   return (
     <>
-      <Header avatar={profile && profile.profilePicture ? profile.profilePicture : ''} />
+      <Header
+      />
       <ProfileThumbnail />
       <MainLayout
         leftSidebar={

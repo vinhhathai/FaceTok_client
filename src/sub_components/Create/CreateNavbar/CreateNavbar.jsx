@@ -5,7 +5,6 @@ import CreateDropdown from "../CreateDropdown/CreateDropdown";
 function CreateNavbar() {
   // State để kiểm soát việc hiển thị dropdown
   const [showDropdown, setShowDropdown] = useState(false);
-  console.log(showDropdown)
 
   // Sử dụng useRef để tham chiếu đến phần tử cha của dropdown
   const dropdownRef = useRef(null);
