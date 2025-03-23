@@ -2,12 +2,20 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import changePasswordApi from "../../api/changePasswordApi";
 
+// Material UI Imports
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+
 function ChangePasswordForm() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
-  const navigate = useNavigate(); // Dùng để điều hướng trang
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmitChangePassword = async (e) => {
     e.preventDefault();
@@ -28,6 +36,10 @@ function ChangePasswordForm() {
       return;
     }
 
+    setIsLoading(true);
+    setMessage("");
+    setIsError(false);
+
     try {
       // Gọi API đổi mật khẩu
       await changePasswordApi(newPassword, confirmNewPassword, resetPasswordToken);
@@ -37,67 +49,78 @@ function ChangePasswordForm() {
 
       // Chuyển hướng sang trang login sau 2 giây
       setTimeout(() => {
-        navigate("/auth/login"); // Điều hướng đến trang login
+        navigate("/auth/login");
       }, 2000);
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to change password. Please try again.");
       setIsError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="row">
-      <div className="col-md-12">
-        <div className="form-group">
-          <input
-            required
-            type="password"
-            className="form-control"
-            name="newPassword"
-            placeholder="New password..."
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="col-md-12">
-        <div className="form-group">
-          <input
-            required
-            type="password"
-            className="form-control"
-            name="confirmNewPassword"
-            placeholder="Confirm new password..."
-            value={confirmNewPassword}
-            onChange={(e) => setConfirmNewPassword(e.target.value)}
-          />
-        </div>
-      </div>
+    <Box component="form" onSubmit={handleSubmitChangePassword} noValidate>
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        name="newPassword"
+        label="New Password"
+        type="password"
+        id="newPassword"
+        autoComplete="new-password"
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+        sx={{ mb: 2 }}
+      />
+      
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        name="confirmNewPassword"
+        label="Confirm New Password"
+        type="password"
+        id="confirmNewPassword"
+        autoComplete="new-password"
+        value={confirmNewPassword}
+        onChange={(e) => setConfirmNewPassword(e.target.value)}
+        sx={{ mb: 2 }}
+      />
 
       {message && (
-        <div className="col-md-12">
-          <div
-            className={`alert ${isError ? "alert-danger" : "alert-success"}`}
-            role="alert"
-          >
-            {message}
-          </div>
-        </div>
+        <Alert 
+          severity={isError ? "error" : "success"} 
+          sx={{ mb: 2 }}
+        >
+          {message}
+        </Alert>
       )}
 
-      <div className="col-md-12 text-center">
-        <div className="form-group">
-          <button
-            onClick={handleSubmitChangePassword}
-            type="submit"
-            className="btn btn-primary btn-block"
-          >
-            Submit
-          </button>
-        </div>
-      </div>
-    </div>
+      <Box sx={{ position: 'relative', width: '100%', textAlign: 'center' }}>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isLoading}
+          sx={{ minWidth: '150px' }}
+        >
+          {isLoading ? "Submitting..." : "Submit"}
+        </Button>
+        {isLoading && (
+          <CircularProgress
+            size={24}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              marginTop: '-12px',
+              marginLeft: '-12px',
+            }}
+          />
+        )}
+      </Box>
+    </Box>
   );
 }
 

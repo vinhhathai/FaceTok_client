@@ -17,8 +17,8 @@ function ProfileInfo({ profile, loading, error }) {
             <div className="profile-img-overlay"></div>
             <img
               src={
-                profile.thumbnail
-                  ? profile.thumbnail
+                profile?.profilePicture
+                  ? profile.profilePicture
                   : "/assets/images/avatar_default.jpg"
               }
               alt="Avatar"

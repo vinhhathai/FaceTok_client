@@ -36,7 +36,7 @@ function ProfilePage() {
     <>
       <Header
       />
-      <ProfileThumbnail />
+      <ProfileThumbnail userId={id}/>
       <MainLayout
         leftSidebar={
           <ProfileInfo profile={profile} loading={loading} error={error} />
