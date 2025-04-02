@@ -2,25 +2,34 @@ import React, { useState } from "react";
 import verifyOtp from '../../api/verifyOtp';
 import { useSelector } from "react-redux";
 
+// Material UI Imports
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+
 function OTPForm({ handleShowChangePasswordForm }) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const email = useSelector((state) => state.email.email);
 
   const handleSubmitOTP = async (e) => {
     e.preventDefault();
     if (otp.trim().length === 0) {
-      alert("Please enter a valid OTP.");
+      setMessage("Please enter a valid OTP.");
+      setIsError(true);
       return;
     }
 
     setIsLoading(true);
     setMessage("");
+    setIsError(false);
+    
     try {
       const result = await verifyOtp(otp, email);
-
-      setIsLoading(false);
 
       if (result.success) {
         const resetPasswordToken = result.data.resetPasswordToken;
@@ -29,6 +38,7 @@ function OTPForm({ handleShowChangePasswordForm }) {
         localStorage.setItem("resetPasswordToken", resetPasswordToken);
 
         setMessage(result.message || "OTP Verification Success");
+        setIsError(false);
 
         // Hiển thị thông báo thành công trước khi chuyển sang form đổi mật khẩu
         setTimeout(() => {
@@ -36,57 +46,70 @@ function OTPForm({ handleShowChangePasswordForm }) {
         }, 2000); // 2 giây
       } else {
         setMessage(`Error: ${result.error}`);
+        setIsError(true);
       }
     } catch (error) {
-      setIsLoading(false);
       setMessage("An error occurred. Please try again.");
+      setIsError(true);
       console.error("Error verifying OTP:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="row">
-      <div className="col-md-12">
-        <div className="form-group">
-          <input
-            required
-            type="number"
-            className="form-control"
-            name="otp"
-            placeholder="OTP Code"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-      </div>
+    <Box component="form" onSubmit={handleSubmitOTP} noValidate>
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        name="otp"
+        label="OTP Code"
+        type="number"
+        id="otp"
+        autoFocus
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+        disabled={isLoading}
+        sx={{ mb: 2 }}
+        inputProps={{ 
+          inputMode: 'numeric',
+          pattern: '[0-9]*'
+        }}
+      />
 
       {message && (
-        <div className="col-md-12">
-          <div
-            className={`alert ${
-              message.startsWith("Error:") ? "alert-danger" : "alert-success"
-            }`}
-            role="alert"
-          >
-            {message}
-          </div>
-        </div>
+        <Alert 
+          severity={isError ? "error" : "success"} 
+          sx={{ mb: 2 }}
+        >
+          {message}
+        </Alert>
       )}
 
-      <div className="col-md-12 text-center">
-        <div className="form-group">
-          <button
-            onClick={handleSubmitOTP}
-            type="submit"
-            className="btn btn-primary btn-block"
-            disabled={isLoading}
-          >
-            {isLoading ? "Verifying..." : "Verify"}
-          </button>
-        </div>
-      </div>
-    </div>
+      <Box sx={{ position: 'relative', width: '100%', textAlign: 'center' }}>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isLoading}
+          sx={{ minWidth: '150px' }}
+        >
+          {isLoading ? "Verifying..." : "Verify"}
+        </Button>
+        {isLoading && (
+          <CircularProgress
+            size={24}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              marginTop: '-12px',
+              marginLeft: '-12px',
+            }}
+          />
+        )}
+      </Box>
+    </Box>
   );
 }
 

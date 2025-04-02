@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import CreatePost from "../../components/CreatePost/CreatePost";
+import CreatingPost from "../../components/CreatingPost/CreatingPost";
 import Header from "../../components/Header/Header";
 import ProfileContent from "../../components/ProfileContent/ProfileContent";
 import ProfileInfo from "../../components/ProfileInfo/ProfileInfo";
@@ -36,7 +36,7 @@ function ProfilePage() {
     <>
       <Header
       />
-      <ProfileThumbnail />
+      <ProfileThumbnail userId={id}/>
       <MainLayout
         leftSidebar={
           <ProfileInfo profile={profile} loading={loading} error={error} />

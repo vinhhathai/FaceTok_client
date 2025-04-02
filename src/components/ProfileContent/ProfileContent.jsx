@@ -1,63 +1,88 @@
 import { useState } from "react";
-import CreatePost from "../CreatePost/CreatePost";
-import "./ProfileContent.css"; // Đảm bảo bạn liên kết file CSS
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import CreatePost from "../CreatingPost/CreatingPost";
+
+import {
+  ProfileContentContainer,
+  NavigationTabs,
+  StyledTab,
+  ContentWrapper,
+  TabPanel
+} from './styles';
+
+function TabPanelContent(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <TabPanel
+      role="tabpanel"
+      hidden={value !== index}
+      id={`profile-tabpanel-${index}`}
+      aria-labelledby={`profile-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box>
+          {children}
+        </Box>
+      )}
+    </TabPanel>
+  );
+}
+
+function a11yProps(index) {
+  return {
+    id: `profile-tab-${index}`,
+    'aria-controls': `profile-tabpanel-${index}`,
+  };
+}
 
 function ProfileContent() {
-  const [activeTab, setActiveTab] = useState("Timeline");
+  const [value, setValue] = useState(0);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "Timeline":
-        return <div>Timeline content here...</div>;
-      case "About":
-        return <div>About content here...</div>;
-      case "Friends":
-        return <div>Friends content here...</div>;
-      case "Media":
-        return <div>Media content here...</div>;
-      default:
-        return null;
-    }
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
   };
 
-  return (<>
-   
-    <div className="container">
-    <CreatePost/>
-      {/* Thanh điều hướng */}
-      <nav className="nav-bar">
-        <button
-          className={activeTab === "Timeline" ? "active" : ""}
-          onClick={() => setActiveTab("Timeline")}
-        >
-          Timeline
-        </button>
-        <button
-          className={activeTab === "About" ? "active" : ""}
-          onClick={() => setActiveTab("About")}
-        >
-          About
-        </button>
-        <button
-          className={activeTab === "Friends" ? "active" : ""}
-          onClick={() => setActiveTab("Friends")}
-        >
-          Friends
-        </button>
-        <button
-          className={activeTab === "Media" ? "active" : ""}
-          onClick={() => setActiveTab("Media")}
-        >
-          Media
-        </button>
-      </nav>
+  return (
+    <ProfileContentContainer>
+      {/* CreatePost component */}
+      <CreatePost />
+      
+      {/* Tabs Navigation */}
+      <NavigationTabs
+        value={value}
+        onChange={handleChange}
+        aria-label="profile navigation tabs"
+        variant="fullWidth"
+      >
+        <StyledTab label="Timeline" {...a11yProps(0)} />
+        <StyledTab label="About" {...a11yProps(1)} />
+        <StyledTab label="Friends" {...a11yProps(2)} />
+        <StyledTab label="Media" {...a11yProps(3)} />
+      </NavigationTabs>
 
-      {/* Nội dung hiển thị */}
-      <div className="content">{renderContent()}</div>
-    </div>
-    </>
+      {/* Tab Content */}
+      <ContentWrapper>
+        <TabPanelContent value={value} index={0}>
+          <Typography variant="body1">Timeline content here...</Typography>
+        </TabPanelContent>
+        
+        <TabPanelContent value={value} index={1}>
+          <Typography variant="body1">About content here...</Typography>
+        </TabPanelContent>
+        
+        <TabPanelContent value={value} index={2}>
+          <Typography variant="body1">Friends content here...</Typography>
+        </TabPanelContent>
+        
+        <TabPanelContent value={value} index={3}>
+          <Typography variant="body1">Media content here...</Typography>
+        </TabPanelContent>
+      </ContentWrapper>
+    </ProfileContentContainer>
   );
-  
 }
 
 export default ProfileContent;

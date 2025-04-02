@@ -1,24 +1,30 @@
 import React from "react";
-import user1 from "../../assets/images/users/user-1.jpg";
-import postImage1 from "../../assets/images/posts/post-1.jpg";
-
 import './Post.css'
 
-function Post() {
+function Post({ post, defaultUserImage, defaultPostImage }) {
+  // Sử dụng dữ liệu từ props hoặc dữ liệu mặc định
+  const userImage = post?.userImage || defaultUserImage;
+  const postImage = post?.image || defaultPostImage;
+  const userName = post?.userName || "User Name";
+  const postTime = post?.time || "3 hours ago";
+  const postContent = post?.content || "No content available";
+  const likeCount = post?.likeCount || 0;
+  const commentCount = post?.commentCount || 0;
+
   return (
     <>
       <div className="posts-section mb-5">
         <div className="post border-bottom p-3 bg-white w-shadow">
           <div className="media text-muted pt-3">
             <img
-              src={user1}
-              alt="Online user"
+              src={userImage}
+              alt="User"
               className="mr-3 post-user-image"
             />
             <div className="media-body pb-3 mb-0 small lh-125">
               <div className="d-flex justify-content-between align-items-center w-100">
                 <a href="#" className="text-gray-dark post-user-name">
-                  John Michael
+                  {userName}
                 </a>
                 <div className="dropdown">
                   <a
@@ -77,7 +83,7 @@ function Post() {
                           <i className="bx bx-time post-option-icon"></i>
                         </div>
                         <div className="col-md-10">
-                          <span className="fs-9">Snooze Lina for 30 days</span>
+                          <span className="fs-9">Snooze {userName} for 30 days</span>
                           <small
                             id="snoozePost"
                             className="form-text text-muted"
@@ -111,28 +117,28 @@ function Post() {
                 </div>
               </div>
               <span className="d-block text-left">
-                3 hours ago <i className="bx bx-globe ml-3"></i>
+                {postTime} <i className="bx bx-globe ml-3"></i>
               </span>
             </div>
           </div>
-          <div class="mt-3 description-post">
-            <p class="">
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quis
-              voluptatem veritatis harum, tenetur, quibusdam voluptatum,
-              incidunt saepe minus maiores ea atque sequi illo veniam sint
-              quaerat corporis totam et. Culpa?
+          <div className="mt-3 description-post">
+            <p className="">
+              {postContent}
             </p>
           </div>
 
-          <div className="d-block mt-3">
-            <img src={postImage1} className="post-content" alt="post image" />
-          </div>
+          {postImage && (
+            <div className="d-block mt-3">
+              <img src={postImage} className="post-content" alt="post image" />
+            </div>
+          )}
+          
           <div className="mb-3">
             {/* Reactions */}
             <div className="argon-reaction">
               <span className="like-btn">
                 <a href="#" className="post-card-buttons" id="reactions">
-                  <i className="bx bxs-like mr-2"></i> 67
+                  <i className="bx bxs-like mr-2"></i> {likeCount}
                 </a>
                 <ul className="reactions-box dropdown-shadow">
                   <li
@@ -163,11 +169,11 @@ function Post() {
               </span>
             </div>
             <a
-              href="javascript:void(0)"
+              href="#"
               className="post-card-buttons"
               id="show-comments"
             >
-              <i className="bx bx-message-rounded mr-2"></i> 5
+              <i className="bx bx-message-rounded mr-2"></i> {commentCount}
             </a>
             <div className="dropdown dropup share-dropup">
               <a
@@ -213,12 +219,16 @@ function Post() {
               </div>
             </div>
           </div>
-
-          {/* //----------- */}
         </div>
       </div>
     </>
   );
 }
+
+// Default props
+Post.defaultProps = {
+  defaultUserImage: require("../../assets/images/users/user-1.jpg"),
+  defaultPostImage: null,
+};
 
 export default Post;

@@ -1,137 +1,190 @@
-import "./ProfileInfo.css";
+import React from 'react';
+import Grid from '@mui/material/Grid';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Link from '@mui/material/Link';
+import CakeIcon from '@mui/icons-material/Cake';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import AddIcon from '@mui/icons-material/Add';
+import ChatIcon from '@mui/icons-material/Chat';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import WcIcon from '@mui/icons-material/Wc';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+
+import {
+  ProfileInfoContainer,
+  ProfileImageWrapper,
+  ProfileImage,
+  ProfileImageCaption,
+  ProfileFullName,
+  ButtonsContainer,
+  AddFriendButton,
+  MessageButton,
+  MoreButton,
+  IntroContainer,
+  IntroHeader,
+  IntroTitle,
+  IntroItem,
+  IntroItemText,
+  EditButton,
+  OnlineStatus,
+  UploadInput
+} from './styles';
 
 function ProfileInfo({ profile, loading, error }) {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <Grid container justifyContent="center" alignItems="center" sx={{ height: 200 }}>
+        <CircularProgress />
+      </Grid>
+    );
   }
 
   if (error) {
-    return <p>Error: {error}</p>;
+    return (
+      <Typography color="error" variant="body1">
+        Error: {error}
+      </Typography>
+    );
   }
 
   return (
-    <div className="col-md-3 profile-info">
-      <div className="profile-info-left">
-        <div className="text-center">
-          <div className="profile-img w-shadow">
-            <div className="profile-img-overlay"></div>
-            <img
-              src={
-                profile.thumbnail
-                  ? profile.thumbnail
-                  : "/assets/images/avatar_default.jpg"
-              }
-              alt="Avatar"
-              className="avatar img-circle"
+    <Grid item xs={12} md={3}>
+      <ProfileInfoContainer elevation={2}>
+        <Grid container direction="column" alignItems="center">
+          {/* Profile Image */}
+          <ProfileImageWrapper>
+            <ProfileImage
+              src={profile?.profilePicture || "/assets/images/avatar_default.jpg"}
+              alt={profile?.fullName || "User"}
             />
-
-            <div className="profile-img-caption">
-              <label htmlFor="updateProfilePicInput" className="upload">
-                <i className="bx bxs-camera"></i> Update
-                <input
-                  type="file"
-                  id="updateProfilePicInput"
-                  className="text-center upload"
-                />
+            <ProfileImageCaption className="image-caption">
+              <label htmlFor="upload-profile-picture" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <CameraAltIcon fontSize="small" sx={{ mr: 0.5 }} /> Update
               </label>
-            </div>
-          </div>
-          <p className="profile-fullname mt-3">{profile.fullName}</p>{" "}
-          {/* Corrected interpolation */}
-        </div>
-        <div className="intro mt-4">
-          <div className="d-flex">
-            <button type="button" className="btn btn-follow mr-3">
-              <i className="bx bx-plus"></i> Add friend
-            </button>
-            <button
-              type="button"
-              className="btn btn-start-chat"
-              data-toggle="modal"
-              data-target="#newMessageModal"
+              <UploadInput
+                id="upload-profile-picture"
+                type="file"
+                accept="image/*"
+              />
+            </ProfileImageCaption>
+          </ProfileImageWrapper>
+
+          {/* Profile Name */}
+          <ProfileFullName variant="h6">
+            {profile?.fullName}
+          </ProfileFullName>
+
+          {/* Action Buttons */}
+          <ButtonsContainer>
+            <AddFriendButton 
+              variant="contained" 
+              startIcon={<AddIcon />}
             >
-              <i className="bx bxs-message-rounded"></i>{" "}
-              <span className="fs-8">Message</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-follow"
-              id="moreMobile"
-              data-toggle="dropdown"
+              Add friend
+            </AddFriendButton>
+            
+            <MessageButton 
+              variant="contained" 
+              startIcon={<ChatIcon />}
+            >
+              Message
+            </MessageButton>
+            
+            <MoreButton
+              aria-controls={open ? 'profile-menu' : undefined}
               aria-haspopup="true"
-              aria-expanded="false"
+              aria-expanded={open ? 'true' : undefined}
+              onClick={handleClick}
+              variant="contained"
             >
-              <i className="bx bx-dots-horizontal-rounded"></i>{" "}
-              <span className="fs-8">More</span>
-            </button>
-            <div
-              className="dropdown-menu dropdown-menu-right profile-ql-dropdown"
-              aria-labelledby="moreMobile"
+              <MoreHorizIcon />
+            </MoreButton>
+            
+            <Menu
+              id="profile-menu"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              MenuListProps={{
+                'aria-labelledby': 'more-button',
+              }}
             >
-              <a href="newsfeed.html" className="dropdown-item">
-                Timeline
-              </a>
-              <a href="about.html" className="dropdown-item">
-                About
-              </a>
-              <a href="followers.html" className="dropdown-item">
-                Followers
-              </a>
-              <a href="following.html" className="dropdown-item">
-                Following
-              </a>
-              <a href="photos.html" className="dropdown-item">
-                Photos
-              </a>
-              <a href="videos.html" className="dropdown-item">
-                Videos
-              </a>
-              <a href="check-ins.html" className="dropdown-item">
-                Check-Ins
-              </a>
-              <a href="events.html" className="dropdown-item">
-                Events
-              </a>
-              <a href="likes.html" className="dropdown-item">
-                Likes
-              </a>
-            </div>
-          </div>
-        </div>
-        <div className="intro mt-5 mv-hidden">
-          <div className="intro-item d-flex justify-content-between align-items-center">
-            <h3 className="intro-about">Intro</h3>
-          </div>
-          <div className="intro-item d-flex justify-content-between align-items-center">
-            <p className="intro-title text-muted">
-              <i className="bx bx-male text-primary"></i> Gender{" "}
-              <a href="#">{profile.gender}</a> {/* Corrected interpolation */}
-            </p>
-          </div>
-          <div className="intro-item d-flex justify-content-between align-items-center">
-            <p className="intro-title text-muted">
-              <i className="bx bx-cake text-primary"></i> Birthday{" "}
-              <a href="#">{profile.birthday}</a> {/* Corrected interpolation */}
-            </p>
-          </div>
-          <div className="intro-item d-flex justify-content-between align-items-center">
-            <p className="intro-title text-muted">
-              <i className="bx bx-map text-primary"></i> Live in{" "}
-              <a href="#">
-                {profile.location}{" "}
-                <span className="ml-1 online-status bg-success"></span>
-              </a>{" "}
-              {/* Corrected interpolation */}
-            </p>
-          </div>
-          <div className="intro-item d-flex justify-content-between align-items-center">
-            <button className="btn btn-quick-link join-group-btn border w-100">
+              <MenuItem onClick={handleClose}>Timeline</MenuItem>
+              <MenuItem onClick={handleClose}>About</MenuItem>
+              <MenuItem onClick={handleClose}>Followers</MenuItem>
+              <MenuItem onClick={handleClose}>Following</MenuItem>
+              <MenuItem onClick={handleClose}>Photos</MenuItem>
+              <MenuItem onClick={handleClose}>Videos</MenuItem>
+              <MenuItem onClick={handleClose}>Check-Ins</MenuItem>
+              <MenuItem onClick={handleClose}>Events</MenuItem>
+              <MenuItem onClick={handleClose}>Likes</MenuItem>
+            </Menu>
+          </ButtonsContainer>
+
+          {/* Intro Section */}
+          <IntroContainer>
+            <IntroHeader>
+              <IntroTitle variant="subtitle1">Intro</IntroTitle>
+            </IntroHeader>
+            
+            {profile?.gender && (
+              <IntroItem>
+                <WcIcon color="primary" fontSize="small" />
+                <IntroItemText variant="body2">
+                  Gender{' '}
+                  <Link href="#" underline="hover">
+                    {profile.gender}
+                  </Link>
+                </IntroItemText>
+              </IntroItem>
+            )}
+            
+            {profile?.birthday && (
+              <IntroItem>
+                <CakeIcon color="primary" fontSize="small" />
+                <IntroItemText variant="body2">
+                  Birthday{' '}
+                  <Link href="#" underline="hover">
+                    {profile.birthday}
+                  </Link>
+                </IntroItemText>
+              </IntroItem>
+            )}
+            
+            {profile?.location && (
+              <IntroItem>
+                <LocationOnIcon color="primary" fontSize="small" />
+                <IntroItemText variant="body2">
+                  Live in{' '}
+                  <Link href="#" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+                    {profile.location}
+                    <OnlineStatus />
+                  </Link>
+                </IntroItemText>
+              </IntroItem>
+            )}
+            
+            <EditButton variant="outlined">
               Edit Details
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+            </EditButton>
+          </IntroContainer>
+        </Grid>
+      </ProfileInfoContainer>
+    </Grid>
   );
 }
 

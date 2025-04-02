@@ -1,0 +1,61 @@
+/* CSS Module cho trang SignUp */
+
+.formContainer {
+  width: 100%;
+  max-width: 450px;
+}
+
+.loginLink {
+  color: #3b82f6;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.loginLink:hover {
+  text-decoration: underline;
+}
+
+.privacyText {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .formContainer {
+    width: 400px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .formContainer {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    box-shadow: none;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  
+  .signUpContainer {
+    background-color: #ffffff;
+  }
+  
+  .actionsContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .actionsContainer > * {
+    width: 100% !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .formControl {
+    font-size: 1rem;
+    padding: 10px 15px;
+  }
+} 

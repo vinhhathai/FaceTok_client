@@ -1,76 +1,144 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
+
+// Material UI imports
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+
+// Components
 import ResetPasswordForm from "../../sub_components/ResetPasswordForm/ResetPasswordForm";
-import ChangePasswordForm from "../../sub_components/ChangePasswordForm/ChangePasswordForm";
 import OTPForm from "../../sub_components/OTPForm/OTPForm";
+import ChangePasswordForm from "../../sub_components/ChangePasswordForm/ChangePasswordForm";
+
+// Styles
+import {
+  ResetPasswordContainer,
+  BackgroundSection,
+  FormPaper,
+  LogoImg,
+  MobileLogo,
+  LogoMobileImg,
+  StepperContainer,
+  ActionsContainer
+} from './ResetPasswordPage.styles';
+import styles from './ResetPasswordPage.module.css';
+
+// Định nghĩa các bước
+const steps = ['Enter Email', 'Verify OTP', 'Reset Password'];
 
 function ResetPasswordPage() {
-  const [step, setStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(0);
 
-  const handleShowOTPForm = () => setStep(2);
-  const handleShowChangePasswordForm = () => setStep(3);
+  const handleShowOTPForm = () => setActiveStep(1);
+  const handleShowChangePasswordForm = () => setActiveStep(2);
 
   return (
-    <>
-      <div className="row ht-100v flex-row-reverse no-gutters">
-        <div className="col-md-6 d-flex justify-content-center align-items-center">
-          <div className="signup-form">
-            <div className="auth-logo text-center mb-5">
-              <div className="row">
-                <div className="col-md-2">
-                  <img
-                    src="/assets/images/FaceTokIcon.jpeg"
-                    className="logo-img"
-                    alt="Logo"
-                  />
-                </div>
-                <div className="col-md-10">
-                  <p>Reset Password </p>
-                </div>
-              </div>
-            </div>
-            <form>
-            {step === 1 && <ResetPasswordForm handleShowOTPForm={handleShowOTPForm} />}
-          {step === 2 && <OTPForm handleShowChangePasswordForm={handleShowChangePasswordForm} />}
-          {step === 3 && <ChangePasswordForm />}
-                
-           
-              <div className="col-md-12 text-center mt-5">
-                  <span className="login__reset_password">
-                    Back to login page? <Link to={"/auth/login"}>Login</Link>
-                  </span>
-                </div>
-            </form>
-          </div>
-        </div>
-        <div className="col-md-6 auth-bg-image d-flex justify-content-center align-items-center">
-          {/* Add content for the background image if needed */}
-        </div>
-      </div>
+    <ResetPasswordContainer>
+      <Container maxWidth="xl" disableGutters>
+        {/* Mobile Logo */}
+        <MobileLogo>
+          <LogoMobileImg 
+            src="/assets/images/FaceTokIcon.jpeg" 
+            alt="FaceTok Logo" 
+          />
+          <Typography variant="h5" component="h1">
+            FaceTok
+          </Typography>
+        </MobileLogo>
 
-      <div
-        className="modal fade fingerprint-modal"
-        id="fingerprintModal"
-        tabIndex="-1"
-        role="dialog"
-        aria-labelledby="fingerprintModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modal-dialog-centered" role="document">
-          <div className="modal-content">
-            <div className="modal-body text-center">
-              <h3 className="text-muted display-5">
-                Place your Finger on the Device Now
-              </h3>
-              <img
-                src="assets/images/icons/auth-fingerprint.png"
-                alt="Fingerprint"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+        <Grid container sx={{ minHeight: { md: '100vh' } }}>
+          {/* Background Section */}
+          <Grid 
+            item 
+            md={6} 
+            sx={{ 
+              display: { xs: 'none', md: 'flex' },
+              height: { md: '100vh' }
+            }}
+          >
+            <BackgroundSection>
+              <Box sx={{ p: 4, maxWidth: '450px' }}>
+                <Typography variant="h1" component="h1">
+                  Reset Your Password
+                </Typography>
+                <Typography variant="body1">
+                  Follow the steps to reset your password and secure your account
+                </Typography>
+              </Box>
+            </BackgroundSection>
+          </Grid>
+
+          {/* Reset Password Form */}
+          <Grid 
+            item 
+            xs={12} 
+            md={6} 
+            sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              py: { xs: 4, md: 0 }
+            }}
+          >
+            <FormPaper elevation={3} className={styles.formContainer}>
+              {/* Logo và Tiêu đề */}
+              <Box sx={{ mb: 4 }}>
+                <Grid container alignItems="center" spacing={2}>
+                  <Grid item xs={2}>
+                    <LogoImg 
+                      src="/assets/images/FaceTokIcon.jpeg" 
+                      alt="FaceTok Logo" 
+                    />
+                  </Grid>
+                  <Grid item xs={10}>
+                    <Typography variant="h5" component="p" sx={{ fontWeight: 'bold', mb: 0 }}>
+                      Reset Password 
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Stepper */}
+              <StepperContainer className={styles.stepper}>
+                <Stepper activeStep={activeStep} alternativeLabel>
+                  {steps.map((label) => (
+                    <Step key={label}>
+                      <StepLabel>{label}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+              </StepperContainer>
+              
+              {/* Form Content */}
+              <Box className={styles.stepContent}>
+                {activeStep === 0 && <ResetPasswordForm handleShowOTPForm={handleShowOTPForm} />}
+                {activeStep === 1 && <OTPForm handleShowChangePasswordForm={handleShowChangePasswordForm} />}
+                {activeStep === 2 && <ChangePasswordForm />}
+              </Box>
+              
+              <ActionsContainer>
+                <Typography variant="body2" textAlign="center" sx={{ mt: 3 }}>
+                  Back to login page?{' '}
+                  <Link 
+                    component={RouterLink} 
+                    to="/auth/login" 
+                    className={styles.loginLink}
+                  >
+                    Login
+                  </Link>
+                </Typography>
+              </ActionsContainer>
+            </FormPaper>
+          </Grid>
+        </Grid>
+      </Container>
+    </ResetPasswordContainer>
   );
 }
 

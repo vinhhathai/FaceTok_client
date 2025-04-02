@@ -1,18 +1,17 @@
 import { Link } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import { LogoImage, LogoLink } from './styles';
 
 function LogoHeader() {
   return (
-    <>
-      <Link className="navbar-brand nav-item mr-lg-5" to="/">
-        <img
+    <Box component="div">
+      <LogoLink to="/">
+        <LogoImage
           src="/assets/images/FaceTokIcon.jpeg"
-          width="40"
-          height="40"
-          className="mr-3 logo__icon"
           alt="Logo"
         />
-      </Link>
-    </>
+      </LogoLink>
+    </Box>
   );
 }
 

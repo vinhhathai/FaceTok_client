@@ -1,61 +1,44 @@
 import SearchDropdown from "../SearchDropdown/SearchDropdown";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useDebounce } from "../../../utils/useDebounce";
 import useSearchApi from "../../../api/useSearchApi";
+import SearchIcon from '@mui/icons-material/Search';
+import Box from '@mui/material/Box';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import { Search, SearchIconWrapper, StyledInputBase } from './styles';
 
-function SearchForm({ avatarFriend1, avatarFriend2, avatarGroup }) {
+function SearchForm({ avatarFriend1, avatarFriend2, avatarGroup, isMobile }) {
   const [searching, setSearching] = useState(false);
   const [searchValue, setSearchValue] = useState(null);
   const debouncedValue = useDebounce(searchValue, 1000);
   // const { dataUser, loading, error } = useSearchApi(debouncedValue);
-  const searchRef = useRef(null);
 
-  // useEffect(() => {
-  //   function handleClickOutside(event) {
-  //     if (searchRef.current && !searchRef.current.contains(event.target)) {
-  //       setSearching(false);
-  //     }
-  //   }
+  const handleClickAway = () => {
+    setSearching(false);
+  };
 
-  //   document.addEventListener("click", handleClickOutside);
-
-  //   return () => {
-  //     document.removeEventListener("click", handleClickOutside);
-  //   };
-  // }, []);
-
-  // const handleSearchChange = (e) => {
-  //   const value = e.target.value;
-  //   setSearchValue(value.trim() === "" ? null : value); // Kiểm tra nếu giá trị nhập vào là trống, đặt searchValue thành null, ngược lại giữ nguyên giá trị
-  //   setSearching(true);
-  // };
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchValue(value.trim() === "" ? null : value);
+    setSearching(true);
+  };
 
   return (
-    <>
-      <form className="w-30 mx-2 my-auto d-inline form-inline mr-5 dropdown search-form show">
-        <div
-          className="input-group"
-          data-toggle="dropdown"
-          aria-haspopup="true"
-          aria-expanded="true"
-          id="searchDropdown"
-          ref={searchRef}
-        >
-          <input
-            type="text"
-            className="form-control search-input w-75"
+    <ClickAwayListener onClickAway={handleClickAway}>
+      <Box sx={{ position: 'relative' }}>
+        <Search isMobile={isMobile}>
+          <SearchIconWrapper>
+            <SearchIcon />
+          </SearchIconWrapper>
+          <StyledInputBase
             placeholder="Search for people, groups..."
-            aria-label="Search"
-            aria-describedby="search-addon"
-            value={searchValue || ""} // Nếu searchValue là null, sẽ render input trống
-            // onChange={handleSearchChange}
+            inputProps={{ 'aria-label': 'search' }}
+            value={searchValue || ""}
+            onChange={handleSearchChange}
           />
-          <div className="input-group-append">
-            <button className="btn search-button" type="button">
-              <i className="bx bx-search"></i>
-            </button>
-          </div>
-        </div>
+        </Search>
+        
+        {/* Uncomment when ready to implement search results */}
         {/* {searching && dataUser.length > 0 && (
           <SearchDropdown
             searchResult={dataUser}
@@ -64,8 +47,8 @@ function SearchForm({ avatarFriend1, avatarFriend2, avatarGroup }) {
             avatarGroup={avatarGroup}
           />
         )} */}
-      </form>
-    </>
+      </Box>
+    </ClickAwayListener>
   );
 }
 
