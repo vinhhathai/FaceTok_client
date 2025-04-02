@@ -4,7 +4,7 @@ import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import Typography from '@mui/material/Typography';
-import MessageItem from '../MessageItem/MessageItem';
+import MessageItem from '../../components/MessageItem/MessageItem';
 import { MessageContainer, MenuTitle, MenuFooter, ActionText, LinkText } from './styles';
 import { IconAvatar } from '../../components/Header/styles';
 

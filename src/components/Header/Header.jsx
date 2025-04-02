@@ -2,12 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
-import LogoHeader from "../../sub_components/LogoHeader/LogoHeader";
-import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
-import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
-import UserDropdown from "../../sub_components/UserDropdown/UserDropdown";
-import MessagesDropdown from "../../sub_components/MessagesDropdown/MessagesDropdown";
-import NotificationsDropdown from "../../sub_components/NotificationsDropdown/NotificationsDropdown";
+import LogoHeader from "../../components/LogoHeader/LogoHeader";
+import SearchForm from "../../components/Search/SearchForm/SearchForm";
+import CreateNavbar from "../CreateNavbar/CreateNavbar";
+import UserDropdown from "../../components/UserDropdown/UserDropdown";
+import MessagesDropdown from "../../components/MessagesDropdown/MessagesDropdown";
+import NotificationsDropdown from "../../components/NotificationsDropdown/NotificationsDropdown";
 
 // Material UI Imports
 import Container from '@mui/material/Container';

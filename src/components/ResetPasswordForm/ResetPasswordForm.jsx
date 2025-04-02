@@ -4,11 +4,16 @@ import { resetPassword } from "../../api/resetPasswordApi";
 import { setEmail } from "../../redux/features/emailSlice";
 
 // Material UI Imports
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+
+// Styled Components
+import {
+  FormContainer,
+  EmailField,
+  SubmitButton,
+  LoaderContainer
+} from "./styles";
 
 function ResetPasswordForm({ handleShowOTPForm }) {
   const [email, setEmailState] = useState("");
@@ -55,9 +60,8 @@ function ResetPasswordForm({ handleShowOTPForm }) {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmitToEmail} noValidate>
-      <TextField
-        margin="normal"
+    <FormContainer component="form" onSubmit={handleSubmitToEmail} noValidate>
+      <EmailField
         required
         fullWidth
         id="email"
@@ -68,7 +72,6 @@ function ResetPasswordForm({ handleShowOTPForm }) {
         value={email}
         onChange={(e) => setEmailState(e.target.value)}
         disabled={isLoading}
-        sx={{ mb: 2 }}
       />
 
       {message && (
@@ -80,15 +83,14 @@ function ResetPasswordForm({ handleShowOTPForm }) {
         </Alert>
       )}
 
-      <Box sx={{ position: 'relative', width: '100%', textAlign: 'center' }}>
-        <Button
+      <LoaderContainer>
+        <SubmitButton
           type="submit"
           variant="contained"
           disabled={isLoading}
-          sx={{ minWidth: '150px' }}
         >
           {isLoading ? "Sending..." : "Send"}
-        </Button>
+        </SubmitButton>
         {isLoading && (
           <CircularProgress
             size={24}
@@ -101,9 +103,9 @@ function ResetPasswordForm({ handleShowOTPForm }) {
             }}
           />
         )}
-      </Box>
-    </Box>
+      </LoaderContainer>
+    </FormContainer>
   );
 }
 
-export default ResetPasswordForm;
+export default ResetPasswordForm; 

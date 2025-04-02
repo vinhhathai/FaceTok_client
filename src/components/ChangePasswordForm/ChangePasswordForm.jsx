@@ -3,11 +3,16 @@ import { useNavigate } from "react-router-dom";
 import changePasswordApi from "../../api/changePasswordApi";
 
 // Material UI Imports
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+
+// Styled Components
+import { 
+  FormContainer, 
+  PasswordField, 
+  SubmitButton,
+  LoaderContainer 
+} from "./styles";
 
 function ChangePasswordForm() {
   const [newPassword, setNewPassword] = useState("");
@@ -60,9 +65,8 @@ function ChangePasswordForm() {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmitChangePassword} noValidate>
-      <TextField
-        margin="normal"
+    <FormContainer component="form" onSubmit={handleSubmitChangePassword} noValidate>
+      <PasswordField
         required
         fullWidth
         name="newPassword"
@@ -72,11 +76,9 @@ function ChangePasswordForm() {
         autoComplete="new-password"
         value={newPassword}
         onChange={(e) => setNewPassword(e.target.value)}
-        sx={{ mb: 2 }}
       />
       
-      <TextField
-        margin="normal"
+      <PasswordField
         required
         fullWidth
         name="confirmNewPassword"
@@ -86,7 +88,6 @@ function ChangePasswordForm() {
         autoComplete="new-password"
         value={confirmNewPassword}
         onChange={(e) => setConfirmNewPassword(e.target.value)}
-        sx={{ mb: 2 }}
       />
 
       {message && (
@@ -98,15 +99,14 @@ function ChangePasswordForm() {
         </Alert>
       )}
 
-      <Box sx={{ position: 'relative', width: '100%', textAlign: 'center' }}>
-        <Button
+      <LoaderContainer>
+        <SubmitButton
           type="submit"
           variant="contained"
           disabled={isLoading}
-          sx={{ minWidth: '150px' }}
         >
           {isLoading ? "Submitting..." : "Submit"}
-        </Button>
+        </SubmitButton>
         {isLoading && (
           <CircularProgress
             size={24}
@@ -119,9 +119,9 @@ function ChangePasswordForm() {
             }}
           />
         )}
-      </Box>
-    </Box>
+      </LoaderContainer>
+    </FormContainer>
   );
 }
 
-export default ChangePasswordForm;
+export default ChangePasswordForm; 

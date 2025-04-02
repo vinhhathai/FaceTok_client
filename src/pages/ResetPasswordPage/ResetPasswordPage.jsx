@@ -12,9 +12,9 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 
 // Components
-import ResetPasswordForm from "../../sub_components/ResetPasswordForm/ResetPasswordForm";
-import OTPForm from "../../sub_components/OTPForm/OTPForm";
-import ChangePasswordForm from "../../sub_components/ChangePasswordForm/ChangePasswordForm";
+import ResetPasswordForm from "../../components/ResetPasswordForm/ResetPasswordForm";
+import OTPForm from "../../components/OTPForm/OTPForm";
+import ChangePasswordForm from "../../components/ChangePasswordForm/ChangePasswordForm";
 
 // Styles
 import {

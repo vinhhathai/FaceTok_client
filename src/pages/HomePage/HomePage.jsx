@@ -3,7 +3,7 @@ import Header from "../../components/Header/Header";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import WeatherBar from "../../components/WeatherBar/WeatherBar";
 import MainLayout from "../../layout/MainLayout/MainLayout";
-import CreateGroupModal from "../../sub_components/Create/CreateGroupModal/CreateGroupModal";
+import CreateGroupModal from "../../components/CreateGroupModal/CreateGroupModal";
 
 function HomePage() {
   return (

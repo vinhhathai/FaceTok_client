@@ -3,11 +3,16 @@ import verifyOtp from '../../api/verifyOtp';
 import { useSelector } from "react-redux";
 
 // Material UI Imports
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+
+// Styled Components
+import { 
+  FormContainer, 
+  OTPField, 
+  SubmitButton,
+  LoaderContainer 
+} from "./styles";
 
 function OTPForm({ handleShowChangePasswordForm }) {
   const [otp, setOtp] = useState("");
@@ -58,9 +63,8 @@ function OTPForm({ handleShowChangePasswordForm }) {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmitOTP} noValidate>
-      <TextField
-        margin="normal"
+    <FormContainer component="form" onSubmit={handleSubmitOTP} noValidate>
+      <OTPField
         required
         fullWidth
         name="otp"
@@ -71,7 +75,6 @@ function OTPForm({ handleShowChangePasswordForm }) {
         value={otp}
         onChange={(e) => setOtp(e.target.value)}
         disabled={isLoading}
-        sx={{ mb: 2 }}
         inputProps={{ 
           inputMode: 'numeric',
           pattern: '[0-9]*'
@@ -87,15 +90,14 @@ function OTPForm({ handleShowChangePasswordForm }) {
         </Alert>
       )}
 
-      <Box sx={{ position: 'relative', width: '100%', textAlign: 'center' }}>
-        <Button
+      <LoaderContainer>
+        <SubmitButton
           type="submit"
           variant="contained"
           disabled={isLoading}
-          sx={{ minWidth: '150px' }}
         >
           {isLoading ? "Verifying..." : "Verify"}
-        </Button>
+        </SubmitButton>
         {isLoading && (
           <CircularProgress
             size={24}
@@ -108,9 +110,9 @@ function OTPForm({ handleShowChangePasswordForm }) {
             }}
           />
         )}
-      </Box>
-    </Box>
+      </LoaderContainer>
+    </FormContainer>
   );
 }
 
-export default OTPForm;
+export default OTPForm; 
