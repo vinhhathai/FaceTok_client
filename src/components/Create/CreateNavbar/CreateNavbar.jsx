@@ -1,5 +1,5 @@
 import { useState } from "react";
-import createIcon from "../../assets/images/icons/navbar/create.png";
+import createIcon from "../../../assets/images/icons/navbar/create.png";
 import CreateDropdown from "../CreateDropdown/CreateDropdown";
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import { CreateIconButton, IconAvatar, DropdownContainer } from './styles';

@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import emailReducer from './features/emailSlice';
-import profileReducer from './features/profileSlice'; // Thêm import
+import profileReducer from './features/profileSlice';
+import userReducer from './features/userSlice';
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
     email: emailReducer,
-    profile: profileReducer, // Thêm profileReducer vào Redux store
+    profile: profileReducer,
+    user: userReducer,
   },
 });
 

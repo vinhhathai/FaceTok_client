@@ -1,7 +1,49 @@
-import React from "react";
-import './Post.css'
+import React, { useState } from 'react';
+import Avatar from '@mui/material/Avatar';
+import IconButton from '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PublicIcon from '@mui/icons-material/Public';
+import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
+import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
+import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
+import Box from '@mui/material/Box';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+
+import {
+  PostCard,
+  PostCardHeader,
+  UserNameLink,
+  PostTime,
+  PostCardContent,
+  PostText,
+  PostCardMedia,
+  PostCardActions,
+  ActionButton,
+  ActionText,
+  PostMenu,
+  PostMenuItem,
+  PostMenuItemIcon,
+  PostMenuItemText
+} from './styles';
 
 function Post({ post, defaultUserImage, defaultPostImage }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+
+  const handleClickMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
   // Sử dụng dữ liệu từ props hoặc dữ liệu mặc định
   const userImage = post?.userImage || defaultUserImage;
   const postImage = post?.image || defaultPostImage;
@@ -11,217 +53,91 @@ function Post({ post, defaultUserImage, defaultPostImage }) {
   const likeCount = post?.likeCount || 0;
   const commentCount = post?.commentCount || 0;
 
-  return (
-    <>
-      <div className="posts-section mb-5">
-        <div className="post border-bottom p-3 bg-white w-shadow">
-          <div className="media text-muted pt-3">
-            <img
-              src={userImage}
-              alt="User"
-              className="mr-3 post-user-image"
-            />
-            <div className="media-body pb-3 mb-0 small lh-125">
-              <div className="d-flex justify-content-between align-items-center w-100">
-                <a href="#" className="text-gray-dark post-user-name">
-                  {userName}
-                </a>
-                <div className="dropdown">
-                  <a
-                    href="#"
-                    className="post-more-settings"
-                    role="button"
-                    data-toggle="dropdown"
-                    id="postOptions"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    <i className="bx bx-dots-horizontal-rounded"></i>
-                  </a>
-                  <div className="dropdown-menu dropdown-menu-right dropdown-menu-lg-left post-dropdown-menu">
-                    <a
-                      href="#"
-                      className="dropdown-item"
-                      aria-describedby="savePost"
-                    >
-                      <div className="row">
-                        <div className="col-md-2">
-                          <i className="bx bx-bookmark-plus post-option-icon"></i>
-                        </div>
-                        <div className="col-md-10">
-                          <span className="fs-9">Save post</span>
-                          <small id="savePost" className="form-text text-muted">
-                            Add this to your saved items
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      href="#"
-                      className="dropdown-item"
-                      aria-describedby="hidePost"
-                    >
-                      <div className="row">
-                        <div className="col-md-2">
-                          <i className="bx bx-hide post-option-icon"></i>
-                        </div>
-                        <div className="col-md-10">
-                          <span className="fs-9">Hide post</span>
-                          <small id="hidePost" className="form-text text-muted">
-                            See fewer posts like this
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      href="#"
-                      className="dropdown-item"
-                      aria-describedby="snoozePost"
-                    >
-                      <div className="row">
-                        <div className="col-md-2">
-                          <i className="bx bx-time post-option-icon"></i>
-                        </div>
-                        <div className="col-md-10">
-                          <span className="fs-9">Snooze {userName} for 30 days</span>
-                          <small
-                            id="snoozePost"
-                            className="form-text text-muted"
-                          >
-                            Temporarily stop seeing posts
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      href="#"
-                      className="dropdown-item"
-                      aria-describedby="reportPost"
-                    >
-                      <div className="row">
-                        <div className="col-md-2">
-                          <i className="bx bx-block post-option-icon"></i>
-                        </div>
-                        <div className="col-md-10">
-                          <span className="fs-9">Report</span>
-                          <small
-                            id="reportPost"
-                            className="form-text text-muted"
-                          >
-                            I'm concerned about this post
-                          </small>
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-              </div>
-              <span className="d-block text-left">
-                {postTime} <i className="bx bx-globe ml-3"></i>
-              </span>
-            </div>
-          </div>
-          <div className="mt-3 description-post">
-            <p className="">
-              {postContent}
-            </p>
-          </div>
+  const menuItems = [
+    { icon: <BookmarkAddOutlinedIcon fontSize="small" />, text: 'Save post', secondaryText: 'Add this to your saved items' },
+    { icon: <VisibilityOffOutlinedIcon fontSize="small" />, text: 'Hide post', secondaryText: 'See fewer posts like this' },
+    { icon: <AccessTimeOutlinedIcon fontSize="small" />, text: `Snooze ${userName} for 30 days`, secondaryText: 'Temporarily stop seeing posts' },
+    { icon: <ReportProblemOutlinedIcon fontSize="small" />, text: 'Report', secondaryText: 'I\'m concerned about this post' },
+  ];
 
-          {postImage && (
-            <div className="d-block mt-3">
-              <img src={postImage} className="post-content" alt="post image" />
-            </div>
-          )}
-          
-          <div className="mb-3">
-            {/* Reactions */}
-            <div className="argon-reaction">
-              <span className="like-btn">
-                <a href="#" className="post-card-buttons" id="reactions">
-                  <i className="bx bxs-like mr-2"></i> {likeCount}
-                </a>
-                <ul className="reactions-box dropdown-shadow">
-                  <li
-                    className="reaction reaction-like"
-                    data-reaction="Like"
-                  ></li>
-                  <li
-                    className="reaction reaction-love"
-                    data-reaction="Love"
-                  ></li>
-                  <li
-                    className="reaction reaction-haha"
-                    data-reaction="HaHa"
-                  ></li>
-                  <li
-                    className="reaction reaction-wow"
-                    data-reaction="Wow"
-                  ></li>
-                  <li
-                    className="reaction reaction-sad"
-                    data-reaction="Sad"
-                  ></li>
-                  <li
-                    className="reaction reaction-angry"
-                    data-reaction="Angry"
-                  ></li>
-                </ul>
-              </span>
-            </div>
-            <a
-              href="#"
-              className="post-card-buttons"
-              id="show-comments"
-            >
-              <i className="bx bx-message-rounded mr-2"></i> {commentCount}
-            </a>
-            <div className="dropdown dropup share-dropup">
-              <a
-                href="#"
-                className="post-card-buttons"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <i className="bx bx-share-alt mr-2"></i> Share
-              </a>
-              <div className="dropdown-menu post-dropdown-menu">
-                <a href="#" className="dropdown-item">
-                  <div className="row">
-                    <div className="col-md-2">
-                      <i className="bx bx-share-alt"></i>
-                    </div>
-                    <div className="col-md-10">
-                      <span>Share Now (Public)</span>
-                    </div>
-                  </div>
-                </a>
-                <a href="#" className="dropdown-item">
-                  <div className="row">
-                    <div className="col-md-2">
-                      <i className="bx bx-share-alt"></i>
-                    </div>
-                    <div className="col-md-10">
-                      <span>Share...</span>
-                    </div>
-                  </div>
-                </a>
-                <a href="#" className="dropdown-item">
-                  <div className="row">
-                    <div className="col-md-2">
-                      <i className="bx bx-message"></i>
-                    </div>
-                    <div className="col-md-10">
-                      <span>Send as Message</span>
-                    </div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+  return (
+    <PostCard>
+      <PostCardHeader
+        avatar={
+          <Avatar src={userImage} aria-label="user avatar" />
+        }
+        action={
+          <IconButton aria-label="settings" onClick={handleClickMenu}>
+            <MoreVertIcon />
+          </IconButton>
+        }
+        title={
+          <UserNameLink href="#" underline="hover">
+            {userName}
+          </UserNameLink>
+        }
+        subheader={
+          <PostTime variant="caption">
+            {postTime} <PublicIcon sx={{ fontSize: '1rem', ml: 0.5 }} />
+          </PostTime>
+        }
+      />
+      <PostMenu
+        id="post-menu"
+        anchorEl={anchorEl}
+        open={openMenu}
+        onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        {menuItems.map((item, index) => (
+          <PostMenuItem key={index} onClick={handleCloseMenu}>
+            <PostMenuItemIcon>{item.icon}</PostMenuItemIcon>
+            <PostMenuItemText primary={item.text} secondary={item.secondaryText} />
+          </PostMenuItem>
+        ))}
+      </PostMenu>
+      
+      <PostCardContent>
+        <PostText variant="body1">
+          {postContent}
+        </PostText>
+        {postImage && (
+          <PostCardMedia
+            component="img"
+            image={postImage}
+            alt="post image"
+          />
+        )}
+      </PostCardContent>
+      
+      <PostCardActions disableSpacing>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <ActionButton aria-label="like post">
+            <ThumbUpAltOutlinedIcon />
+          </ActionButton>
+          <ActionText>{likeCount}</ActionText>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <ActionButton aria-label="comment on post">
+            <ChatBubbleOutlineOutlinedIcon />
+          </ActionButton>
+          <ActionText>{commentCount}</ActionText>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+          <ActionButton aria-label="share post">
+            <ShareOutlinedIcon />
+          </ActionButton>
+          <ActionText>Share</ActionText>
+        </Box>
+      </PostCardActions>
+    </PostCard>
   );
 }
 

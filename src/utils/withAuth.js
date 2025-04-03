@@ -36,7 +36,6 @@ const withAuth = (Component, options = {}) => {
             // Check if user is admin if adminOnly option is true
             if (options.adminOnly) {
               // Assuming user role is stored in cookie or can be extracted from token
-              // This is a simplified example - in real app, you might need to decode JWT
               setIsAdmin(parsedInfo.role === 'admin');
             }
           } else {
@@ -59,7 +58,13 @@ const withAuth = (Component, options = {}) => {
 
     if (!isAuthenticated) {
       // Redirect to login with return URL
-      return <Navigate to="/auth/login" state={{ from: location.pathname }} replace />;
+      return (
+        <Navigate 
+          to="/auth/login" 
+          state={{ from: location.pathname }} 
+          replace 
+        />
+      );
     }
 
     if (options.adminOnly && !isAdmin) {

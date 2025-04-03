@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import changePasswordApi from "../../api/changePasswordApi";
+import Cookies from 'js-cookie';
 
 // Material UI Imports
 import Alert from '@mui/material/Alert';
@@ -32,8 +33,8 @@ function ChangePasswordForm() {
       return;
     }
 
-    // Lấy resetPasswordToken từ localStorage
-    const resetPasswordToken = localStorage.getItem("resetPasswordToken");
+    // Lấy resetPasswordToken từ cookie
+    const resetPasswordToken = Cookies.get("resetPasswordToken");
 
     if (!resetPasswordToken) {
       setMessage("Reset password token is missing. Please try again.");

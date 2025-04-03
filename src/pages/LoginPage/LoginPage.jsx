@@ -108,9 +108,9 @@ function LoginPage() {
       // Save information to cookie
       await saveDataToCookie(loginResult, "accountInformation", 1500);
       
-      // Save access token to localStorage if available
+      // Also save accessToken to a separate cookie
       if (loginResult.accessToken) {
-        localStorage.setItem("accessToken", loginResult.accessToken);
+        await saveDataToCookie(loginResult.accessToken, "accessToken", 1500);
       }
 
       // Show success toast message

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import verifyOtp from '../../api/verifyOtp';
 import { useSelector } from "react-redux";
+import Cookies from 'js-cookie';
 
 // Material UI Imports
 import Alert from '@mui/material/Alert';
@@ -39,8 +40,8 @@ function OTPForm({ handleShowChangePasswordForm }) {
       if (result.success) {
         const resetPasswordToken = result.data.resetPasswordToken;
 
-        // Lưu resetPasswordToken vào localStorage
-        localStorage.setItem("resetPasswordToken", resetPasswordToken);
+        // Save resetPasswordToken in cookie (valid for 5 minutes)
+        Cookies.set("resetPasswordToken", resetPasswordToken, { expires: 1/288 }); // 1/288 is 5 minutes in days
 
         setMessage(result.message || "OTP Verification Success");
         setIsError(false);

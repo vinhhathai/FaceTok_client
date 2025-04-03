@@ -1,0 +1,91 @@
+import React, { useEffect } from 'react';
+import { Route, Routes, Navigate, useLocation } from "react-router-dom";
+import './App.css';
+
+// Import CSS files
+import './assets/css/bootstrap/bootstrap.min.css';
+import './assets/css/boxicons.min.css'
+import './assets/css/style.css'
+import './assets/css/components.css'
+import './assets/css/media.css'
+import './assets/css/chat.css'
+import './assets/css/video.css'
+import './assets/css/auth.css'
+import './assets/css/forms.css'
+import './assets/css/profile.css'
+import './assets/js/load.js'
+
+// Import pages
+import HomePage from './pages/HomePage/HomePage';
+import LoginPage from './pages/LoginPage/LoginPage';
+import ProfilePage from './pages/ProfilePage/ProfilePage';
+import SignUpPage from './pages/SignUpPage/SignUpPage';
+import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
+
+// Toast notifications
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
+
+// Redux
+import { useDispatch } from 'react-redux';
+import { setUserFromToken } from './redux/features/userSlice';
+
+// HOC for protecting routes
+import withAuth from './utils/withAuth.js';
+
+// Wrap components with auth protection
+const ProtectedHomePage = withAuth(HomePage);
+const ProtectedProfilePage = withAuth(ProfilePage);
+
+// Component to redirect to login with return URL
+const RedirectToLogin = () => {
+  const location = useLocation();
+  return (
+    <Navigate 
+      to="/auth/login" 
+      state={{ from: location.pathname }}
+      replace 
+    />
+  );
+};
+
+function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Khởi tạo thông tin người dùng từ token
+    dispatch(setUserFromToken());
+  }, [dispatch]);
+
+  return (
+    <div className="App">
+      <Routes>
+        {/* Public Auth Routes */}
+        <Route path="/auth/sign-up" element={<SignUpPage />} />
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+        
+        {/* Protected Routes */}
+        <Route path="/" element={<ProtectedHomePage />} />
+        <Route path="/search/see-more" element={<ProtectedHomePage />} />
+        <Route path="/profile/:id" element={<ProtectedProfilePage />} />
+        
+        {/* Redirect any unknown routes to login */}
+        <Route path="*" element={<RedirectToLogin />} />
+      </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+    </div>
+  );
+}
+
+export default App; 

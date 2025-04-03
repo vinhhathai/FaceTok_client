@@ -1,51 +1,58 @@
 import message from "../../assets/images/icons/left-sidebar/message.png";
 import group from "../../assets/images/icons/left-sidebar/group.png";
 import findFriend from "../../assets/images/icons/left-sidebar/find-friends.png";
+import { ListItemText } from '@mui/material'; // Keep only necessary direct imports
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import {
+  SidebarContainer,
+  SidebarCard,
+  SidebarList,
+  HomeListItem,
+  HomeTypography,
+  ItemListItem,
+  ItemListItemButton,
+  ItemListItemIcon,
+  ItemIconImage,
+  StyledBadge
+} from './styles';
+
+// Example list items
+const sidebarItems = [
+  { text: 'Messages', icon: message, count: 2, href: 'messages.html' },
+  { text: 'Groups', icon: group, count: 17, href: 'groups.html' },
+  { text: 'Find Friends', icon: findFriend, href: 'find-friends.html' },
+];
 
 function Sidebar() {
   return (
-    <>
-    
-        <div
-          className="col-md-3 newsfeed-left-side sticky-top shadow-sm"
-          id="sidebar-wrapper"
-        >
-          <div className="card newsfeed-user-card h-100">
-            <ul className="list-group list-group-flush newsfeed-left-sidebar">
-              <li className="list-group-item">
-                <h6>Home</h6>
-              </li>
+    <SidebarContainer>
+      <SidebarCard>
+        <SidebarList>
+          <HomeListItem disablePadding>
+            <HomeTypography variant="subtitle1">Home</HomeTypography>
+          </HomeListItem>
 
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                <a href="messages.html" className="sidebar-item">
-                  <img src={message} alt="message" />
-                  Messages
-                </a>
-                
-                <span className="badge badge-primary badge-pill">2</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                <a href="groups.html" className="sidebar-item">
-                  <img src={group} alt="group" />
-                  Groups
-                </a>
-                <span className="badge badge-primary badge-pill">17</span>
-              </li>
-
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                <a href="find-friends.html" className="sidebar-item">
-                  <img src={findFriend} alt="find-friends" />
-                  Find Friends
-                </a>
-                <span className="badge badge-primary badge-pill">
-                  <i className="bx bx-chevron-right"></i>
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
-     
-    </>
+          {sidebarItems.map((item, index) => (
+            <ItemListItem key={index} disablePadding>
+              <ItemListItemButton 
+                component="a" 
+                href={item.href}
+              >
+                <ItemListItemIcon>
+                  <ItemIconImage src={item.icon} alt={item.text} />
+                </ItemListItemIcon>
+                <ListItemText primary={item.text} sx={{ opacity: 1 }} />
+                {item.count !== undefined ? (
+                  <StyledBadge badgeContent={item.count} />
+                ) : (
+                  item.text === 'Find Friends' && <ChevronRightIcon color="action" />
+                )}
+              </ItemListItemButton>
+            </ItemListItem>
+          ))}
+        </SidebarList>
+      </SidebarCard>
+    </SidebarContainer>
   );
 }
 

@@ -1,13 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
 import LogoHeader from "../../components/LogoHeader/LogoHeader";
 import SearchForm from "../../components/Search/SearchForm/SearchForm";
-import CreateNavbar from "../CreateNavbar/CreateNavbar";
+import CreateNavbar from "../Create/CreateNavbar/CreateNavbar";
 import UserDropdown from "../../components/UserDropdown/UserDropdown";
 import MessagesDropdown from "../../components/MessagesDropdown/MessagesDropdown";
 import NotificationsDropdown from "../../components/NotificationsDropdown/NotificationsDropdown";
+import { useSelector, useDispatch } from 'react-redux';
+import { clearUser } from '../../redux/features/userSlice';
 
 // Material UI Imports
 import Container from '@mui/material/Container';
@@ -36,42 +37,25 @@ import avatarFriend2 from "../../assets/images/users/user-5.png";
 import avatarGroup from "../../assets/images/groups/group-2.jpg";
 
 function Header() {
-  const [id, setId] = useState("");
-  const [profilePicture, setProfilePicture] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
+  const dispatch = useDispatch();
+  
+  // Lấy thông tin người dùng từ Redux store
+  const { id, profilePicture } = useSelector(state => state.user);
+  
   const isExtraSmall = useMediaQuery(theme.breakpoints.down('xs'));
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
   const isMedium = useMediaQuery(theme.breakpoints.down('md'));
 
-  useEffect(() => {
-    // Kiểm tra sự tồn tại của cookie có tên là 'accountInformation'
-    const accountInfo = Cookies.get("accountInformation");
-
-    // Nếu token tồn tại, parse chuỗi JSON để lấy accessToken
-    if (accountInfo) {
-      try {
-        const parsedAccountInfo = JSON.parse(accountInfo);
-
-        if (parsedAccountInfo.accessToken) {
-          // Giải mã token để lấy thông tin userId
-          const decoded = jwtDecode(parsedAccountInfo.accessToken);
-          setId(decoded._id);
-          setProfilePicture(decoded.profilePicture);
-        }
-      } catch (error) {
-        console.error("Token is invalid or expired", error);
-      }
-    }
-  }, []);
-
   const handleLogout = () => {
-    // Xóa toàn bộ localStorage
-    localStorage.clear();
-    
-    // Xóa cookie `accountInformation`
+    // Xóa cookie `accountInformation` và `accessToken`
     Cookies.remove("accountInformation", { path: "/" });
+    Cookies.remove("accessToken", { path: "/" });
+    
+    // Xóa thông tin người dùng trong Redux store
+    dispatch(clearUser());
     
     // Điều hướng đến trang đăng nhập
     navigate("/auth/login");

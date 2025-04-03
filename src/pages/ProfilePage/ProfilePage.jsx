@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import CreatingPost from "../../components/CreatingPost/CreatingPost";
+import { useEffect, useState, useCallback } from "react";
 import Header from "../../components/Header/Header";
 import ProfileContent from "../../components/ProfileContent/ProfileContent";
 import ProfileInfo from "../../components/ProfileInfo/ProfileInfo";
@@ -17,31 +16,38 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getProfileApi(id);
-        setProfile(data.data); // Dữ liệu trả về từ API
-        setLoading(false);
-      } catch (err) {
-        setError(err.message || "Unable to fetch profile");
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true); // Start loading
+      const data = await getProfileApi(id);
+      setProfile(data.data); // Dữ liệu trả về từ API
+      setError(null); // Clear previous error
+    } catch (err) {
+      setError(err.message || "Unable to fetch profile");
+      setProfile(null); // Clear profile on error
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   return (
     <>
-      <Header
-      />
-      <ProfileThumbnail userId={id}/>
+      <Header />
       <MainLayout
+        thumbnail={<ProfileThumbnail userId={id}/>}
         leftSidebar={
-          <ProfileInfo profile={profile} loading={loading} error={error} />
+          <ProfileInfo 
+            profile={profile} 
+            loading={loading} 
+            error={error} 
+            refreshProfile={fetchProfile} 
+          />
         }
-        content={<ProfileContent />}
+        content={<ProfileContent profile={profile} loading={loading} error={error} />}
         rightSidebar={<WeatherBar />}
       />
     </>
