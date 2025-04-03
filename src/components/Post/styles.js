@@ -25,6 +25,12 @@ export const PostCardHeader = styled(CardHeader)({
   '& .MuiCardHeader-avatar': {
     marginRight: 12, // Adjust spacing
   },
+  '& .MuiCardHeader-content': {
+    textAlign: 'left', // Căn lề trái
+  },
+  '& .MuiCardHeader-action': {
+    alignSelf: 'flex-start', // Căn đầu nút action
+  },
 });
 
 export const UserNameLink = styled(Link)(({ theme }) => ({
@@ -49,7 +55,7 @@ export const PostCardContent = styled(CardContent)({
 });
 
 export const PostText = styled(Typography)({
-  textAlign: 'start',
+  textAlign: 'start', // Căn lề trái nội dung post
   marginBottom: 8, // Add space before image if exists
 });
 

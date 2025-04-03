@@ -12,10 +12,16 @@ import ChatIcon from '@mui/icons-material/Chat';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import WcIcon from '@mui/icons-material/Wc';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import EditIcon from '@mui/icons-material/Edit';
 import { toast } from 'react-toastify';
+import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 
 import updateAvatarApi from '../../api/updateAvatarApi';
 import { DEFAULT_AVATAR, MAX_AVATAR_SIZE, SUPPORTED_IMAGE_TYPES } from '../../config/config';
+import EditProfileForm from '../EditProfileForm/EditProfileForm';
+import FullNameEditDialog from '../FullNameEditDialog/FullNameEditDialog';
 
 import {
   ProfileInfoContainer,
@@ -42,6 +48,8 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState(profile?.profilePicture || DEFAULT_AVATAR);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [nameEditDialogOpen, setNameEditDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
 
   // Hàm trả về màu dựa vào % tiến trình
@@ -120,6 +128,26 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
       setUploading(false);
       setUploadProgress(0);
     }
+  };
+
+  // Function to open edit dialog
+  const handleOpenEditDialog = () => {
+    setEditDialogOpen(true);
+  };
+
+  // Function to close edit dialog
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+  };
+
+  // Function to open name edit dialog
+  const handleOpenNameEditDialog = () => {
+    setNameEditDialogOpen(true);
+  };
+
+  // Function to close name edit dialog
+  const handleCloseNameEditDialog = () => {
+    setNameEditDialogOpen(false);
   };
 
   // Update avatar URL when profile changes
@@ -226,10 +254,26 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
           </ProfileImageCaption>
         </ProfileImageWrapper>
 
-        {/* Profile Name */}
-        <ProfileFullName variant="h6">
-          {profile?.fullName || 'User Name'}
-        </ProfileFullName>
+        {/* Profile Name with Edit Button */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          mt: 1,
+          mb: 1
+        }}>
+          <ProfileFullName variant="h6">
+            {profile?.fullName || 'User Name'}
+          </ProfileFullName>
+          <IconButton 
+            size="small" 
+            color="primary" 
+            onClick={handleOpenNameEditDialog}
+            sx={{ ml: 1 }}
+          >
+            <DriveFileRenameOutlineIcon fontSize="small" />
+          </IconButton>
+        </Box>
 
         {/* Action Buttons */}
         <ButtonsContainer>
@@ -274,14 +318,30 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
         {/* Intro Section */}
         <IntroContainer>
           <IntroHeader>
-            <IntroTitle variant="subtitle1">Intro</IntroTitle>
+            <EditButton 
+              color="primary" 
+              onClick={handleOpenEditDialog}
+              startIcon={<EditIcon />}
+            >
+              Chỉnh sửa
+            </EditButton>
           </IntroHeader>
+          
+          {profile?.bio ? (
+            <IntroItem>
+              <IntroItemText variant="body2">
+                {profile.bio}
+              </IntroItemText>
+            </IntroItem>
+          ) : null}
           
           {profile?.gender ? (
             <IntroItem>
               <WcIcon color="action" fontSize="small" />
               <IntroItemText variant="body2">
-                {profile.gender}
+                {profile.gender === 'male' ? 'Nam' : 
+                 profile.gender === 'female' ? 'Nữ' : 
+                 'Không xác định'}
               </IntroItemText>
             </IntroItem>
           ) : null }
@@ -302,9 +362,25 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
                 Lives in {profile.location}
               </IntroItemText>
             </IntroItem>
-          ) : null}
+          ) : null }
         </IntroContainer>
       </Grid>
+      
+      {/* Edit Profile Dialog */}
+      <EditProfileForm 
+        open={editDialogOpen} 
+        onClose={handleCloseEditDialog} 
+        profile={profile} 
+        refreshProfile={refreshProfile}
+      />
+
+      {/* Name Edit Dialog */}
+      <FullNameEditDialog
+        open={nameEditDialogOpen}
+        onClose={handleCloseNameEditDialog}
+        currentName={profile?.fullName}
+        refreshProfile={refreshProfile}
+      />
     </ProfileInfoContainer>
   );
 }

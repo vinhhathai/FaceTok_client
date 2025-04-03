@@ -32,7 +32,13 @@ function MainLayout({ thumbnail, leftSidebar, content, rightSidebar }) {
         <Grid item xs={12} md={3} lg={3} sx={{ 
           display: { xs: 'none', md: 'block' }
         }}>
-          {rightSidebar}
+          <Box sx={{ 
+            position: 'sticky',
+            top: '16px',
+            height: 'auto'
+          }}>
+            {rightSidebar}
+          </Box>
         </Grid>
       </Grid>
     </Container>

@@ -8,7 +8,7 @@ import UserDropdown from "../../components/UserDropdown/UserDropdown";
 import MessagesDropdown from "../../components/MessagesDropdown/MessagesDropdown";
 import NotificationsDropdown from "../../components/NotificationsDropdown/NotificationsDropdown";
 import { useSelector, useDispatch } from 'react-redux';
-import { clearUser } from '../../redux/features/userSlice';
+import { clearUserData } from '../../redux/features/userSlice';
 
 // Material UI Imports
 import Container from '@mui/material/Container';
@@ -55,7 +55,7 @@ function Header() {
     Cookies.remove("accessToken", { path: "/" });
     
     // Xóa thông tin người dùng trong Redux store
-    dispatch(clearUser());
+    dispatch(clearUserData());
     
     // Điều hướng đến trang đăng nhập
     navigate("/auth/login");

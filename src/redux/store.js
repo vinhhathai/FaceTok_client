@@ -1,13 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
-import emailReducer from './features/emailSlice';
-import profileReducer from './features/profileSlice';
 import userReducer from './features/userSlice';
+import profileReducer from './features/profileSlice';
+import postReducer from './features/postSlice';
 
 export const store = configureStore({
   reducer: {
-    email: emailReducer,
-    profile: profileReducer,
     user: userReducer,
+    profile: profileReducer,
+    posts: postReducer,
   },
 });
 
