@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { setUserFromToken } from "../../redux/features/userSlice";
 // Material UI imports
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -87,6 +89,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
   // Get the page to redirect after login from state (if available)
   const from = location.state?.from || "/";
@@ -123,16 +126,19 @@ function LoginPage() {
         draggable: true
       });
       
-      // Short delay to allow the toast to be visible before navigating
+      // Dispatch action to load user data from token
+      dispatch(setUserFromToken());
+      
+      // Longer delay to ensure authentication state is updated properly
       setTimeout(() => {
         // Navigate user to the original page they were trying to access or to home page
         navigate(from, { replace: true });
-      }, 1000);
+        setLoading(false);
+      }, 1500);
       
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("Login failed. Please check your login information.");
-    } finally {
       setLoading(false);
     }
   };
@@ -266,23 +272,22 @@ function LoginPage() {
                   type="submit"
                   fullWidth
                   variant="contained"
+                  color="primary"
                   size="large"
                   disabled={loading}
-                  className={styles.btn}
                   sx={{ 
-                    py: 1.5,
-                    mb: 2,
-                    fontWeight: 'bold',
-                    borderRadius: 2
+                    mt: 2, 
+                    mb: 3,
+                    height: '48px',
+                    fontSize: '16px',
+                    fontWeight: 'bold' 
                   }}
+                  className={styles.loginButton}
                 >
                   {loading ? (
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <CircularProgress size={20} color="inherit" />
-                      <span>Logging in...</span>
-                    </Stack>
+                    <CircularProgress size={24} color="inherit" />
                   ) : (
-                    "Login"
+                    'Login'
                   )}
                 </Button>
                 

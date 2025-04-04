@@ -15,12 +15,8 @@ export const createPost = async (postData) => {
       throw new Error('Bạn cần đăng nhập để thực hiện chức năng này.');
     }
 
-    // Không cần kiểm tra userId nữa vì server sẽ lấy từ token
-    // const userId = localStorage.getItem('userId');
-    // if (!userId) {
-    //   throw new Error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
-    // }
-
+    console.log('createPost API - Starting with data:', { content: postData.content, hasMedia: !!postData.mediaFiles?.length });
+    
     // Tạo form data nếu có file đính kèm
     let formData = null;
     if (postData.mediaFiles && postData.mediaFiles.length > 0) {
@@ -38,6 +34,7 @@ export const createPost = async (postData) => {
       // Đính kèm file ảnh
       formData.append('file', file);
       
+      console.log('createPost API - Sending form data with file');
       const response = await axios.post(
         `${BASE_URL}/post/create`, 
         formData,
@@ -49,9 +46,11 @@ export const createPost = async (postData) => {
         }
       );
       
+      console.log('createPost API - Response:', response.data);
       return response;
     } else {
       // Gửi request JSON thông thường nếu không có file
+      console.log('createPost API - Sending JSON without file');
       const response = await axios.post(
         `${BASE_URL}/post/create`,
         { 
@@ -66,6 +65,7 @@ export const createPost = async (postData) => {
         }
       );
       
+      console.log('createPost API - Response:', response.data);
       return response;
     }
   } catch (error) {
@@ -148,8 +148,10 @@ export const getUserPosts = async (userId, page = 1, limit = 10) => {
       throw new Error('Không tìm thấy ID người dùng');
     }
     
+    const apiUrl = `${BASE_URL}/post/user/${userId}?page=${page}&limit=${limit}`;
+    
     const response = await axios.get(
-      `${BASE_URL}/post/user/${userId}?page=${page}&limit=${limit}`,
+      apiUrl,
       {
         headers: {
           'Authorization': `Bearer ${token}`

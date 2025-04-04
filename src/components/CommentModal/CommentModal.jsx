@@ -74,67 +74,25 @@ const CommentModal = ({
   const handleSubmitComment = async (e) => {
     e.preventDefault();
     
-    const text = commentText.trim();
-    if (!text || submitting || !postId) return;
+    if (!commentText.trim() || submitting) return;
     
-    // Save the comment text for potential rollback
-    const originalText = text;
-    
-    // Create optimistic comment
-    const optimisticComment = {
-      _id: `temp-comment-${Date.now()}`,
-      text: text,
-      userId: {
-        _id: currentUser.id,
-        fullName: currentUser.fullName,
-        profilePicture: currentUser.profilePicture
-      },
-      createdAt: new Date().toISOString(),
-      isOptimistic: true
-    };
-    
-    // Add comment to local state immediately
-    const updatedComments = [optimisticComment, ...localComments];
-    updateParentComments(updatedComments);
-    
-    // Clear input right away for better UX
-    setCommentText('');
-    
-    // Set submitting state
     setSubmitting(true);
     setError(null);
     
     try {
-      // Make actual API call
-      const response = await addComment(postId, originalText);
+      const commentToSend = commentText.trim();
       
-      // If successful, replace the optimistic comment with the real one
-      if (response.data?.success && response.data?.comment) {
-        const realComment = response.data.comment;
-        
-        // Create new comments array with the real comment replacing the optimistic one
-        const updatedWithRealComment = localComments.map(comment => 
-          comment.isOptimistic ? realComment : comment
-        );
-        
-        // Be sure to include the real comment if it's not in the array
-        if (!updatedWithRealComment.some(c => c._id === realComment._id)) {
-          updatedWithRealComment.unshift(realComment);
-        }
-        
-        // Update both local and parent state
-        updateParentComments(updatedWithRealComment);
+      // Add the comment directly through the parent component's handler
+      // which now implements optimistic updates
+      if (typeof onAddComment === 'function') {
+        await onAddComment(commentToSend);
       }
+      
+      // Clear input
+      setCommentText('');
     } catch (error) {
-      console.error('Error submitting comment:', error);
-      setError(error.message || 'Có lỗi khi gửi bình luận');
-      
-      // Restore the input if there's an error
-      setCommentText(originalText);
-      
-      // Remove optimistic comment on failure
-      const rollbackComments = localComments.filter(comment => !comment.isOptimistic);
-      updateParentComments(rollbackComments);
+      console.error('Error adding comment:', error);
+      setError(error.message || 'Không thể thêm bình luận. Vui lòng thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -158,6 +116,13 @@ const CommentModal = ({
     return currentUser.id === comment.userId._id;
   };
 
+  // Handle delete comment
+  const handleDeleteComment = (commentId) => {
+    if (typeof onDeleteComment === 'function') {
+      onDeleteComment(commentId);
+    }
+  };
+
   return (
     <StyledDialog 
       open={open} 
@@ -166,7 +131,9 @@ const CommentModal = ({
       maxWidth="sm"
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">Bình luận</Typography>
+        <Typography variant="h6">
+          Bình luận {localComments && localComments.length > 0 ? `(${localComments.length})` : ''}
+        </Typography>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
@@ -248,7 +215,7 @@ const CommentModal = ({
                             variant="text" 
                             size="small" 
                             sx={{ ml: 1, minWidth: 'auto', color: 'text.secondary', fontSize: '0.7rem' }}
-                            onClick={() => onDeleteComment && onDeleteComment(comment._id)}
+                            onClick={() => handleDeleteComment(comment._id)}
                           >
                             Xóa
                           </Button>

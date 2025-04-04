@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { useSelector, useDispatch } from 'react-redux';
+import { setUserFromToken } from '../redux/features/userSlice';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 
 /**
@@ -12,63 +14,82 @@ import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
  */
 const withAuth = (Component, options = {}) => {
   const WithAuthComponent = (props) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
     const location = useLocation();
+    const dispatch = useDispatch();
+    
+    // Get authentication state from Redux
+    const { isAuthenticated, id } = useSelector(state => state.user);
 
     useEffect(() => {
-      const checkAuth = () => {
-        const accountInfo = Cookies.get('accountInformation');
-        
-        if (!accountInfo) {
-          setIsAuthenticated(false);
-          setLoading(false);
-          return;
-        }
-
+      const checkAuth = async () => {
         try {
-          const parsedInfo = JSON.parse(accountInfo);
+          // First check if Redux already has the user authenticated
+          if (isAuthenticated && id) {
+            setLoading(false);
+            return;
+          }
           
-          // Improved token validation check
-          if (parsedInfo && parsedInfo.accessToken && parsedInfo.accessToken.trim() !== '') {
-            // Check if token has expired (if it contains expiration info)
-            const currentTime = Math.floor(Date.now() / 1000);
-            let tokenExpired = false;
+          const accountInfo = Cookies.get('accountInformation');
+          
+          if (!accountInfo) {
+            setLoading(false);
+            return;
+          }
+
+          // If we have account info in cookie but not in Redux, load it
+          try {
+            const parsedInfo = JSON.parse(accountInfo);
             
-            if (parsedInfo.expiresAt && parsedInfo.expiresAt < currentTime) {
-              tokenExpired = true;
-            }
-            
-            if (!tokenExpired) {
-              setIsAuthenticated(true);
+            // Check if token exists and is valid
+            if (parsedInfo && parsedInfo.accessToken && parsedInfo.accessToken.trim() !== '') {
+              // Check if token has expired (if it contains expiration info)
+              const currentTime = Math.floor(Date.now() / 1000);
+              let tokenExpired = false;
               
-              // Check if user is admin if adminOnly option is true
-              if (options.adminOnly) {
-                // Assuming user role is stored in cookie or can be extracted from token
-                setIsAdmin(parsedInfo.role === 'admin');
+              if (parsedInfo.expiresAt && parsedInfo.expiresAt < currentTime) {
+                tokenExpired = true;
+              }
+              
+              if (!tokenExpired) {
+                // Load user data into Redux from token
+                dispatch(setUserFromToken());
+                
+                // Give a small delay to ensure Redux state updates
+                setTimeout(() => {
+                  setLoading(false);
+                }, 500);
+                
+                return;
+              } else {
+                // Clear expired token
+                Cookies.remove('accountInformation');
+                setLoading(false);
               }
             } else {
-              setIsAuthenticated(false);
-              // Clear expired token
-              Cookies.remove('accountInformation');
+              setLoading(false);
             }
-          } else {
-            setIsAuthenticated(false);
+          } catch (error) {
+            console.error('Error parsing account info:', error);
+            setLoading(false);
           }
         } catch (error) {
-          console.error('Error parsing account info:', error);
-          setIsAuthenticated(false);
+          console.error('Authentication check error:', error);
+          setLoading(false);
         }
-        
-        setLoading(false);
       };
 
       checkAuth();
-    }, []);
+    }, [dispatch, isAuthenticated, id]);
 
     if (loading) {
-      return <LoadingSpinner text="Đang xác thực..." fullScreen />;
+      return (
+        <LoadingSpinner 
+          text="Đang tải trang..." 
+          fullScreen 
+        />
+      );
     }
 
     if (!isAuthenticated) {

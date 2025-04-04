@@ -82,20 +82,6 @@ function ProfileContent({ profile, loading, error }) {
     }
   }, [createPostStatus, dispatch, id, value]);
 
-  // Force refetch if user is viewing their own profile after 2 seconds
-  // This helps with showing fresh posts after creation
-  useEffect(() => {
-    if (id) {
-      const intervalId = setInterval(() => {
-        if (value === 0) {
-          dispatch(fetchUserPosts({ userId: id, page: 1 }));
-        }
-      }, 2000);
-      
-      return () => clearInterval(intervalId);
-    }
-  }, [dispatch, id, value]);
-
   const handleChange = (event, newValue) => {
     setValue(newValue);
     
@@ -183,6 +169,9 @@ function ProfileContent({ profile, loading, error }) {
           {isLoadingUserPosts && userPosts.length === 0 ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <CircularProgress />
+              <Typography variant="body2" sx={{ ml: 2 }}>
+                Đang tải bài viết...
+              </Typography>
             </Box>
           ) : userPostsError ? (
             <Typography color="error" variant="body1" sx={{ p: 3, textAlign: 'center' }}>
@@ -201,7 +190,6 @@ function ProfileContent({ profile, loading, error }) {
             <>
               <PostsContainer>
                 {userPosts.map((post) => {
-                  console.log("Post data in ProfileContent:", post);
                   return (
                     <Post 
                       key={post._id} 

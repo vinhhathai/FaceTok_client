@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 import './App.css';
 
@@ -27,8 +27,11 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
 // Redux
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setUserFromToken } from './redux/features/userSlice';
+
+// Loading component
+import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
 
 // HOC for protecting routes
 import withAuth from './utils/withAuth.js';
@@ -51,11 +54,29 @@ const RedirectToLogin = () => {
 
 function App() {
   const dispatch = useDispatch();
+  const [initializing, setInitializing] = useState(true);
+  const { isAuthenticated } = useSelector(state => state.user || {});
 
   useEffect(() => {
-    // Khởi tạo thông tin người dùng từ token
-    dispatch(setUserFromToken());
+    // Initialize user data from token
+    const initApp = async () => {
+      try {
+        await dispatch(setUserFromToken());
+      } catch (error) {
+        console.error("Error initializing app:", error);
+      } finally {
+        // Even if there's an error, we still want to show the app
+        setInitializing(false);
+      }
+    };
+
+    initApp();
   }, [dispatch]);
+
+  // Show loading spinner during initialization
+  if (initializing) {
+    return <LoadingSpinner text="Đang tải ứng dụng..." fullScreen />;
+  }
 
   return (
     <div className="App">

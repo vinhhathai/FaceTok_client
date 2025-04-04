@@ -37,10 +37,8 @@ function CreatePost() {
       setContent('');
       handleRemoveMedia();
       
-      // Manually refresh the user posts immediately
-      if (id) {
-        dispatch(fetchUserPosts({ userId: id, page: 1 }));
-      }
+      // Show a success message
+      toast.success('Đăng bài thành công!');
       
       // Reset trạng thái createPostStatus sau 1 giây
       const timer = setTimeout(() => {
@@ -100,10 +98,14 @@ function CreatePost() {
     if (isDisabled) return;
     
     try {
-      await dispatch(createNewPost({ content, mediaFiles })).unwrap();
-      toast.success('Đăng bài thành công!');
+      const result = await dispatch(createNewPost({ content, mediaFiles })).unwrap();
+      
+      // If we're on a profile page and have an ID, force refresh the posts
+      if (id) {
+        // Force immediate refresh of posts for this profile
+        dispatch(fetchUserPosts({ userId: id, page: 1 }));
+      }
     } catch (error) {
-      console.error('Error creating post:', error);
       // Thông báo lỗi sẽ được xử lý trong useEffect
     }
   };

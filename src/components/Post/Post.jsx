@@ -56,6 +56,9 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
   const likeStatusChecked = useRef(false);
   const commentsLoaded = useRef(false);
   
+  // Add debounce timer ref
+  const debounceTimerRef = useRef(null);
+  
   const currentUser = useSelector((state) => state.user);
   
   // Sử dụng dữ liệu từ props hoặc dữ liệu mặc định
@@ -90,11 +93,18 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
         // Mark as checked before the API call to prevent duplicate requests
         likeStatusChecked.current = true;
         
-        const response = await checkLikeStatus(postIdToCheck);
-        if (response.data.success) {
-          setLiked(response.data.isLiked);
-          setLikeCount(response.data.likesCount);
+        // Add debounce to prevent too many simultaneous requests
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
         }
+        
+        debounceTimerRef.current = setTimeout(async () => {
+          const response = await checkLikeStatus(postIdToCheck);
+          if (response.data.success) {
+            setLiked(response.data.isLiked);
+            setLikeCount(response.data.likesCount);
+          }
+        }, 500); // 500ms debounce delay
       } catch (error) {
         console.error("Error checking like status:", error);
         // Silently fail - not showing error to user for this operation
@@ -106,6 +116,9 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
     // Reset the ref when component unmounts
     return () => {
       likeStatusChecked.current = false;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
     };
   }, [currentUser, post]);
 
@@ -120,10 +133,8 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
   // Handle comment button click - open modal
   const handleCommentClick = () => {
     setShowCommentModal(true);
-    // Load comments when modal opens, but only if not already loaded
-    if (!commentsLoaded.current) {
-      fetchComments();
-    }
+    // Always fetch fresh comments when modal opens
+    fetchComments();
   };
   
   const handleCloseCommentModal = () => {
@@ -143,23 +154,52 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
   const handleAddComment = async (text, updatedComments) => {
     // If text is provided and not empty, add a new comment
     if (text && text.trim() !== '') {
-      const response = await addComment(post.postId || post._id, text);
-      handleCommentAdded();
-      return response;
-    } 
-    // If updatedComments provided, just update the state
-    else if (updatedComments) {
-      // Check if we're adding a new comment (optimistic update from CommentModal)
-      const isNewComment = updatedComments.length > comments.length;
-      
-      // Update the comments state
-      setComments(updatedComments);
-      
-      // If this is a new comment (optimistic update), increment the count
-      if (isNewComment) {
+      try {
+        // Create optimistic comment
+        const optimisticComment = {
+          _id: `temp-${Date.now()}`,
+          text: text,
+          userId: {
+            _id: currentUser.id,
+            fullName: currentUser.fullName,
+            profilePicture: currentUser.profilePicture || ''
+          },
+          createdAt: new Date().toISOString(),
+          isOptimistic: true
+        };
+        
+        // Add optimistic comment to the current comments list
+        const newComments = [optimisticComment, ...comments];
+        setComments(newComments);
+        
+        // Update the comment count
         handleCommentAdded();
+        
+        // Make the actual API call
+        const response = await addComment(post.postId || post._id, text);
+        
+        if (response.data?.success && response.data?.comment) {
+          // Replace the optimistic comment with the real one from the server
+          const realComment = response.data.comment;
+          setComments(prevComments => 
+            prevComments.map(comment => 
+              comment.isOptimistic ? realComment : comment
+            )
+          );
+        }
+        
+        return response;
+      } catch (error) {
+        // If there's an error, revert the optimistic update
+        setComments(prevComments => prevComments.filter(comment => !comment.isOptimistic));
+        handleCommentDeleted(); // Revert the comment count
+        
+        throw error;
       }
-      
+    } 
+    // If updatedComments is provided (from CommentModal), update our state
+    else if (updatedComments) {
+      setComments(updatedComments);
       return Promise.resolve({ data: { success: true } });
     }
     
@@ -174,13 +214,26 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
       setLoadingComments(true);
       const postId = post.postId || post._id;
       
-      const response = await getComments(postId, 1, 10);
+      // Use debounce to prevent multiple API calls
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
       
-      const commentsData = response.data?.comments || [];
-      setComments(commentsData);
-      
-      // Mark comments as loaded to prevent unnecessary refetching
-      commentsLoaded.current = true;
+      debounceTimerRef.current = setTimeout(async () => {
+        const response = await getComments(postId, 1, 10);
+        
+        const commentsData = response.data?.comments || [];
+        setComments(commentsData);
+        
+        // Update comment count to match the actual total from server
+        if (response.data && typeof response.data.totalComments === 'number') {
+          setCommentsCount(response.data.totalComments);
+        }
+        
+        // Mark comments as loaded to prevent unnecessary refetching
+        commentsLoaded.current = true;
+        setLoadingComments(false);
+      }, 300); // 300ms debounce
     } catch (error) {
       console.error('Error fetching comments:', error);
       setSnackbar({
@@ -188,7 +241,6 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
         message: error.message || 'Không thể tải bình luận',
         severity: 'error'
       });
-    } finally {
       setLoadingComments(false);
     }
   };
@@ -313,33 +365,55 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
       setLiked(newLikedStatus);
       setLikeCount(newLikeCount);
       
-      // Make API call
-      const response = await likePost(post.postId || post._id);
-      
-      // Update UI with server response
-      if (response.data.success) {
-        // If API successful, keep the updated state
-        setLiked(response.data.post.isLiked);
-        setLikeCount(response.data.post.likesCount);
-      } else {
-        // If API error, revert to original state
-        setLiked(!newLikedStatus);
-        setLikeCount(likeCount);
+      // Debounce API call
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
+      
+      debounceTimerRef.current = setTimeout(async () => {
+        try {
+          // Make API call
+          const response = await likePost(post.postId || post._id);
+          
+          // Update UI with server response
+          if (response.data.success) {
+            // If API successful, keep the updated state
+            setLiked(response.data.post.isLiked);
+            setLikeCount(response.data.post.likesCount);
+          } else {
+            // If API error, revert to original state
+            setLiked(!newLikedStatus);
+            setLikeCount(likeCount);
+          }
+        } catch (error) {
+          // Revert optimistic update on error
+          setLiked(!newLikedStatus);
+          setLikeCount(newLikedStatus ? newLikeCount - 1 : newLikeCount + 1);
+          
+          console.error("Error toggling like:", error);
+          
+          setSnackbar({
+            open: true,
+            message: error.message || 'Không thể yêu thích bài viết',
+            severity: 'error'
+          });
+        } finally {
+          setLikeLoading(false);
+        }
+      }, 300);
     } catch (error) {
-      console.error("Error toggling like:", error);
+      console.error("Error preparing like toggle:", error);
       
       // Revert optimistic update on error
       setLiked(!liked);
       setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+      setLikeLoading(false);
       
       setSnackbar({
         open: true,
         message: error.message || 'Không thể yêu thích bài viết',
         severity: 'error'
       });
-    } finally {
-      setLikeLoading(false);
     }
   };
 

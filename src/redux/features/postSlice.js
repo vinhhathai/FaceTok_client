@@ -94,6 +94,11 @@ export const fetchUserPosts = createAsyncThunk(
     try {
       const response = await getUserPosts(userId, page, limit);
       
+      // Check if we got a valid response with posts
+      if (!response.data) {
+        return { posts: [], currentPage: page, totalPages: 1 };
+      }
+      
       // Format lại dữ liệu tương tự như timeline posts
       if (response.data && Array.isArray(response.data)) {
         return {
@@ -108,15 +113,22 @@ export const fetchUserPosts = createAsyncThunk(
           totalPages: Math.ceil(response.data.length / limit) || 1
         };
       } else if (response.data && response.data.posts) {
+        // Check if posts array is valid
+        if (!Array.isArray(response.data.posts)) {
+          return { posts: [], currentPage: page, totalPages: 1 };
+        }
+        
         return {
           ...response.data,
-          posts: response.data.posts.map(post => ({
-            ...post,
-            content: post.caption || post.content || '',
-            media: post.filePath
-              ? [{ url: post.filePath }]
-              : []
-          }))
+          posts: response.data.posts.map(post => {
+            return {
+              ...post,
+              content: post.caption || post.content || '',
+              media: post.filePath
+                ? [{ url: post.filePath }]
+                : (post.media || [])
+            };
+          })
         };
       } else {
         return {
@@ -126,6 +138,7 @@ export const fetchUserPosts = createAsyncThunk(
         };
       }
     } catch (error) {
+      console.error('Error fetching user posts:', error);
       return rejectWithValue(error.message || 'Không thể tải bài viết của người dùng');
     }
   }
@@ -181,11 +194,36 @@ const postSlice = createSlice({
         state.createPostStatus = 'succeeded';
         // Thêm bài viết mới vào đầu danh sách nếu có
         if (action.payload && action.payload.post) {
-          state.timelinePosts.unshift(action.payload.post);
+          const newPost = action.payload.post;
           
-          // Luôn thêm bài viết mới vào userPosts để đảm bảo hiển thị trên trang profile
-          // mà không cần phải reload trang
-          state.userPosts.unshift(action.payload.post);
+          console.log('New post from server:', newPost);
+          
+          // Ensure we have the proper format for the post
+          const formattedPost = {
+            ...newPost,
+            _id: newPost._id,
+            content: newPost.content || newPost.caption || '',
+            author: newPost.author || {
+              _id: newPost.userId || 'temp-id',
+              fullName: 'Tôi',
+              profilePicture: ''
+            },
+            media: newPost.media || (newPost.filePath ? [{ url: newPost.filePath }] : []),
+            likesCount: newPost.likesCount || 0,
+            commentsCount: newPost.commentsCount || 0,
+            createdAt: newPost.createdAt || new Date().toISOString()
+          };
+          
+          console.log('Formatted post for Redux store:', formattedPost);
+          
+          // Add to timeline posts
+          state.timelinePosts.unshift(formattedPost);
+          
+          // Add to user posts - only if we're on the first page
+          // We'll let the fetchUserPosts handle refreshing the full list
+          if (state.userPostsPage === 1) {
+            state.userPosts.unshift(formattedPost);
+          }
         }
       })
       .addCase(createNewPost.rejected, (state, action) => {
@@ -227,16 +265,23 @@ const postSlice = createSlice({
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
         state.isLoadingUserPosts = false;
         
+        console.log('fetchUserPosts fulfilled with data:', action.payload);
+        
         // Cập nhật danh sách bài viết người dùng
         if (action.payload && action.payload.posts) {
-          if (state.userPostsPage === 1) {
+          if (action.meta.arg.page === 1) {
+            // If it's page 1, replace the entire list
             state.userPosts = action.payload.posts;
+            state.userPostsPage = 1;
           } else {
             // Nối thêm bài viết mới vào danh sách hiện tại
-            state.userPosts = [...state.userPosts, ...action.payload.posts];
+            // Ensure no duplicates by checking post IDs
+            const existingIds = new Set(state.userPosts.map(post => post._id));
+            const newPosts = action.payload.posts.filter(post => !existingIds.has(post._id));
+            state.userPosts = [...state.userPosts, ...newPosts];
+            state.userPostsPage = action.payload.currentPage || action.meta.arg.page;
           }
           
-          state.userPostsPage = action.payload.currentPage || 1;
           state.userPostsTotalPages = action.payload.totalPages || 1;
         }
       })
