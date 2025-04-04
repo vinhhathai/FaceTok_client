@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { Paper, Typography, Button, TextField, Box } from '@mui/material';
+import { Paper, Typography, Button, Box } from '@mui/material';
 
 export const PostContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -51,6 +51,14 @@ export const ActionButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
   flex: 1,
   padding: theme.spacing(1),
+  minWidth: '70px',
+  cursor: 'pointer',
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  '&:active': {
+    backgroundColor: theme.palette.action.selected,
+  },
 }));
 
 export const ActionCount = styled(Typography)(({ theme }) => ({
@@ -61,11 +69,8 @@ export const ActionCount = styled(Typography)(({ theme }) => ({
 export const CommentSection = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(1),
   padding: theme.spacing(1),
-}));
-
-export const CommentInput = styled(TextField)(({ theme }) => ({
-  marginTop: theme.spacing(1),
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '20px',
-  },
+  backgroundColor: theme.palette.background.paper,
+  borderTop: `1px solid ${theme.palette.divider}`,
+  display: 'block',
+  width: '100%',
 })); 

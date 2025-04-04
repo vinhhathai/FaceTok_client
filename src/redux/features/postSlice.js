@@ -163,6 +163,11 @@ const postSlice = createSlice({
       state.userPostsTotalPages = 1;
       state.isLoadingUserPosts = false;
       state.userPostsError = null;
+    },
+    setUserPosts: (state, action) => {
+      state.userPosts = action.payload.posts;
+      state.userPostsPage = action.payload.page || 1;
+      state.userPostsTotalPages = action.payload.totalPages || 1;
     }
   },
   extraReducers: (builder) => {
@@ -178,14 +183,9 @@ const postSlice = createSlice({
         if (action.payload && action.payload.post) {
           state.timelinePosts.unshift(action.payload.post);
           
-          // Nếu đang ở trang profile của người dùng hiện tại, cũng thêm vào danh sách userPosts
-          const currentUser = action.payload.post.author;
-          if (currentUser && currentUser._id && state.userPosts.length > 0) {
-            // Kiểm tra nếu userPosts thuộc về người dùng hiện tại
-            if (state.userPosts[0]?.author?._id === currentUser._id) {
-              state.userPosts.unshift(action.payload.post);
-            }
-          }
+          // Luôn thêm bài viết mới vào userPosts để đảm bảo hiển thị trên trang profile
+          // mà không cần phải reload trang
+          state.userPosts.unshift(action.payload.post);
         }
       })
       .addCase(createNewPost.rejected, (state, action) => {
@@ -247,6 +247,6 @@ const postSlice = createSlice({
   },
 });
 
-export const { clearPostErrors, resetCreatePostStatus, clearUserPosts } = postSlice.actions;
+export const { clearPostErrors, resetCreatePostStatus, clearUserPosts, setUserPosts } = postSlice.actions;
 
 export default postSlice.reducer; 

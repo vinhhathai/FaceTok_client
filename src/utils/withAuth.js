@@ -30,13 +30,28 @@ const withAuth = (Component, options = {}) => {
         try {
           const parsedInfo = JSON.parse(accountInfo);
           
-          if (parsedInfo && parsedInfo.accessToken) {
-            setIsAuthenticated(true);
+          // Improved token validation check
+          if (parsedInfo && parsedInfo.accessToken && parsedInfo.accessToken.trim() !== '') {
+            // Check if token has expired (if it contains expiration info)
+            const currentTime = Math.floor(Date.now() / 1000);
+            let tokenExpired = false;
             
-            // Check if user is admin if adminOnly option is true
-            if (options.adminOnly) {
-              // Assuming user role is stored in cookie or can be extracted from token
-              setIsAdmin(parsedInfo.role === 'admin');
+            if (parsedInfo.expiresAt && parsedInfo.expiresAt < currentTime) {
+              tokenExpired = true;
+            }
+            
+            if (!tokenExpired) {
+              setIsAuthenticated(true);
+              
+              // Check if user is admin if adminOnly option is true
+              if (options.adminOnly) {
+                // Assuming user role is stored in cookie or can be extracted from token
+                setIsAdmin(parsedInfo.role === 'admin');
+              }
+            } else {
+              setIsAuthenticated(false);
+              // Clear expired token
+              Cookies.remove('accountInformation');
             }
           } else {
             setIsAuthenticated(false);

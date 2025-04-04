@@ -4,7 +4,8 @@ import { CircularProgress, IconButton } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'react-toastify';
 import mediaIcon from "../../assets/images/icons/theme/post-image.png";
-import { createNewPost, resetCreatePostStatus } from '../../redux/features/postSlice';
+import { createNewPost, resetCreatePostStatus, fetchUserPosts } from '../../redux/features/postSlice';
+import { useParams } from 'react-router-dom';
 
 import {
   CreatePostWrapper,
@@ -18,6 +19,7 @@ import {
 
 function CreatePost() {
   const dispatch = useDispatch();
+  const { id } = useParams(); // Get the user ID from URL params
   const { createPostStatus, createPostError } = useSelector(state => state.posts);
   const currentUser = useSelector(state => state.user);
   
@@ -35,6 +37,11 @@ function CreatePost() {
       setContent('');
       handleRemoveMedia();
       
+      // Manually refresh the user posts immediately
+      if (id) {
+        dispatch(fetchUserPosts({ userId: id, page: 1 }));
+      }
+      
       // Reset trạng thái createPostStatus sau 1 giây
       const timer = setTimeout(() => {
         dispatch(resetCreatePostStatus());
@@ -47,7 +54,7 @@ function CreatePost() {
       // Reset trạng thái lỗi
       dispatch(resetCreatePostStatus());
     }
-  }, [createPostStatus, createPostError, dispatch]);
+  }, [createPostStatus, createPostError, dispatch, id]);
   
   // Xử lý thay đổi nội dung bài viết
   const handleContentChange = (e) => {

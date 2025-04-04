@@ -51,13 +51,15 @@ function ProfileContent({ profile, loading, error }) {
   const [value, setValue] = useState(0);
   const dispatch = useDispatch();
   const { id } = useParams();
+  const userPostsLimit = 10; // Default limit for user posts
   
   const { 
     userPosts, 
     userPostsPage, 
     userPostsTotalPages, 
     isLoadingUserPosts, 
-    userPostsError 
+    userPostsError,
+    createPostStatus
   } = useSelector((state) => state.posts);
 
   // Load user posts when component mounts or when user ID changes
@@ -70,6 +72,28 @@ function ProfileContent({ profile, loading, error }) {
     return () => {
       dispatch(clearUserPosts());
     };
+  }, [dispatch, id, value]);
+
+  // Also reload user posts when a post is successfully created
+  useEffect(() => {
+    if (createPostStatus === 'succeeded' && id && value === 0) {
+      // Immediately refresh the user posts
+      dispatch(fetchUserPosts({ userId: id, page: 1 }));
+    }
+  }, [createPostStatus, dispatch, id, value]);
+
+  // Force refetch if user is viewing their own profile after 2 seconds
+  // This helps with showing fresh posts after creation
+  useEffect(() => {
+    if (id) {
+      const intervalId = setInterval(() => {
+        if (value === 0) {
+          dispatch(fetchUserPosts({ userId: id, page: 1 }));
+        }
+      }, 2000);
+      
+      return () => clearInterval(intervalId);
+    }
   }, [dispatch, id, value]);
 
   const handleChange = (event, newValue) => {
@@ -89,6 +113,30 @@ function ProfileContent({ profile, loading, error }) {
         page: userPostsPage + 1 
       }));
     }
+  };
+
+  // Xử lý khi xóa bài viết
+  const handlePostDeleted = (postId) => {
+    // Tải lại bài viết sau khi xóa - sử dụng id từ URL thay vì profile._id
+    dispatch(fetchUserPosts({ userId: id, page: 1, limit: userPostsLimit }));
+  };
+  
+  // Xử lý khi cập nhật bài viết
+  const handlePostUpdated = (postId, updatedPost) => {
+    // Cập nhật UI bằng cách thay thế bài viết đã cập nhật trong danh sách
+    const updatedPosts = userPosts.map(post => 
+      post._id === postId ? { ...post, caption: updatedPost.caption } : post
+    );
+    
+    // Dispatch action để cập nhật danh sách bài viết
+    dispatch({
+      type: 'posts/setUserPosts',
+      payload: {
+        posts: updatedPosts,
+        page: userPostsPage,
+        totalPages: userPostsTotalPages
+      }
+    });
   };
 
   // Hiển thị loading khi đang tải dữ liệu
@@ -152,20 +200,28 @@ function ProfileContent({ profile, loading, error }) {
           ) : (
             <>
               <PostsContainer>
-                {userPosts.map((post) => (
-                  <Post 
-                    key={post._id} 
-                    post={{
-                      userImage: post.author?.profilePicture,
-                      userName: post.author?.fullName,
-                      time: new Date(post.createdAt).toLocaleDateString('vi-VN'),
-                      content: post.content || post.caption,
-                      image: post.media && post.media.length > 0 ? post.media[0].url : null,
-                      likeCount: post.likesCount || 0,
-                      commentCount: post.commentsCount || 0
-                    }} 
-                  />
-                ))}
+                {userPosts.map((post) => {
+                  console.log("Post data in ProfileContent:", post);
+                  return (
+                    <Post 
+                      key={post._id} 
+                      post={{
+                        userImage: post.author?.profilePicture,
+                        userName: post.author?.fullName,
+                        time: new Date(post.createdAt).toLocaleDateString('vi-VN'),
+                        content: post.content || post.caption,
+                        image: post.media && post.media.length > 0 ? post.media[0].url : null,
+                        likeCount: post.likesCount || 0,
+                        commentCount: post.commentsCount || 0,
+                        postId: post._id, // Add post ID for deletion
+                        userId: post.userId || post.author?._id, // Add user ID for permission check
+                        _id: post._id // Include the original _id
+                      }} 
+                      onPostDeleted={handlePostDeleted}
+                      onPostUpdated={handlePostUpdated}
+                    />
+                  );
+                })}
               </PostsContainer>
               
               {userPostsPage < userPostsTotalPages && (

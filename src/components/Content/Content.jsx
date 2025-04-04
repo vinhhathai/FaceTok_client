@@ -8,8 +8,7 @@ function Content() {
     <>
       
           <CreatePost />
-          <Post/>
-          <Post/>
+         
      
     </>
   );

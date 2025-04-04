@@ -18,6 +18,37 @@ function HomePage() {
     dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
   }, [dispatch]);
   
+  // Xử lý khi xóa bài viết
+  const handlePostDeleted = (postId) => {
+    // Cập nhật UI ngay lập tức bằng cách lọc bỏ bài viết đã xóa (Optimistic UI update)
+    const updatedPosts = timelinePosts.filter(post => post._id !== postId);
+    
+    // Dispatch action để cập nhật redux store và sau đó tải lại dữ liệu
+    dispatch({ 
+      type: 'posts/setTimelinePosts', 
+      payload: updatedPosts 
+    });
+    
+    // Tải lại dữ liệu từ server sau một khoảng thời gian ngắn
+    setTimeout(() => {
+      dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
+    }, 500);
+  };
+  
+  // Xử lý khi cập nhật bài viết
+  const handlePostUpdated = (postId, updatedPost) => {
+    // Cập nhật UI bằng cách thay thế bài viết đã cập nhật trong danh sách
+    const updatedPosts = timelinePosts.map(post => 
+      post._id === postId ? { ...post, caption: updatedPost.caption } : post
+    );
+    
+    // Dispatch action để cập nhật redux store
+    dispatch({ 
+      type: 'posts/setTimelinePosts', 
+      payload: updatedPosts 
+    });
+  };
+  
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header />
@@ -53,7 +84,12 @@ function HomePage() {
                   </Paper>
                 ) : timelinePosts.length > 0 ? (
                   timelinePosts.map(post => (
-                    <PostItem key={post._id} post={post} />
+                    <PostItem 
+                      key={post._id} 
+                      post={post} 
+                      onPostDeleted={handlePostDeleted}
+                      onPostUpdated={handlePostUpdated}
+                    />
                   ))
                 ) : (
                   <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
