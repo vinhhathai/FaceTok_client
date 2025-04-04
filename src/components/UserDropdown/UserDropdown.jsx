@@ -7,6 +7,7 @@ import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
+import CircularProgress from '@mui/material/CircularProgress';
 import { UserAvatar, UserButton } from './styles';
 
 const UserDropdown = ({ id, profilePicture, handleLogout }) => {
@@ -20,6 +21,23 @@ const UserDropdown = ({ id, profilePicture, handleLogout }) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  // Nếu id bị undefined, hiển thị chỉ avatar với indicator
+  if (!id) {
+    return (
+      <UserButton
+        color="inherit"
+        disabled
+      >
+        <UserAvatar 
+          src={"/assets/images/avatar_default.jpg"}
+          alt="Loading user profile"
+        >
+          <CircularProgress size={24} />
+        </UserAvatar>
+      </UserButton>
+    );
+  }
 
   return (
     <>

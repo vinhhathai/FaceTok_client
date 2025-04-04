@@ -1,3 +1,5 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
 import message from "../../assets/images/icons/left-sidebar/message.png";
 import group from "../../assets/images/icons/left-sidebar/group.png";
 import findFriend from "../../assets/images/icons/left-sidebar/find-friends.png";
@@ -18,9 +20,9 @@ import {
 
 // Example list items
 const sidebarItems = [
-  { text: 'Messages', icon: message, count: 2, href: 'messages.html' },
-  { text: 'Groups', icon: group, count: 17, href: 'groups.html' },
-  { text: 'Find Friends', icon: findFriend, href: 'find-friends.html' },
+  { text: 'Messages', icon: message, count: 2, to: '/messages' },
+  { text: 'Groups', icon: group, count: 17, to: '/groups' },
+  { text: 'Find Friends', icon: findFriend, to: '/friends' },
 ];
 
 function Sidebar() {
@@ -35,8 +37,8 @@ function Sidebar() {
           {sidebarItems.map((item, index) => (
             <ItemListItem key={index} disablePadding>
               <ItemListItemButton 
-                component="a" 
-                href={item.href}
+                component={Link} 
+                to={item.to}
               >
                 <ItemListItemIcon>
                   <ItemIconImage src={item.icon} alt={item.text} />

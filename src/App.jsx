@@ -21,6 +21,8 @@ import LoginPage from './pages/LoginPage/LoginPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import SignUpPage from './pages/SignUpPage/SignUpPage';
 import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
+import MessagePage from './pages/MessagePage/MessagePage';
+import FriendsPage from './pages/FriendsPage/FriendsPage';
 
 // Toast notifications
 import 'react-toastify/dist/ReactToastify.css';
@@ -29,9 +31,13 @@ import { ToastContainer } from 'react-toastify';
 // Redux
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserFromToken } from './redux/features/userSlice';
+import { fetchFriends, fetchFriendRequests } from './redux/features/friendSlice';
 
 // Loading component
 import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
+
+// Socket service
+import socketService from './services/socketService';
 
 // HOC for protecting routes
 import withAuth from './utils/withAuth.js';
@@ -39,6 +45,8 @@ import withAuth from './utils/withAuth.js';
 // Wrap components with auth protection
 const ProtectedHomePage = withAuth(HomePage);
 const ProtectedProfilePage = withAuth(ProfilePage);
+const ProtectedMessagePage = withAuth(MessagePage);
+const ProtectedFriendsPage = withAuth(FriendsPage);
 
 // Component to redirect to login with return URL
 const RedirectToLogin = () => {
@@ -55,23 +63,43 @@ const RedirectToLogin = () => {
 function App() {
   const dispatch = useDispatch();
   const [initializing, setInitializing] = useState(true);
-  const { isAuthenticated } = useSelector(state => state.user || {});
+  const { isAuthenticated, user } = useSelector(state => state.user || {});
 
   useEffect(() => {
     // Initialize user data from token
     const initApp = async () => {
       try {
         await dispatch(setUserFromToken());
+        
+        // Wait a bit to ensure user is properly initialized
+        setTimeout(() => {
+          setInitializing(false);
+        }, 300);
       } catch (error) {
         console.error("Error initializing app:", error);
-      } finally {
-        // Even if there's an error, we still want to show the app
         setInitializing(false);
       }
     };
 
     initApp();
   }, [dispatch]);
+
+  // Initialize socket and fetch friends data when user is authenticated
+  useEffect(() => {
+    if (!initializing && isAuthenticated && user) {
+      // Initialize socket connection
+      socketService.initSocket();
+      
+      // Fetch friends data
+      dispatch(fetchFriends());
+      dispatch(fetchFriendRequests());
+      
+      // Cleanup socket on app unmount
+      return () => {
+        socketService.closeSocket();
+      };
+    }
+  }, [initializing, isAuthenticated, user, dispatch]);
 
   // Show loading spinner during initialization
   if (initializing) {
@@ -90,6 +118,8 @@ function App() {
         <Route path="/" element={<ProtectedHomePage />} />
         <Route path="/search/see-more" element={<ProtectedHomePage />} />
         <Route path="/profile/:id" element={<ProtectedProfilePage />} />
+        <Route path="/messages" element={<ProtectedMessagePage />} />
+        <Route path="/friends" element={<ProtectedFriendsPage />} />
         
         {/* Redirect any unknown routes to login */}
         <Route path="*" element={<RedirectToLogin />} />

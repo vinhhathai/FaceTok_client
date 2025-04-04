@@ -4,8 +4,8 @@ import { jwtDecode } from 'jwt-decode';
 
 // Thiết lập giá trị cho localStorage để sử dụng trong các components khác
 const updateLocalUserData = (userData) => {
-  if (userData && userData.id) {
-    localStorage.setItem('userId', userData.id);
+  if (userData && userData._id) {
+    localStorage.setItem('userId', userData._id);
     
     if (userData.fullName) {
       localStorage.setItem('userFullName', userData.fullName);
@@ -32,9 +32,13 @@ const getUserFromToken = () => {
           const userId = decoded._id || decoded.id || '';
           
           return {
-            id: userId,
-            fullName: decoded.fullName || decoded.name || '',
-            profilePicture: decoded.profilePicture || '',
+            user: {
+              _id: userId,
+              fullName: decoded.fullName || decoded.name || '',
+              profilePicture: decoded.profilePicture || '',
+              username: decoded.username || decoded.fullName || '',
+              email: decoded.email || ''
+            },
             isAuthenticated: true
           };
         }
@@ -49,16 +53,20 @@ const getUserFromToken = () => {
 
 // Khởi tạo state từ token
 const initialUserState = getUserFromToken() || {
-  id: '',
-  profilePicture: localStorage.getItem('userProfilePicture') || '',
-  fullName: localStorage.getItem('userFullName') || '',
-  thumbnail: localStorage.getItem('userThumbnail') || '',
+  user: {
+    _id: localStorage.getItem('userId') || '',
+    profilePicture: localStorage.getItem('userProfilePicture') || '',
+    fullName: localStorage.getItem('userFullName') || '',
+    thumbnail: localStorage.getItem('userThumbnail') || '',
+    username: localStorage.getItem('userFullName') || '',
+    email: ''
+  },
   isAuthenticated: false,
 };
 
 // Đảm bảo lưu dữ liệu vào localStorage cho lần sau
-if (initialUserState.id) {
-  updateLocalUserData(initialUserState);
+if (initialUserState.user && initialUserState.user._id) {
+  updateLocalUserData(initialUserState.user);
 }
 
 // Tạo userSlice để quản lý thông tin người dùng hiện tại
@@ -70,13 +78,11 @@ const userSlice = createSlice({
     setUserFromToken: (state) => {
       const userData = getUserFromToken();
       if (userData) {
-        state.id = userData.id;
-        state.fullName = userData.fullName;
-        state.profilePicture = userData.profilePicture;
+        state.user = userData.user;
         state.isAuthenticated = true;
         
         // Cập nhật localStorage để các components khác có thể truy cập
-        updateLocalUserData(userData);
+        updateLocalUserData(userData.user);
       } else {
         state.isAuthenticated = false;
       }
@@ -88,13 +94,13 @@ const userSlice = createSlice({
       if (action.payload && !action.payload.startsWith('blob:')) {
         localStorage.setItem('userProfilePicture', action.payload);
       }
-      state.profilePicture = action.payload;
+      state.user.profilePicture = action.payload;
     },
     
     // Cập nhật thumbnail người dùng
     updateUserThumbnail: (state, action) => {
       const thumbnailUrl = action.payload;
-      state.thumbnail = thumbnailUrl;
+      state.user.thumbnail = thumbnailUrl;
       
       // Lưu vào localStorage
       localStorage.setItem('userThumbnail', thumbnailUrl);
@@ -102,25 +108,37 @@ const userSlice = createSlice({
     
     // Cập nhật thông tin người dùng (để cập nhật sau khi người dùng thay đổi profile)
     updateUserInfo: (state, action) => {
-      const { fullName, profilePicture } = action.payload;
+      const { fullName, profilePicture, username, email } = action.payload;
       
       if (fullName) {
-        state.fullName = fullName;
+        state.user.fullName = fullName;
         localStorage.setItem('userFullName', fullName);
       }
       
       if (profilePicture) {
-        state.profilePicture = profilePicture;
+        state.user.profilePicture = profilePicture;
         localStorage.setItem('userProfilePicture', profilePicture);
+      }
+      
+      if (username) {
+        state.user.username = username;
+      }
+      
+      if (email) {
+        state.user.email = email;
       }
     },
     
     // Đăng xuất - xóa thông tin người dùng
     clearUserData: (state) => {
-      state.id = '';
-      state.fullName = '';
-      state.profilePicture = '';
-      state.thumbnail = '';
+      state.user = {
+        _id: '',
+        fullName: '',
+        profilePicture: '',
+        thumbnail: '',
+        username: '',
+        email: ''
+      };
       state.isAuthenticated = false;
       
       // Xóa khỏi localStorage

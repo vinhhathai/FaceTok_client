@@ -7,6 +7,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from './theme';
 
+// Import cấu hình axios để áp dụng cho toàn bộ ứng dụng
+import './utils/axiosConfig';
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

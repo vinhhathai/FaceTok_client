@@ -1,22 +1,35 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../utils/axiosConfig';
 
 function useSearchApi(searchValue) {
   const [dataUser, setDataUser] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Nếu không có giá trị tìm kiếm hoặc giá trị tìm kiếm rỗng, không gọi API
+    if (!searchValue || searchValue.trim() === '') {
+      setDataUser([]);
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
-    axios.get(`http://localhost:9999/search-user?username=${encodeURIComponent(searchValue)}`)
+    
+    // Gọi API tìm kiếm với axios đã cấu hình
+    axios.get(`/search/users?query=${encodeURIComponent(searchValue)}`)
       .then(response => {
-        if (response.data.users.length > 0) {
+        if (response.data.users) {
           setDataUser(response.data.users);
+        } else {
+          setDataUser([]);
         }
         setLoading(false);
       })
       .catch(error => {
-        setError(error);
+        console.error('Search error:', error);
+        setError(error.response?.data?.message || 'Error searching users');
+        setDataUser([]);
         setLoading(false);
       });
   }, [searchValue]);

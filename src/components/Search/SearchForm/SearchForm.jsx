@@ -5,13 +5,14 @@ import useSearchApi from "../../../api/useSearchApi";
 import SearchIcon from '@mui/icons-material/Search';
 import Box from '@mui/material/Box';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Search, SearchIconWrapper, StyledInputBase } from './styles';
 
-function SearchForm({ avatarFriend1, avatarFriend2, avatarGroup, isMobile }) {
+function SearchForm({ isMobile }) {
   const [searching, setSearching] = useState(false);
-  const [searchValue, setSearchValue] = useState(null);
-  const debouncedValue = useDebounce(searchValue, 1000);
-  // const { dataUser, loading, error } = useSearchApi(debouncedValue);
+  const [searchValue, setSearchValue] = useState('');
+  const debouncedValue = useDebounce(searchValue, 500);
+  const { dataUser, loading, error } = useSearchApi(debouncedValue);
 
   const handleClickAway = () => {
     setSearching(false);
@@ -19,8 +20,16 @@ function SearchForm({ avatarFriend1, avatarFriend2, avatarGroup, isMobile }) {
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
-    setSearchValue(value.trim() === "" ? null : value);
-    setSearching(true);
+    setSearchValue(value);
+    if (value.trim() !== '') {
+      setSearching(true);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (searchValue.trim() !== '') {
+      setSearching(true);
+    }
   };
 
   return (
@@ -28,25 +37,28 @@ function SearchForm({ avatarFriend1, avatarFriend2, avatarGroup, isMobile }) {
       <Box sx={{ position: 'relative' }}>
         <Search isMobile={isMobile}>
           <SearchIconWrapper>
-            <SearchIcon />
+            {loading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <SearchIcon />
+            )}
           </SearchIconWrapper>
           <StyledInputBase
-            placeholder="Search for people, groups..."
+            placeholder="Search for people..."
             inputProps={{ 'aria-label': 'search' }}
-            value={searchValue || ""}
+            value={searchValue}
             onChange={handleSearchChange}
+            onFocus={handleInputFocus}
           />
         </Search>
         
-        {/* Uncomment when ready to implement search results */}
-        {/* {searching && dataUser.length > 0 && (
+        {searching && searchValue.trim() !== '' && (
           <SearchDropdown
             searchResult={dataUser}
-            avatarFriend1={avatarFriend1}
-            avatarFriend2={avatarFriend2}
-            avatarGroup={avatarGroup}
+            loading={loading}
+            error={error}
           />
-        )} */}
+        )}
       </Box>
     </ClickAwayListener>
   );

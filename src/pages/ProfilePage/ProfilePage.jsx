@@ -5,6 +5,7 @@ import ProfileInfo from "../../components/ProfileInfo/ProfileInfo";
 import ProfileThumbnail from "../../components/ProfileThumbnail/ProfileThumbnail";
 import WeatherBar from "../../components/WeatherBar/WeatherBar";
 import MainLayout from "../../layout/MainLayout/MainLayout";
+import { useSelector } from "react-redux";
 
 import { useParams } from "react-router-dom"; // Để lấy tham số từ URL
 import getProfileApi from "../../api/getProfileApi";
@@ -15,6 +16,10 @@ function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Get current user to check if viewing own profile
+  const currentUser = useSelector(state => state.user.user);
+  const isOwnProfile = currentUser && id && currentUser._id === id;
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -31,8 +36,10 @@ function ProfilePage() {
   }, [id]);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (id) {
+      fetchProfile();
+    }
+  }, [fetchProfile, id]);
 
   return (
     <>

@@ -21,32 +21,12 @@ import { toast } from 'react-toastify';
 import { styled } from '@mui/system';
 
 import updateProfileApi from '../../api/updateProfileApi';
-
-// Styled components
-const StyledDialogTitle = styled(DialogTitle)({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '16px 24px',
-  backgroundColor: '#f5f5f5',
-});
-
-const StyledDialogContent = styled(DialogContent)({
-  padding: '24px',
-  paddingTop: '16px',
-});
-
-const StyledDialogActions = styled(DialogActions)({
-  padding: '16px 24px',
-  borderTop: '1px solid #e0e0e0',
-});
-
-const FormSectionTitle = styled(Typography)({
-  fontSize: '14px',
-  color: '#666',
-  marginBottom: '8px',
-  fontWeight: 500,
-});
+import {
+  StyledDialogTitle,
+  StyledDialogContent,
+  StyledDialogActions,
+  FormSectionTitle
+} from './styles';
 
 // Helper for formatting date to YYYY-MM-DD for input[type="date"]
 const formatDateForInput = (dateString) => {

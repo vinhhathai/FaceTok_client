@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -6,6 +8,10 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
+import { sendFriendRequest } from '../../../redux/features/friendSlice';
 import {
   DropdownPaper,
   DropdownHeader,
@@ -16,17 +22,67 @@ import {
   FooterLink
 } from './styles';
 
-function SearchDropdown({ searchResult, avatarFriend1 }) {
+function SearchDropdown({ searchResult, loading, error }) {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [requestedMap, setRequestedMap] = useState({});
+  
+  // Lấy trạng thái kết bạn từ Redux để biết ai đã là bạn hoặc đã gửi lời mời
+  const { friendshipStatus } = useSelector(state => state.friends);
 
-  const handleAddFriendClick = (index, event) => {
+  const handleAddFriendClick = (userId, index, event) => {
     event.preventDefault();
     event.stopPropagation();
     
+    // Gửi yêu cầu kết bạn thông qua Redux
+    dispatch(sendFriendRequest(userId));
+    
+    // Cập nhật UI
     const updatedMap = { ...requestedMap };
-    updatedMap[index] = !updatedMap[index];
+    updatedMap[index] = true;
     setRequestedMap(updatedMap);
   };
+  
+  const handleUserClick = (userId, event) => {
+    // Chuyển hướng đến trang profile của người dùng
+    navigate(`/profile/${userId}`);
+  };
+  
+  // Kiểm tra trạng thái kết bạn
+  const getFriendshipStatus = (userId) => {
+    return friendshipStatus[userId]?.status || 'not_friends';
+  };
+
+  // Hiển thị thông báo khi đang tải hoặc có lỗi
+  if (loading) {
+    return (
+      <DropdownPaper elevation={3}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+          <CircularProgress size={24} />
+        </Box>
+      </DropdownPaper>
+    );
+  }
+
+  if (error) {
+    return (
+      <DropdownPaper elevation={3}>
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Typography color="error">Error searching users</Typography>
+        </Box>
+      </DropdownPaper>
+    );
+  }
+
+  if (!searchResult || searchResult.length === 0) {
+    return (
+      <DropdownPaper elevation={3}>
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Typography color="text.secondary">No users found</Typography>
+        </Box>
+      </DropdownPaper>
+    );
+  }
 
   return (
     <DropdownPaper elevation={3}>
@@ -44,39 +100,54 @@ function SearchDropdown({ searchResult, avatarFriend1 }) {
       <Box>
         <CategoryHeader variant="subtitle2">People</CategoryHeader>
         <List disablePadding>
-          {searchResult.map((item, index) => (
-            <ListItem 
-              key={index}
-              divider
-              sx={{ py: 1 }}
-            >
-              <ProfileLink to={`/profile/detail/${item._id}`}>
+          {searchResult.map((user, index) => {
+            const userFriendshipStatus = getFriendshipStatus(user._id);
+            const isAlreadyFriend = userFriendshipStatus === 'friends';
+            const requestSent = userFriendshipStatus === 'request_sent' || requestedMap[index];
+            
+            return (
+              <ListItem 
+                key={user._id}
+                divider
+                sx={{ py: 1, cursor: 'pointer' }}
+                onClick={(e) => handleUserClick(user._id, e)}
+              >
                 <ListItemAvatar>
-                  <Avatar src={avatarFriend1} alt="Search result" />
+                  <Avatar 
+                    src={user.profilePicture} 
+                    alt={user.fullName} 
+                  />
                 </ListItemAvatar>
                 <ListItemText 
-                  primary={item.fullName || "No search results found"}
-                  secondary="6 Mutual friends"
+                  primary={user.fullName || user.username || "User"}
+                  secondary={user.email}
                   primaryTypographyProps={{ fontWeight: 500 }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
-              </ProfileLink>
-              <AddFriendButton
-                variant="contained"
-                size="small"
-                requested={requestedMap[index]}
-                onClick={(event) => handleAddFriendClick(index, event)}
-              >
-                {requestedMap[index] ? "Requested" : "Add Friend"}
-              </AddFriendButton>
-            </ListItem>
-          ))}
+                
+                {!isAlreadyFriend && (
+                  <AddFriendButton
+                    variant="contained"
+                    size="small"
+                    requested={requestSent}
+                    onClick={(event) => handleAddFriendClick(user._id, index, event)}
+                    disabled={requestSent}
+                    startIcon={requestSent ? <HowToRegIcon /> : <PersonAddIcon />}
+                  >
+                    {requestSent ? "Requested" : "Add Friend"}
+                  </AddFriendButton>
+                )}
+              </ListItem>
+            );
+          })}
         </List>
       </Box>
       
-      <FooterLink to="/search/see-more">
-        <Typography variant="body2">See More</Typography>
-      </FooterLink>
+      {searchResult.length > 5 && (
+        <FooterLink to="/friends">
+          <Typography variant="body2">See All</Typography>
+        </FooterLink>
+      )}
     </DropdownPaper>
   );
 }

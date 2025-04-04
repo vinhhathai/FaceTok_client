@@ -19,6 +19,9 @@ import {
 function ProfileThumbnail({ userId }) {
   const dispatch = useDispatch();
   const profile = useSelector((state) => state.profile.data);
+  const currentUser = useSelector((state) => state.user.user);
+  const isOwnProfile = currentUser && userId && currentUser._id === userId;
+  
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -27,6 +30,7 @@ function ProfileThumbnail({ userId }) {
   useEffect(() => {
     console.log("ProfileThumbnail - userId:", userId);
     console.log("ProfileThumbnail - profile state:", profile);
+    console.log("ProfileThumbnail - isOwnProfile:", isOwnProfile);
     
     // Xác định thumbnail từ các cấu trúc dữ liệu có thể có
     const findThumbnail = () => {
@@ -44,7 +48,7 @@ function ProfileThumbnail({ userId }) {
     const url = findThumbnail();
     console.log("ProfileThumbnail - selected thumbnail URL:", url);
     setThumbnailUrl(url);
-  }, [profile, userId]);
+  }, [profile, userId, isOwnProfile]);
   
   // Load profile data nếu chưa có
   useEffect(() => {
@@ -93,28 +97,30 @@ function ProfileThumbnail({ userId }) {
             e.target.src = "https://artmin96.github.io/argon-social/assets/images/users/cover/cover-1.gif";
           }}
         />
-        <CoverOverlay className="cover-overlay">
-          <label htmlFor="upload-cover-photo">
-            <UpdateCoverButton
-              variant="contained"
-              component="span"
-              disabled={isUploading}
-              startIcon={isUploading ? 
-                <CircularProgress size={16} color="inherit" variant={uploadProgress > 0 ? "determinate" : "indeterminate"} value={uploadProgress} /> : 
-                <CameraAltIcon />
-              }
-            >
-              {isUploading ? `Uploading... ${uploadProgress}%` : "Update Cover Photo"}
-            </UpdateCoverButton>
-            <UploadInput
-              id="upload-cover-photo"
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              disabled={isUploading}
-            />
-          </label>
-        </CoverOverlay>
+        {isOwnProfile && (
+          <CoverOverlay className="cover-overlay">
+            <label htmlFor="upload-cover-photo">
+              <UpdateCoverButton
+                variant="contained"
+                component="span"
+                disabled={isUploading}
+                startIcon={isUploading ? 
+                  <CircularProgress size={16} color="inherit" variant={uploadProgress > 0 ? "determinate" : "indeterminate"} value={uploadProgress} /> : 
+                  <CameraAltIcon />
+                }
+              >
+                {isUploading ? `Uploading... ${uploadProgress}%` : "Update Cover Photo"}
+              </UpdateCoverButton>
+              <UploadInput
+                id="upload-cover-photo"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+            </label>
+          </CoverOverlay>
+        )}
       </ProfileCover>
     </ProfileHeaderBackground>
   );

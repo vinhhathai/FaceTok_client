@@ -15,8 +15,12 @@ import Container from '@mui/material/Container';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useTheme } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
+import Badge from '@mui/material/Badge';
 
 // Import styled components
 import {
@@ -32,9 +36,6 @@ import {
 import message from "../../assets/images/icons/navbar/message.png";
 import notificationIcon from "../../assets/images/icons/navbar/notification.png";
 import avatarMessage from "../../assets/images/users/user-6.png";
-import avatarFriend1 from "../../assets/images/users/user-6.png";
-import avatarFriend2 from "../../assets/images/users/user-5.png";
-import avatarGroup from "../../assets/images/groups/group-2.jpg";
 
 function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,7 +44,13 @@ function Header() {
   const dispatch = useDispatch();
   
   // Lấy thông tin người dùng từ Redux store
-  const { id, profilePicture } = useSelector(state => state.user);
+  const user = useSelector(state => state.user?.user);
+  const isAuthenticated = useSelector(state => state.user?.isAuthenticated);
+  
+  // Get friend requests safely
+  const friends = useSelector(state => state.friends || {});
+  const friendRequests = friends.friendRequests || { received: [] };
+  const requestCount = friendRequests.received?.length || 0;
   
   const isExtraSmall = useMediaQuery(theme.breakpoints.down('xs'));
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
@@ -61,6 +68,14 @@ function Header() {
     navigate("/auth/login");
   };
 
+  const handleNavigateHome = () => {
+    navigate("/");
+  };
+  
+  const handleNavigateFriends = () => {
+    navigate("/friends");
+  };
+
   return (
     <StyledAppBar elevation={2}>
       <Container maxWidth="xl">
@@ -70,11 +85,7 @@ function Header() {
             <LogoHeader />
             {!isSmall && (
               <SearchContainer>
-                <SearchForm
-                  avatarFriend1={avatarFriend1}
-                  avatarFriend2={avatarFriend2}
-                  avatarGroup={avatarGroup}
-                />
+                <SearchForm isMobile={false} />
               </SearchContainer>
             )}
           </LogoContainer>
@@ -84,25 +95,60 @@ function Header() {
             {/* Search form for small screens */}
             {isSmall && (
               <SearchContainer>
-                <SearchForm
-                  avatarFriend1={avatarFriend1}
-                  avatarFriend2={avatarFriend2}
-                  avatarGroup={avatarGroup}
-                  isMobile={true}
-                />
+                <SearchForm isMobile={true} />
               </SearchContainer>
             )}
             
             {/* Action buttons */}
             <ActionButtonsContainer>
+              <Tooltip title="Trang chủ">
+                <IconButton
+                  onClick={handleNavigateHome}
+                  sx={{
+                    borderRadius: '8px',
+                    padding: '8px',
+                    color: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 123, 255, 0.15)',
+                    },
+                    mr: 1
+                  }}
+                >
+                  <HomeIcon sx={{ fontSize: 26 }} />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Bạn bè">
+                <IconButton
+                  onClick={handleNavigateFriends}
+                  sx={{
+                    borderRadius: '8px',
+                    padding: '8px',
+                    color: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 123, 255, 0.15)',
+                    },
+                    mr: 1
+                  }}
+                >
+                  <Badge badgeContent={requestCount} color="error">
+                    <PeopleIcon sx={{ fontSize: 26 }} />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+              
               <CreateNavbar />
               <MessagesDropdown messageIcon={message} avatarMessage={avatarMessage} />
               <NotificationsDropdown notificationIcon={notificationIcon} />
-              <UserDropdown 
-                id={id} 
-                profilePicture={profilePicture} 
-                handleLogout={handleLogout} 
-              />
+              {isAuthenticated && user && (
+                <UserDropdown 
+                  id={user._id} 
+                  profilePicture={user.profilePicture} 
+                  handleLogout={handleLogout} 
+                />
+              )}
             </ActionButtonsContainer>
           </ActionsContainer>
         </StyledToolbar>

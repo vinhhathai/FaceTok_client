@@ -17,6 +17,8 @@ import { toast } from 'react-toastify';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import { useSelector } from 'react-redux';
+import Button from '@mui/material/Button';
 
 import updateAvatarApi from '../../api/updateAvatarApi';
 import { DEFAULT_AVATAR, MAX_AVATAR_SIZE, SUPPORTED_IMAGE_TYPES } from '../../config/config';
@@ -51,6 +53,10 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [nameEditDialogOpen, setNameEditDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
+  
+  // Get current user to check if viewing own profile
+  const currentUser = useSelector(state => state.user.user);
+  const isOwnProfile = currentUser && profile && currentUser._id === profile.id;
 
   // Hàm trả về màu dựa vào % tiến trình
   const getProgressColor = (progress) => {
@@ -150,6 +156,13 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
     setNameEditDialogOpen(false);
   };
 
+  // Navigate to messages
+  const navigateToMessages = () => {
+    if (profile?.id) {
+      window.location.href = `/messages?userId=${profile.id}`;
+    }
+  };
+
   // Update avatar URL when profile changes
   React.useEffect(() => {
     if (profile?.profilePicture) {
@@ -237,21 +250,23 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
             </div>
           )}
           
-          <ProfileImageCaption 
-            className="image-caption"
-            sx={uploading ? { opacity: 0.5, pointerEvents: 'none' } : {}}
-          >
-            <label htmlFor="upload-profile-picture" style={{ cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}>
-              <CameraAltIcon fontSize="small" sx={{ mr: 0.5 }} /> Update
-            </label>
-            <UploadInput
-              id="upload-profile-picture"
-              type="file"
-              accept={SUPPORTED_IMAGE_TYPES.join(',')}
-              onChange={handleAvatarUpload}
-              disabled={uploading}
-            />
-          </ProfileImageCaption>
+          {isOwnProfile && (
+            <ProfileImageCaption 
+              className="image-caption"
+              sx={uploading ? { opacity: 0.5, pointerEvents: 'none' } : {}}
+            >
+              <label htmlFor="upload-profile-picture" style={{ cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}>
+                <CameraAltIcon fontSize="small" sx={{ mr: 0.5 }} /> Update
+              </label>
+              <UploadInput
+                id="upload-profile-picture"
+                type="file"
+                accept={SUPPORTED_IMAGE_TYPES.join(',')}
+                onChange={handleAvatarUpload}
+                disabled={uploading}
+              />
+            </ProfileImageCaption>
+          )}
         </ProfileImageWrapper>
 
         {/* Profile Name with Edit Button */}
@@ -260,72 +275,62 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
           alignItems: 'center', 
           justifyContent: 'center',
           mt: 1,
-          mb: 1
+          mb: 1,
+          flexDirection: 'column'
         }}>
-          <ProfileFullName variant="h6">
-            {profile?.fullName || 'User Name'}
-          </ProfileFullName>
-          <IconButton 
-            size="small" 
-            color="primary" 
-            onClick={handleOpenNameEditDialog}
-            sx={{ ml: 1 }}
-          >
-            <DriveFileRenameOutlineIcon fontSize="small" />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <ProfileFullName variant="h6">
+              {profile?.fullName || 'User Name'}
+            </ProfileFullName>
+            {isOwnProfile && (
+              <IconButton 
+                size="small" 
+                color="primary" 
+                onClick={handleOpenNameEditDialog}
+                sx={{ ml: 1 }}
+              >
+                <DriveFileRenameOutlineIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+          
+          {!isOwnProfile && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<ChatIcon />}
+              onClick={navigateToMessages}
+              sx={{
+                mt: 2,
+                bgcolor: '#2196f3',
+                color: 'white',
+                '&:hover': {
+                  bgcolor: '#1976d2',
+                },
+                textTransform: 'none',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 3
+              }}
+            >
+              Nhắn tin
+            </Button>
+          )}
         </Box>
-
-        {/* Action Buttons */}
-        <ButtonsContainer>
-          <AddFriendButton 
-            variant="contained" 
-            startIcon={<AddIcon />}
-          >
-            Add friend
-          </AddFriendButton>
-          
-          <MessageButton 
-            variant="contained" 
-            startIcon={<ChatIcon />}
-          >
-            Message
-          </MessageButton>
-          
-          <MoreButton
-            aria-controls={open ? 'profile-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? 'true' : undefined}
-            onClick={handleClick}
-            variant="contained"
-          >
-            <MoreHorizIcon />
-          </MoreButton>
-          
-          <Menu
-            id="profile-menu"
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-            MenuListProps={{
-              'aria-labelledby': 'more-button',
-            }}
-          >
-            <MenuItem onClick={handleClose}>Block</MenuItem>
-            <MenuItem onClick={handleClose}>Report</MenuItem>
-          </Menu>
-        </ButtonsContainer>
 
         {/* Intro Section */}
         <IntroContainer>
-          <IntroHeader>
-            <EditButton 
-              color="primary" 
-              onClick={handleOpenEditDialog}
-              startIcon={<EditIcon />}
-            >
-              Chỉnh sửa
-            </EditButton>
-          </IntroHeader>
+          {isOwnProfile && (
+            <IntroHeader>
+              <EditButton 
+                color="primary" 
+                onClick={handleOpenEditDialog}
+                startIcon={<EditIcon />}
+              >
+                Chỉnh sửa
+              </EditButton>
+            </IntroHeader>
+          )}
           
           {profile?.bio ? (
             <IntroItem>
