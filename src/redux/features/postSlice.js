@@ -46,41 +46,33 @@ export const fetchTimelinePosts = createAsyncThunk(
     try {
       const response = await getTimelinePosts(page, limit);
       
-      // Format lại dữ liệu nếu cần
+      // Nếu API trả về dữ liệu phân trang đầy đủ
+      if (response.data && response.data.posts) {
+        return {
+          posts: response.data.posts,
+          currentPage: response.data.currentPage || page,
+          totalPages: response.data.totalPages || 1,
+          totalPosts: response.data.totalPosts || response.data.posts.length
+        };
+      } 
+      
+      // Nếu API chỉ trả về array của posts
       if (response.data && Array.isArray(response.data)) {
-        // Trường hợp API trả về mảng bài viết trực tiếp
         return {
-          posts: response.data.map(post => ({
-            ...post,
-            // Map các trường caption thành content để thống nhất hiển thị
-            content: post.caption || post.content || '',
-            media: post.filePath 
-              ? [{ url: post.filePath }]
-              : []
-          })),
+          posts: response.data,
           currentPage: page,
-          totalPages: Math.ceil(response.data.length / limit) || 1
-        };
-      } else if (response.data && response.data.posts) {
-        // Trường hợp API trả về object có trường posts
-        return {
-          ...response.data,
-          posts: response.data.posts.map(post => ({
-            ...post,
-            content: post.caption || post.content || '',
-            media: post.filePath 
-              ? [{ url: post.filePath }]
-              : []
-          }))
-        };
-      } else {
-        // Trường hợp khác
-        return {
-          posts: [],
-          currentPage: 1,
-          totalPages: 1
+          totalPages: Math.ceil(response.data.length / limit) || 1,
+          totalPosts: response.data.length
         };
       }
+      
+      // Fallback nếu không xác định được định dạng
+      return {
+        posts: [],
+        currentPage: page,
+        totalPages: 1,
+        totalPosts: 0
+      };
     } catch (error) {
       return rejectWithValue(error.message || 'Không thể tải bài viết');
     }
@@ -232,62 +224,73 @@ const postSlice = createSlice({
       })
       
       // Xử lý fetchTimelinePosts
-      .addCase(fetchTimelinePosts.pending, (state) => {
-        state.isLoading = true;
+      .addCase(fetchTimelinePosts.pending, (state, action) => {
+        // Chỉ set isLoading = true nếu đang load trang đầu tiên
+        // Để tránh hiển thị loading spinner khi load thêm
+        if (action.meta.arg.page === 1) {
+          state.isLoading = true;
+        }
         state.error = null;
       })
       .addCase(fetchTimelinePosts.fulfilled, (state, action) => {
         state.isLoading = false;
         
-        // Cập nhật danh sách bài viết
+        // Kiểm tra nếu có dữ liệu posts
         if (action.payload && action.payload.posts) {
-          if (state.currentPage === 1) {
+          // Nếu đang load trang đầu tiên, thay thế hoàn toàn danh sách cũ
+          if (action.meta.arg.page === 1) {
             state.timelinePosts = action.payload.posts;
           } else {
-            // Nối thêm bài viết mới vào danh sách hiện tại
-            state.timelinePosts = [...state.timelinePosts, ...action.payload.posts];
+            // Nếu không, thêm vào danh sách hiện tại
+            // Loại bỏ các bài viết trùng lặp (nếu có)
+            const existingIds = new Set(state.timelinePosts.map(post => post._id));
+            const newPosts = action.payload.posts.filter(post => !existingIds.has(post._id));
+            
+            state.timelinePosts = [...state.timelinePosts, ...newPosts];
           }
           
-          state.currentPage = action.payload.currentPage || 1;
-          state.totalPages = action.payload.totalPages || 1;
+          // Cập nhật thông tin phân trang
+          state.currentPage = action.payload.currentPage;
+          state.totalPages = action.payload.totalPages;
+        } else {
+          // Nếu không có dữ liệu và đang ở trang đầu tiên, đặt lại danh sách
+          if (action.meta.arg.page === 1) {
+            state.timelinePosts = [];
+          }
         }
       })
       .addCase(fetchTimelinePosts.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.error = action.payload || 'Failed to fetch timeline posts';
       })
       
       // Xử lý fetchUserPosts
-      .addCase(fetchUserPosts.pending, (state) => {
+      .addCase(fetchUserPosts.pending, (state, action) => {
         state.isLoadingUserPosts = true;
         state.userPostsError = null;
       })
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
         state.isLoadingUserPosts = false;
         
-        console.log('fetchUserPosts fulfilled with data:', action.payload);
-        
-        // Cập nhật danh sách bài viết người dùng
         if (action.payload && action.payload.posts) {
           if (action.meta.arg.page === 1) {
-            // If it's page 1, replace the entire list
+            // Replace current posts if loading first page
             state.userPosts = action.payload.posts;
-            state.userPostsPage = 1;
           } else {
-            // Nối thêm bài viết mới vào danh sách hiện tại
-            // Ensure no duplicates by checking post IDs
+            // Append new posts and ensure no duplicates
             const existingIds = new Set(state.userPosts.map(post => post._id));
             const newPosts = action.payload.posts.filter(post => !existingIds.has(post._id));
+            
             state.userPosts = [...state.userPosts, ...newPosts];
-            state.userPostsPage = action.payload.currentPage || action.meta.arg.page;
           }
           
-          state.userPostsTotalPages = action.payload.totalPages || 1;
+          state.userPostsPage = action.payload.currentPage;
+          state.userPostsTotalPages = action.payload.totalPages;
         }
       })
       .addCase(fetchUserPosts.rejected, (state, action) => {
         state.isLoadingUserPosts = false;
-        state.userPostsError = action.payload;
+        state.userPostsError = action.payload || 'Failed to fetch user posts';
       });
   },
 });

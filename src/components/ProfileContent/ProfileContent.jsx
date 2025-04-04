@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import CreatePost from "../CreatingPost/CreatingPost";
 import ProfileAbout from "../ProfileAbout/ProfileAbout";
+import ProfileFriendsList from "../ProfileFriendsList/ProfileFriendsList";
 import Post from "../Post/Post";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -52,6 +53,10 @@ function ProfileContent({ profile, loading, error }) {
   const dispatch = useDispatch();
   const { id } = useParams();
   const userPostsLimit = 10; // Default limit for user posts
+  
+  // Check if viewing own profile
+  const currentUser = useSelector(state => state.user.user);
+  const isOwnProfile = currentUser && id && currentUser._id === id;
   
   const { 
     userPosts, 
@@ -232,7 +237,7 @@ function ProfileContent({ profile, loading, error }) {
         </TabPanelContent>
         
         <TabPanelContent value={value} index={2}>
-          <Typography variant="body1">Friends content here...</Typography>
+          <ProfileFriendsList userId={id} isOwnProfile={isOwnProfile} />
         </TabPanelContent>
         
         <TabPanelContent value={value} index={3}>

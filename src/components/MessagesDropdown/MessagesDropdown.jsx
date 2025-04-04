@@ -1,36 +1,34 @@
 import React, { useState } from 'react';
-import Menu from '@mui/material/Menu';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
-import Typography from '@mui/material/Typography';
-import MessageItem from '../../components/MessageItem/MessageItem';
-import { MessageContainer, MenuTitle, MenuFooter, ActionText, LinkText } from './styles';
+import { useSelector } from 'react-redux';
+import { MessageContainer } from './styles';
 import { IconAvatar } from '../../components/Header/styles';
+import MessageSidebar from '../MessageSidebar/MessageSidebar';
 
 const MessagesDropdown = ({ messageIcon, avatarMessage }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  // Lấy số lượng tin nhắn chưa đọc từ Redux store
+  const conversations = useSelector(state => state.messages.conversations || []);
+  const unreadCount = conversations.reduce((total, conv) => total + (conv.unread || 0), 0);
+  
+  const handleOpenSidebar = () => {
+    setSidebarOpen(true);
   };
   
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
   };
   
   return (
     <MessageContainer>
       <IconButton
         aria-label="messages"
-        aria-controls={open ? 'messages-menu' : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
-        onClick={handleClick}
+        onClick={handleOpenSidebar}
         color="inherit"
       >
-        <Badge badgeContent={1} color="primary">
+        <Badge badgeContent={unreadCount} color="primary">
           <IconAvatar 
             src={messageIcon} 
             variant="square" 
@@ -38,56 +36,12 @@ const MessagesDropdown = ({ messageIcon, avatarMessage }) => {
           />
         </Badge>
       </IconButton>
-      <Menu
-        id="messages-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        MenuListProps={{
-          'aria-labelledby': 'messages-button',
-        }}
-        PaperProps={{
-          elevation: 4,
-          sx: { width: 320, maxHeight: 450 }
-        }}
-      >
-        <MenuTitle>
-          <Typography variant="subtitle1">
-            Messages | <LinkText component="span">Requests</LinkText>
-          </Typography>
-          <ActionText variant="body2">
-            Mark All as Read
-          </ActionText>
-        </MenuTitle>
-        <Divider />
-        <MessageItem 
-          avatar={avatarMessage} 
-          userName="Susan P. Jarvis" 
-          message="This party is going to have a DJ, food, and drinks."
-          isUnread={true}
-        />
-        <MessageItem 
-          avatar={avatarMessage} 
-          userName="Ruth D. Greene" 
-          message="Great, I'll see you tomorrow!"
-          isUnread={true}
-        />
-        <MessageItem 
-          avatar={avatarMessage} 
-          userName="Kimberly R. Hatfield" 
-          message="yeah, I will be there."
-          isUnread={true}
-        />
-        <Divider />
-        <MenuFooter>
-          <ActionText 
-            variant="body2" 
-            sx={{ display: 'block', width: '100%' }}
-          >
-            View All Messages
-          </ActionText>
-        </MenuFooter>
-      </Menu>
+      
+      {/* MessageSidebar thay thế cho Menu */}
+      <MessageSidebar 
+        open={sidebarOpen} 
+        onClose={handleCloseSidebar}
+      />
     </MessageContainer>
   );
 };

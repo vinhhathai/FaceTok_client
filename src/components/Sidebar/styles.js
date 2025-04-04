@@ -60,12 +60,12 @@ export const ItemListItemIcon = styled(ListItemIcon)(({ theme }) => ({
   minWidth: 0,
   marginRight: theme.spacing(3),
   justifyContent: 'center',
+  display: 'flex',
+  alignItems: 'center',
+  '& .MuiSvgIcon-root': {
+    fontSize: 24,
+  }
 }));
-
-export const ItemIconImage = styled('img')({
-  width: 24,
-  height: 24,
-});
 
 export const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {

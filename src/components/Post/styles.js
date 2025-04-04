@@ -33,12 +33,22 @@ export const PostCardHeader = styled(CardHeader)({
   },
 });
 
+export const UserAvatar = styled(Avatar)(({ theme }) => ({
+  cursor: 'pointer',
+  transition: 'transform 0.2s',
+  '&:hover': {
+    transform: 'scale(1.05)',
+  },
+}));
+
 export const UserNameLink = styled(Link)(({ theme }) => ({
   fontWeight: 'bold',
   color: theme.palette.text.primary,
   textDecoration: 'none',
+  cursor: 'pointer',
   '&:hover': {
     textDecoration: 'underline',
+    color: theme.palette.primary.main,
   },
 }));
 

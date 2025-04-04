@@ -13,6 +13,7 @@ import Box from '@mui/material/Box';
 import { useSelector } from 'react-redux';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import { Link, useNavigate } from 'react-router-dom';
 
 import {
   PostCard,
@@ -28,7 +29,8 @@ import {
   PostMenu,
   PostMenuItem,
   PostMenuItemIcon,
-  PostMenuItemText
+  PostMenuItemText,
+  UserAvatar
 } from './styles';
 
 import DeleteConfirmModal from '../DeleteConfirmModal/DeleteConfirmModal';
@@ -60,6 +62,7 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
   const debounceTimerRef = useRef(null);
   
   const currentUser = useSelector((state) => state.user);
+  const navigate = useNavigate();
   
   // Sử dụng dữ liệu từ props hoặc dữ liệu mặc định
   const userImage = post?.userImage || defaultUserImage;
@@ -67,6 +70,9 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
   const userName = post?.userName || "User Name";
   const postTime = post?.time || "3 hours ago";
   const postContent = post?.content || "No content available";
+  
+  // Lấy userId để điều hướng đến trang profile
+  const authorId = post?.userId || (post?.author && post.author._id);
   
   // Kiểm tra xem post có phải của user hiện tại không
   const isCurrentUserPost = currentUser && currentUser.id && 
@@ -150,6 +156,13 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
     setCommentsCount(prev => Math.max(0, prev - 1));
   };
   
+  // Xử lý điều hướng đến trang profile khi click vào avatar hoặc tên người dùng
+  const handleProfileNavigate = () => {
+    if (authorId) {
+      navigate(`/profile/${authorId}`);
+    }
+  };
+
   // Function to handle adding new comments
   const handleAddComment = async (text, updatedComments) => {
     // If text is provided and not empty, add a new comment
@@ -450,7 +463,12 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
     <PostCard>
       <PostCardHeader
         avatar={
-          <Avatar src={userImage} aria-label="user avatar" />
+          <Avatar 
+            src={userImage} 
+            aria-label="user avatar" 
+            onClick={handleProfileNavigate}
+            sx={{ cursor: 'pointer' }}
+          />
         }
         action={
           <IconButton aria-label="settings" onClick={handleClickMenu}>
@@ -458,7 +476,10 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
           </IconButton>
         }
         title={
-          <UserNameLink href="#" underline="hover">
+          <UserNameLink 
+            onClick={handleProfileNavigate}
+            sx={{ cursor: 'pointer' }}
+          >
             {userName}
           </UserNameLink>
         }
@@ -546,15 +567,15 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
       />
       
       {/* Comment Modal */}
-      <CommentModal
+      <CommentModal 
         open={showCommentModal}
         onClose={handleCloseCommentModal}
-        postId={post.postId || post._id}
+        postId={post?.postId || post?._id}
         comments={comments}
+        loadingComments={loadingComments}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}
-        loading={loadingComments}
-        currentUser={currentUser}
+        postAuthorId={post?.userId || (post?.author && post.author._id)}
       />
       
       {/* Snackbar thông báo */}

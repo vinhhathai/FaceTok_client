@@ -14,6 +14,22 @@ export const fetchFriends = createAsyncThunk(
   }
 );
 
+// Thunk to fetch a specific user's friends by userId
+export const fetchUserFriends = createAsyncThunk(
+  'friends/fetchUserFriends',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/friend/list/${userId}`);
+      return {
+        userId,
+        friends: response.data.friends
+      };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to fetch user friends');
+    }
+  }
+);
+
 // Thunk to fetch friend requests
 export const fetchFriendRequests = createAsyncThunk(
   'friends/fetchFriendRequests',
@@ -120,6 +136,7 @@ export const removeFriend = createAsyncThunk(
 // Initial state
 const initialState = {
   friends: [],
+  userFriends: {}, // { userId: friends[] }
   friendRequests: {
     received: [],
     sent: []
@@ -230,6 +247,21 @@ const friendSlice = createSlice({
       .addCase(fetchFriends.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch friends';
+      })
+      
+      // fetchUserFriends
+      .addCase(fetchUserFriends.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserFriends.fulfilled, (state, action) => {
+        state.loading = false;
+        const { userId, friends } = action.payload;
+        state.userFriends[userId] = friends;
+      })
+      .addCase(fetchUserFriends.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch user friends';
       })
       
       // fetchFriendRequests

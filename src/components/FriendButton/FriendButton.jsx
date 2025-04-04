@@ -7,6 +7,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import { 
   sendFriendRequest, 
   acceptFriendRequest, 
@@ -29,8 +30,9 @@ import {
  * @param {string} props.size - Button size ('small', 'medium', 'large')
  * @param {string} props.variant - Button variant ('text', 'outlined', 'contained')
  * @param {boolean} props.showText - Whether to show text along with icon
+ * @param {string} props.iconSize - Size of the icon ('small', 'medium', 'large')
  */
-const FriendButton = ({ userId, size = 'small', variant = 'contained', showText = true }) => {
+const FriendButton = ({ userId, size = 'small', variant = 'contained', showText = true, iconSize = 'medium' }) => {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -109,7 +111,7 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
               variant={variant}
               size={size}
               color="primary"
-              startIcon={<PeopleIcon />}
+              startIcon={<PeopleIcon fontSize={iconSize} />}
               onClick={handleOpenMenu}
               disabled={loading}
             >
@@ -122,8 +124,8 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
             onClose={handleCloseMenu}
           >
             <FriendMenuItem onClick={handleRemoveFriend} disabled={loading}>
-              <CloseIcon fontSize="small" />
-              Remove Friend
+              <PersonRemoveIcon fontSize={iconSize} />
+              Remove
             </FriendMenuItem>
           </FriendActionMenu>
         </>
@@ -136,7 +138,7 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
             variant={variant}
             size={size}
             color="secondary"
-            startIcon={<CancelIcon />}
+            startIcon={<CancelIcon fontSize={iconSize} />}
             onClick={handleCancelRequest}
             disabled={loading}
           >
@@ -153,7 +155,7 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
               variant={variant}
               size={size}
               color="primary"
-              startIcon={<HowToRegIcon />}
+              startIcon={<HowToRegIcon fontSize={iconSize} />}
               onClick={handleOpenMenu}
               disabled={loading}
             >
@@ -166,11 +168,11 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
             onClose={handleCloseMenu}
           >
             <FriendMenuItem onClick={handleAcceptRequest} disabled={loading}>
-              <CheckIcon fontSize="small" />
+              <CheckIcon fontSize={iconSize} />
               Accept
             </FriendMenuItem>
             <FriendMenuItem onClick={handleRejectRequest} disabled={loading}>
-              <CloseIcon fontSize="small" />
+              <CloseIcon fontSize={iconSize} />
               Reject
             </FriendMenuItem>
           </FriendActionMenu>
@@ -185,7 +187,7 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
             variant={variant}
             size={size}
             color="primary"
-            startIcon={<PersonAddIcon />}
+            startIcon={<PersonAddIcon fontSize={iconSize} />}
             onClick={handleSendRequest}
             disabled={loading}
           >
