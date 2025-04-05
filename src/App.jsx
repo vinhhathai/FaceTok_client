@@ -1,19 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 import './App.css';
+import { ThemeProvider, CssBaseline, useTheme } from "@mui/material";
+import socketService from "./services/socketService";
 
 // Import CSS files
-import './assets/css/bootstrap/bootstrap.min.css';
-import './assets/css/boxicons.min.css'
-import './assets/css/style.css'
-import './assets/css/components.css'
-import './assets/css/media.css'
-import './assets/css/chat.css'
-import './assets/css/video.css'
-import './assets/css/auth.css'
-import './assets/css/forms.css'
-import './assets/css/profile.css'
-import './assets/js/load.js'
+
 
 // Import pages
 import HomePage from './pages/HomePage/HomePage';
@@ -35,9 +27,6 @@ import { fetchFriends, fetchFriendRequests } from './redux/features/friendSlice'
 
 // Loading component
 import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
-
-// Socket service
-import socketService from './services/socketService';
 
 // HOC for protecting routes
 import withAuth from './utils/withAuth.js';
@@ -64,6 +53,7 @@ function App() {
   const dispatch = useDispatch();
   const [initializing, setInitializing] = useState(true);
   const { isAuthenticated, user } = useSelector(state => state.user || {});
+  const theme = useTheme();
 
   useEffect(() => {
     // Initialize user data from token
@@ -84,22 +74,28 @@ function App() {
     initApp();
   }, [dispatch]);
 
-  // Initialize socket and fetch friends data when user is authenticated
   useEffect(() => {
-    if (!initializing && isAuthenticated && user) {
-      // Initialize socket connection
-      socketService.initSocket();
+    if (isAuthenticated && user) {
+      console.log("Initializing socket connection from App component");
+      const token = socketService.getTokenFromCookie();
+      if (token) {
+        socketService.initializeSocket(token);
+      } else {
+        console.error("No token available for socket connection");
+      }
       
       // Fetch friends data
       dispatch(fetchFriends());
       dispatch(fetchFriendRequests());
-      
-      // Cleanup socket on app unmount
-      return () => {
-        socketService.closeSocket();
-      };
+    } else {
+      console.log("User not authenticated, socket not initialized");
+      socketService.closeSocket();
     }
-  }, [initializing, isAuthenticated, user, dispatch]);
+
+    return () => {
+      socketService.closeSocket();
+    };
+  }, [isAuthenticated, user, dispatch]);
 
   // Show loading spinner during initialization
   if (initializing) {

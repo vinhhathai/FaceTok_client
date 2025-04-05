@@ -3,10 +3,9 @@ import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import { useSelector } from 'react-redux';
 import { MessageContainer } from './styles';
-import { IconAvatar } from '../../components/Header/styles';
 import MessageSidebar from '../MessageSidebar/MessageSidebar';
 
-const MessagesDropdown = ({ messageIcon, avatarMessage }) => {
+const MessagesDropdown = ({ messageIcon }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Lấy số lượng tin nhắn chưa đọc từ Redux store
@@ -29,11 +28,7 @@ const MessagesDropdown = ({ messageIcon, avatarMessage }) => {
         color="inherit"
       >
         <Badge badgeContent={unreadCount} color="primary">
-          <IconAvatar 
-            src={messageIcon} 
-            variant="square" 
-            alt="message icon"
-          />
+          {messageIcon}
         </Badge>
       </IconButton>
       

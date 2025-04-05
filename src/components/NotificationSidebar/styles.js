@@ -18,7 +18,7 @@ export const SidebarTitle = styled(Typography)(({ theme }) => ({
 export const SidebarContent = styled(Box)(({ theme }) => ({
   flexGrow: 1,
   overflowY: 'auto',
-  height: 'calc(100vh - 130px)',
+  height: 'calc(100vh - 64px)',
   '&::-webkit-scrollbar': {
     width: '6px'
   },

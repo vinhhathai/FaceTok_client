@@ -1,6 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { formatTime } from '../../utils/dateFormatter';
+import { 
+  fetchNotifications, 
+  markNotificationAsRead, 
+  markAllNotificationsAsRead 
+} from '../../redux/features/notificationSlice';
 
 // Material UI components
 import Drawer from '@mui/material/Drawer';
@@ -30,58 +36,34 @@ import {
   NotificationDot,
 } from './styles';
 
-// Sample notifications data (replace with actual data from Redux later)
-const sampleNotifications = [
-  {
-    id: '1',
-    user: {
-      _id: '101',
-      fullName: 'Cá chà bặc',
-      profilePicture: '',
-    },
-    text: 'đã gửi cho bạn lời mời kết bạn',
-    timestamp: '2025-04-04T10:45:00.855Z',
-    isRead: false,
-    type: 'friend_request',
-    link: '/friends'
-  },
-  {
-    id: '2',
-    user: {
-      _id: '102',
-      fullName: 'Hà Thái Vĩnh',
-      profilePicture: '',
-    },
-    text: 'đã bình luận về bài viết của bạn',
-    timestamp: '2025-04-04T10:31:29.994Z',
-    isRead: false,
-    type: 'comment',
-    link: '/post/123'
-  },
-];
-
 const NotificationSidebar = ({ open, onClose }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   
-  // Giả lập trạng thái loading
-  const [loading, setLoading] = React.useState(true);
-  const [notifications, setNotifications] = React.useState([]);
+  // Get data from Redux
+  const { notifications, loading, error } = useSelector(state => state.notifications);
   
-  // Giả lập việc tải thông báo
+  console.log('NotificationSidebar rendering with:', { 
+    notificationsCount: notifications?.length, 
+    notifications,
+    loading
+  });
+  
+  // Fetch notifications when the sidebar opens
   useEffect(() => {
     if (open) {
-      // Giả lập API call
-      const timer = setTimeout(() => {
-        setNotifications(sampleNotifications);
-        setLoading(false);
-      }, 500);
-      
-      return () => clearTimeout(timer);
+      console.log("NotificationSidebar opening, current notifications:", notifications);
+      dispatch(fetchNotifications());
     }
-  }, [open]);
+  }, [open, dispatch]);
   
   // Xử lý click vào thông báo
   const handleNotificationClick = (notification) => {
+    // Đánh dấu thông báo là đã đọc
+    if (!notification.isRead) {
+      dispatch(markNotificationAsRead(notification.id));
+    }
+    
     // Điều hướng đến trang tương ứng với thông báo
     if (notification.link) {
       navigate(notification.link);
@@ -91,10 +73,7 @@ const NotificationSidebar = ({ open, onClose }) => {
   
   // Xử lý đánh dấu tất cả là đã đọc
   const handleMarkAllAsRead = () => {
-    // Cập nhật trạng thái đã đọc cho tất cả thông báo
-    setNotifications(prevNotifications => 
-      prevNotifications.map(notif => ({ ...notif, isRead: true }))
-    );
+    dispatch(markAllNotificationsAsRead());
   };
   
   return (
@@ -197,20 +176,7 @@ const NotificationSidebar = ({ open, onClose }) => {
         </List>
       </SidebarContent>
       
-      <Divider />
-      
-      <SidebarFooter>
-        <Button 
-          variant="text" 
-          fullWidth
-          onClick={() => {
-            navigate('/notifications');
-            onClose();
-          }}
-        >
-          Xem tất cả thông báo
-        </Button>
-      </SidebarFooter>
+      {/* Removed the footer with "Xem tất cả thông báo" button */}
     </Drawer>
   );
 };

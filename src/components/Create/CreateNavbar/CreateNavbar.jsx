@@ -1,8 +1,8 @@
 import { useState } from "react";
-import createIcon from "../../../assets/images/icons/navbar/create.png";
 import CreateDropdown from "../CreateDropdown/CreateDropdown";
 import ClickAwayListener from '@mui/material/ClickAwayListener';
-import { CreateIconButton, IconAvatar, DropdownContainer } from './styles';
+import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
+import { CreateIconButton, DropdownContainer } from './styles';
 
 function CreateNavbar() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -24,11 +24,7 @@ function CreateNavbar() {
           aria-label="create"
           onClick={handleClick}
         >
-          <IconAvatar
-            src={createIcon}
-            variant="square"
-            alt="Create"
-          />
+          <AddBoxOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />
         </CreateIconButton>
         
         {showDropdown && <CreateDropdown />}

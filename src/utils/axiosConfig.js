@@ -1,10 +1,24 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-// Đặt URL cơ sở cho tất cả các yêu cầu
-axios.defaults.baseURL = 'http://localhost:3000'; // Thay đổi URL server của bạn nếu cần
+// Lấy origin của client (đầy đủ domain/host) và thay đổi port nếu cần
+const getBaseURL = () => {
+  const origin = window.location.origin; // ví dụ: http://localhost:3001
+  
+  // Nếu đang chạy local, sử dụng port 3000 cho API
+  if (origin.includes('localhost')) {
+    return origin.replace(/:\d+$/, ':3000'); // Thay thế port bằng 3000
+  }
+  
+  // Khi deploy, sử dụng cùng domain nhưng path khác nhau
+  return origin;
+};
 
-// Thêm một interceptor yêu cầu
+// Đặt URL cơ sở cho tất cả các yêu cầu
+axios.defaults.baseURL = getBaseURL();
+console.log('Axios baseURL configured as:', axios.defaults.baseURL);
+
+// Thêm interceptor cho mọi request
 axios.interceptors.request.use(
   (config) => {
     // Lấy token từ cookie

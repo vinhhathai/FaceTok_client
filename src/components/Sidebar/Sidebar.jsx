@@ -2,10 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ListItemText, Divider } from '@mui/material'; // Keep only necessary direct imports
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import EmailIcon from '@mui/icons-material/Email';
+import GroupsIcon from '@mui/icons-material/Groups';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import HomeIcon from '@mui/icons-material/Home';
 import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
 import VideoCameraBackOutlinedIcon from '@mui/icons-material/VideoCameraBackOutlined';
 import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
@@ -23,9 +23,9 @@ import {
 
 // Main navigation items with Material-UI icons
 const mainItems = [
-  { text: 'Messages', icon: <EmailOutlinedIcon color="primary" />, to: '/messages' },
-  { text: 'Groups', icon: <GroupsOutlinedIcon color="secondary" />,  to: '/groups' },
-  { text: 'Find Friends', icon: <PeopleAltOutlinedIcon style={{ color: '#f0a04b' }} />, to: '/friends' },
+  { text: 'Messages', icon: <EmailIcon color="primary" />, to: '/messages' },
+  { text: 'Groups', icon: <GroupsIcon color="secondary" />,  to: '/groups' },
+  { text: 'Find Friends', icon: <PeopleAltIcon style={{ color: '#f0a04b' }} />, to: '/friends' },
 ];
 
 // Additional items
@@ -43,7 +43,7 @@ function Sidebar() {
           <ItemListItem disablePadding>
             <ItemListItemButton component={Link} to="/">
               <ItemListItemIcon>
-                <HomeOutlinedIcon color="primary" />
+                <HomeIcon color="primary" />
               </ItemListItemIcon>
               <ListItemText primary="Home" sx={{ '& .MuiTypography-root': { fontWeight: 'bold' } }} />
             </ItemListItemButton>

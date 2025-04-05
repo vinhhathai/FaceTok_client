@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { CircularProgress, IconButton } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import { toast } from 'react-toastify';
-import mediaIcon from "../../assets/images/icons/theme/post-image.png";
 import { createNewPost, resetCreatePostStatus, fetchUserPosts } from '../../redux/features/postSlice';
 import { useParams } from 'react-router-dom';
 
@@ -153,7 +153,7 @@ function CreatePost() {
         />
         <label htmlFor="media-upload">
           <MediaButton component="span" disabled={isLoading}>
-            <img src={mediaIcon} alt="Media" />
+            <ImageOutlinedIcon sx={{ mr: 1 }} />
             Thêm ảnh
           </MediaButton>
         </label>

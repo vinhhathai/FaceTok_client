@@ -595,7 +595,7 @@ function Post({ post, defaultUserImage, defaultPostImage, onPostDeleted, onPostU
 
 // Default props
 Post.defaultProps = {
-  defaultUserImage: require("../../assets/images/users/user-1.jpg"),
+  defaultUserImage: process.env.PUBLIC_URL + "/assets/images/avatar_default.jpg",
   defaultPostImage: null,
 };
 

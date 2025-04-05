@@ -10,7 +10,6 @@ import Alert from '@mui/material/Alert';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import IconButton from '@mui/material/IconButton';
-import weatherIcon from "../../assets/images/icons/weather/sun.png";
 
 import {
   WeatherBarContainer,
@@ -24,6 +23,9 @@ import {
   WeatherDetails,
   WeatherDetailItem
 } from './styles';
+
+// Default weather icon as fallback (placeholder URL)
+const weatherIcon = "https://openweathermap.org/img/wn/04d@2x.png";
 
 function WeatherBar() {
   const [currentTime, setCurrentTime] = useState(new Date());

@@ -1,46 +1,61 @@
-import { io } from 'socket.io-client';
+import io from 'socket.io-client';
 import Cookies from 'js-cookie';
 import { store } from '../redux/store';
 import { addMessage, updateMessageRead, setOnlineUsers, setTypingStatus } from '../redux/features/messageSlice';
 import { addFriendRequest, addFriend, removeFriendAction } from '../redux/features/friendSlice';
+import { addNotification } from '../redux/features/notificationSlice';
 
+// Hàm để lấy URL socket dựa trên vị trí hiện tại
+const getSocketURL = () => {
+  const origin = window.location.origin;
+  
+  // Nếu đang chạy local, sử dụng port 3000 cho API
+  if (origin.includes('localhost')) {
+    return origin.replace(/:\d+$/, ':3000');
+  }
+  
+  // Khi deploy, sử dụng cùng domain nhưng port khác
+  return origin;
+};
+
+// Khởi tạo socket
 let socket = null;
 
-export const initSocket = () => {
-  if (socket) return socket;
-  
-  // Lấy token từ cookie theo cách mới
-  const token = getTokenFromCookie();
+export const initializeSocket = (token) => {
+  if (socket) {
+    console.log('Socket already initialized');
+    return socket;
+  }
+
   if (!token) {
-    console.error('No authentication token found, socket connection aborted');
+    console.error('No token provided for socket connection');
     return null;
   }
 
-  console.log('Initializing socket with token');
+  // Lấy URL socket dựa trên môi trường
+  const socketURL = getSocketURL();
+  console.log(`Attempting to connect to socket server at: ${socketURL}`);
   
-  // Connect to server with authentication
-  socket = io('http://localhost:3000', {
-    auth: { token },
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-    timeout: 10000
+  socket = io(socketURL, {
+    auth: {
+      token: token,
+    },
   });
 
-  // Set up event listeners
   socket.on('connect', () => {
-    console.log('Connected to socket server');
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Disconnected from socket server');
-  });
-
-  socket.on('error', (error) => {
-    console.error('Socket error:', error);
+    console.log('Connected to socket server at:', socketURL);
   });
 
   socket.on('connect_error', (error) => {
-    console.error('Socket connection error:', error);
+    console.error('Socket connection error:', error.message);
+    // Thêm mask token để hiển thị an toàn trong log
+    const maskedToken = token ? `${token.substring(0, 10)}...${token.substring(token.length - 5)}` : 'no token';
+    console.log('Connection attempted with token (masked):', maskedToken);
+  });
+
+  // Thêm sự kiện theo dõi tất cả các sự kiện socket để debug
+  socket.onAny((event, ...args) => {
+    console.log(`[Socket Debug] Event received: ${event}`, args);
   });
 
   // Listen for new messages
@@ -84,29 +99,47 @@ export const initSocket = () => {
     console.log('Friend removed:', data);
     store.dispatch(removeFriendAction({ friendId: data.userId }));
   });
+  
+  // New notification received
+  socket.on('newNotification', (notification) => {
+    console.log('New notification received:', notification);
+    console.log('Dispatching addNotification action to Redux store');
+    store.dispatch(addNotification(notification));
+    console.log('Notification dispatched successfully');
+  });
 
   return socket;
 };
 
-// Hàm để lấy token từ cookie - giống như trong axiosConfig
-function getTokenFromCookie() {
+// Thêm hàm initSocket để tương thích với code hiện tại
+export const initSocket = () => {
+  const token = getTokenFromCookie();
+  return initializeSocket(token);
+};
+
+export const getSocket = () => {
+  return socket;
+};
+
+export const closeSocket = () => {
+  if (socket) {
+    socket.close();
+    socket = null;
+    console.log('Socket connection closed');
+  }
+};
+
+export const getTokenFromCookie = () => {
   try {
     const accountInfo = Cookies.get('accountInformation');
     if (accountInfo) {
       const parsedInfo = JSON.parse(accountInfo);
-      return parsedInfo.accessToken || '';
+      return parsedInfo.accessToken || null;
     }
-    return '';
+    return null;
   } catch (error) {
     console.error('Error getting token from cookie:', error);
-    return '';
-  }
-}
-
-export const closeSocket = () => {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
+    return null;
   }
 };
 
@@ -130,8 +163,11 @@ export const markMessageAsRead = (messageId) => {
 };
 
 export default {
+  initializeSocket,
   initSocket,
+  getSocket,
   closeSocket,
+  getTokenFromCookie,
   sendMessage,
   sendTypingStatus,
   markMessageAsRead

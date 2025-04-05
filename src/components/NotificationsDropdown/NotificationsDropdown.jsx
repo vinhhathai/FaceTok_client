@@ -1,12 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import { NotificationContainer } from './styles';
-import { IconAvatar } from '../../components/Header/styles';
 import NotificationSidebar from '../NotificationSidebar/NotificationSidebar';
+import { getUnreadCount } from '../../redux/features/notificationSlice';
 
 const NotificationsDropdown = ({ notificationIcon }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const dispatch = useDispatch();
+  
+  // Get unread count from Redux
+  const { unreadCount, notifications } = useSelector(state => state.notifications);
+  
+  console.log('NotificationsDropdown rendering:', { unreadCount, notificationsCount: notifications?.length });
+  
+  // Fetch unread count initially and on interval
+  useEffect(() => {
+    console.log('NotificationsDropdown: Fetching unread count');
+    dispatch(getUnreadCount());
+    
+    // Poll for new notifications every minute
+    const intervalId = setInterval(() => {
+      console.log('NotificationsDropdown: Polling for updates');
+      dispatch(getUnreadCount());
+    }, 60000);
+    
+    return () => clearInterval(intervalId);
+  }, [dispatch]);
   
   const handleOpenSidebar = () => {
     setSidebarOpen(true);
@@ -23,12 +44,8 @@ const NotificationsDropdown = ({ notificationIcon }) => {
         onClick={handleOpenSidebar}
         color="inherit"
       >
-        <Badge badgeContent={2} color="primary">
-          <IconAvatar 
-            src={notificationIcon} 
-            variant="square" 
-            alt="notification icon"
-          />
+        <Badge badgeContent={unreadCount} color="error">
+          {notificationIcon}
         </Badge>
       </IconButton>
       

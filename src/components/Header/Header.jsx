@@ -15,9 +15,11 @@ import Container from '@mui/material/Container';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
-import HomeIcon from '@mui/icons-material/Home';
-import PeopleIcon from '@mui/icons-material/People';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
+import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import { useTheme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import Badge from '@mui/material/Badge';
@@ -29,13 +31,9 @@ import {
   LogoContainer,
   ActionsContainer,
   SearchContainer,
-  ActionButtonsContainer
+  ActionButtonsContainer,
+  IconAvatar
 } from './styles';
-
-// Import icons
-import message from "../../assets/images/icons/navbar/message.png";
-import notificationIcon from "../../assets/images/icons/navbar/notification.png";
-import avatarMessage from "../../assets/images/users/user-6.png";
 
 function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -51,6 +49,10 @@ function Header() {
   const friends = useSelector(state => state.friends || {});
   const friendRequests = friends.friendRequests || { received: [] };
   const requestCount = friendRequests.received?.length || 0;
+  
+  // Log notification data from Redux store for debugging
+  const notificationState = useSelector(state => state.notifications);
+  console.log("Current notification state:", notificationState);
   
   const isExtraSmall = useMediaQuery(theme.breakpoints.down('xs'));
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
@@ -105,17 +107,10 @@ function Header() {
                 <IconButton
                   onClick={handleNavigateHome}
                   sx={{
-                    borderRadius: '8px',
-                    padding: '8px',
-                    color: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.08)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 123, 255, 0.15)',
-                    },
                     mr: 1
                   }}
                 >
-                  <HomeIcon sx={{ fontSize: 26 }} />
+                  <HomeOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />
                 </IconButton>
               </Tooltip>
               
@@ -123,25 +118,18 @@ function Header() {
                 <IconButton
                   onClick={handleNavigateFriends}
                   sx={{
-                    borderRadius: '8px',
-                    padding: '8px',
-                    color: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.08)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 123, 255, 0.15)',
-                    },
                     mr: 1
                   }}
                 >
                   <Badge badgeContent={requestCount} color="error">
-                    <PeopleIcon sx={{ fontSize: 26 }} />
+                    <PeopleAltOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />
                   </Badge>
                 </IconButton>
               </Tooltip>
               
               <CreateNavbar />
-              <MessagesDropdown messageIcon={message} avatarMessage={avatarMessage} />
-              <NotificationsDropdown notificationIcon={notificationIcon} />
+              <MessagesDropdown messageIcon={<ChatOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />} />
+              <NotificationsDropdown notificationIcon={<NotificationsOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />} />
               {isAuthenticated && user && (
                 <UserDropdown 
                   id={user._id} 

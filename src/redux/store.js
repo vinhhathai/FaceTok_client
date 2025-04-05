@@ -4,6 +4,7 @@ import profileReducer from './features/profileSlice';
 import postReducer from './features/postSlice';
 import messageReducer from './features/messageSlice';
 import friendReducer from './features/friendSlice';
+import notificationReducer from './features/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     posts: postReducer,
     messages: messageReducer,
     friends: friendReducer,
+    notifications: notificationReducer,
   },
 });
 
