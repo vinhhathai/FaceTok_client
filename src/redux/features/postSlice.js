@@ -44,36 +44,49 @@ export const fetchTimelinePosts = createAsyncThunk(
   'posts/fetchTimeline',
   async ({ page, limit }, { rejectWithValue }) => {
     try {
+      console.log(`Fetching timeline posts: page ${page}, limit ${limit}`);
       const response = await getTimelinePosts(page, limit);
+      console.log('Timeline API response:', response.data);
       
-      // Nếu API trả về dữ liệu phân trang đầy đủ
-      if (response.data && response.data.posts) {
-        return {
-          posts: response.data.posts,
-          currentPage: response.data.currentPage || page,
-          totalPages: response.data.totalPages || 1,
-          totalPosts: response.data.totalPosts || response.data.posts.length
-        };
-      } 
+      // API function đã xử lý response.data.data
+      const responseData = response.data;
       
-      // Nếu API chỉ trả về array của posts
-      if (response.data && Array.isArray(response.data)) {
-        return {
-          posts: response.data,
-          currentPage: page,
-          totalPages: Math.ceil(response.data.length / limit) || 1,
-          totalPosts: response.data.length
-        };
+      if (!responseData) {
+        console.error('No data returned from API');
+        return rejectWithValue('Không nhận được dữ liệu từ server');
       }
       
-      // Fallback nếu không xác định được định dạng
-      return {
-        posts: [],
-        currentPage: page,
-        totalPages: 1,
-        totalPosts: 0
-      };
+      // Kiểm tra xem dữ liệu có cấu trúc đúng không
+      if (Array.isArray(responseData)) {
+        // Trường hợp API trả về mảng posts trực tiếp
+        console.log('API returned array of posts directly');
+        return {
+          posts: responseData,
+          currentPage: page,
+          totalPages: Math.ceil(responseData.length / limit) || 1,
+          totalPosts: responseData.length
+        };
+      } else if (responseData.posts) {
+        // Trường hợp API trả về object có chứa posts
+        console.log('API returned object with posts field');
+        return {
+          posts: responseData.posts || [],
+          currentPage: responseData.currentPage || page,
+          totalPages: responseData.totalPages || 1,
+          totalPosts: responseData.totalPosts || (responseData.posts ? responseData.posts.length : 0)
+        };
+      } else {
+        // Trường hợp không xác định
+        console.error('Unexpected API response format:', responseData);
+        return {
+          posts: [],
+          currentPage: page,
+          totalPages: 1,
+          totalPosts: 0
+        };
+      }
     } catch (error) {
+      console.error('Error fetching timeline posts:', error);
       return rejectWithValue(error.message || 'Không thể tải bài viết');
     }
   }
@@ -84,45 +97,50 @@ export const fetchUserPosts = createAsyncThunk(
   'posts/fetchUserPosts',
   async ({ userId, page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
+      console.log(`Fetching user posts for user ${userId}: page ${page}, limit ${limit}`);
       const response = await getUserPosts(userId, page, limit);
+      console.log('User posts API response:', response.data);
       
-      // Check if we got a valid response with posts
-      if (!response.data) {
-        return { posts: [], currentPage: page, totalPages: 1 };
+      // API function đã xử lý response.data.data
+      const responseData = response.data;
+      
+      if (!responseData) {
+        console.error('No data returned from API');
+        return rejectWithValue('Không nhận được dữ liệu từ server');
       }
       
-      // Format lại dữ liệu tương tự như timeline posts
-      if (response.data && Array.isArray(response.data)) {
+      // Kiểm tra xem dữ liệu có cấu trúc đúng không
+      if (Array.isArray(responseData)) {
+        // Trường hợp API trả về mảng posts trực tiếp
+        console.log('API returned array of posts directly');
         return {
-          posts: response.data.map(post => ({
+          posts: responseData.map(post => ({
             ...post,
             content: post.caption || post.content || '',
             media: post.filePath 
               ? [{ url: post.filePath }]
-              : []
+              : (post.media || [])
           })),
           currentPage: page,
-          totalPages: Math.ceil(response.data.length / limit) || 1
+          totalPages: Math.ceil(responseData.length / limit) || 1
         };
-      } else if (response.data && response.data.posts) {
-        // Check if posts array is valid
-        if (!Array.isArray(response.data.posts)) {
-          return { posts: [], currentPage: page, totalPages: 1 };
-        }
-        
+      } else if (responseData.posts) {
+        // Trường hợp API trả về object có chứa posts
+        console.log('API returned object with posts field');
         return {
-          ...response.data,
-          posts: response.data.posts.map(post => {
-            return {
-              ...post,
-              content: post.caption || post.content || '',
-              media: post.filePath
-                ? [{ url: post.filePath }]
-                : (post.media || [])
-            };
-          })
+          posts: responseData.posts.map(post => ({
+            ...post,
+            content: post.caption || post.content || '',
+            media: post.filePath 
+              ? [{ url: post.filePath }]
+              : (post.media || [])
+          })),
+          currentPage: responseData.currentPage || page,
+          totalPages: responseData.totalPages || 1
         };
       } else {
+        // Trường hợp không xác định
+        console.error('Unexpected API response format:', responseData);
         return {
           posts: [],
           currentPage: 1,

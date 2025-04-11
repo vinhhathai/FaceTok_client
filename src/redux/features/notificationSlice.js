@@ -9,11 +9,15 @@ export const fetchNotifications = createAsyncThunk(
       console.log("Fetching notifications from API");
       const response = await axios.get("/notification/list");
       console.log("API returned notifications:", response.data);
-      return response.data;
+      // Lấy dữ liệu từ cấu trúc mới: response.data.data
+      return {
+        data: response.data.data || [],
+        unreadCount: response.data.unreadCount
+      };
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
       return rejectWithValue(
-        error.response?.data?.message || "Không thể tải thông báo"
+        error.response?.data?.error?.message || "Không thể tải thông báo"
       );
     }
   }
@@ -24,10 +28,13 @@ export const markNotificationAsRead = createAsyncThunk(
   async (notificationId, { rejectWithValue }) => {
     try {
       const response = await axios.put(`/notification/read/${notificationId}`);
-      return { notificationId, data: response.data };
+      return { 
+        notificationId, 
+        data: response.data.data 
+      };
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Không thể đánh dấu đã đọc"
+        error.response?.data?.error?.message || "Không thể đánh dấu đã đọc"
       );
     }
   }
@@ -38,10 +45,10 @@ export const markAllNotificationsAsRead = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.put("/notification/read-all");
-      return response.data;
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Không thể đánh dấu tất cả đã đọc"
+        error.response?.data?.error?.message || "Không thể đánh dấu tất cả đã đọc"
       );
     }
   }
@@ -54,11 +61,14 @@ export const getUnreadCount = createAsyncThunk(
       console.log("Fetching unread count...");
       const response = await axios.get("/notification/unread-count");
       console.log("Unread count response:", response.data);
-      return response.data;
+      // Lấy dữ liệu từ cấu trúc mới: response.data.data.count
+      return { 
+        count: response.data.data ? response.data.data.count : 0 
+      };
     } catch (error) {
       console.error("Failed to fetch unread count:", error);
       return rejectWithValue(
-        error.response?.data?.message || "Không thể lấy số thông báo chưa đọc"
+        error.response?.data?.error?.message || "Không thể lấy số thông báo chưa đọc"
       );
     }
   }
@@ -94,13 +104,15 @@ const notificationSlice = createSlice({
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.loading = false;
         
-        // Nếu có dữ liệu từ API
-        if (action.payload.data && action.payload.data.length > 0) {
+        // Đảm bảo dữ liệu là một mảng hợp lệ
+        const notifications = Array.isArray(action.payload.data) ? action.payload.data : [];
+        
+        if (notifications.length > 0) {
           // Lấy ID của các thông báo hiện tại
           const existingIds = state.notifications.map(n => n.id);
           
           // Chỉ thêm thông báo mới mà chưa có trong danh sách
-          const newNotifications = action.payload.data.filter(n => !existingIds.includes(n.id));
+          const newNotifications = notifications.filter(n => !existingIds.includes(n.id));
           
           // Gộp thông báo mới với thông báo hiện tại, ưu tiên thông báo mới lên đầu
           state.notifications = [...newNotifications, ...state.notifications];

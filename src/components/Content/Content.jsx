@@ -112,15 +112,15 @@ function Content() {
           <Post
             key={post._id}
             post={{
-              userImage: post.author?.profilePicture,
-              userName: post.author?.fullName,
+              userImage: post.userId?.profilePicture,
+              userName: post.userId?.fullName,
               time: new Date(post.createdAt).toLocaleDateString('vi-VN'),
-              content: post.content,
-              image: post.media && post.media.length > 0 ? post.media[0].url : null,
+              content: post.caption,
+              image: post.filePath || null,
               likeCount: post.likesCount || 0,
               commentCount: post.commentsCount || 0,
               postId: post._id,
-              userId: post.author?._id,
+              userId: post.userId?._id,
               _id: post._id
             }}
           />

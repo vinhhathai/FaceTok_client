@@ -118,6 +118,12 @@ export const updateProfileThumbnail = async (file, progressCallback = null) => {
         const response = await axiosInstance.put('/user/update-thumbnail-url', postData);
 
         console.log('Server response:', response.data);
+        
+        // Kiểm tra và xử lý cấu trúc phản hồi mới
+        let responseData = response.data;
+        if (response.data && response.data.data) {
+            responseData = response.data.data;
+        }
 
         // 3. Cập nhật thumbnail trong Redux store với URL chính thức từ Cloudinary
         // URL này sẽ được tự động lưu vào localStorage trong reducer
@@ -129,13 +135,19 @@ export const updateProfileThumbnail = async (file, progressCallback = null) => {
         return {
             success: true,
             imageUrl: cloudinaryUrl,
-            message: response.data.message
+            message: responseData.message || 'Thumbnail updated successfully'
         };
     } catch (error) {
         console.error('API Error:', error);
         if (error.response) {
             console.error('Error data:', error.response.data);
             console.error('Error status:', error.response.status);
+            
+            // Xử lý lỗi theo cấu trúc mới
+            if (error.response.data.error) {
+                console.error('Detailed error:', error.response.data.error);
+                throw new Error(error.response.data.error.message || 'Failed to update thumbnail');
+            }
         }
         
         // Nếu có lỗi, khôi phục lại thumbnail từ localStorage

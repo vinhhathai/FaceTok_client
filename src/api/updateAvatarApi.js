@@ -63,8 +63,15 @@ const updateAvatarApi = async (file, progressCallback = null) => {
     URL.revokeObjectURL(tempURL);
 
     console.log('Server response:', response.data);
+    
+    // Kiểm tra và xử lý cấu trúc phản hồi mới
+    let responseData = response.data;
+    if (response.data && response.data.data) {
+      responseData = response.data.data;
+    }
+    
     return {
-      ...response.data,
+      ...responseData,
       avatarUrl: cloudinaryUrl
     };
   } catch (error) {
@@ -80,11 +87,13 @@ const updateAvatarApi = async (file, progressCallback = null) => {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       console.error('Error response:', error.response.data);
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Failed to update avatar';
-      throw new Error(errorMsg);
+      
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Failed to update avatar');
+      } else {
+        throw new Error(error.response.data.message || 'Failed to update avatar');
+      }
     } else if (error.request) {
       // The request was made but no response was received
       console.error('No response from server');

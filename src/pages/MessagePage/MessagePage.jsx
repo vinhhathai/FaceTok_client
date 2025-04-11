@@ -190,9 +190,18 @@ function MessagePage() {
   };
 
   // Filter conversations to only show friends
-  const friendConversations = conversations.filter(
-    conv => isFriend(conv.user._id)
-  );
+  const ensureArray = (possibleArray) => {
+    if (Array.isArray(possibleArray)) return possibleArray;
+    console.warn('Expected array but received:', possibleArray);
+    return [];
+  };
+
+  const friendConversations = ensureArray(conversations)
+    .filter(conv => conv && conv.user && isFriend(conv.user._id));
+
+  // Log both raw conversations and filtered friend conversations
+  console.log('Raw conversations:', conversations);
+  console.log('Friend conversations after filtering:', friendConversations);
 
   return (
     <PageContainer>

@@ -1,15 +1,25 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Hàm trợ giúp để xử lý dữ liệu từ API mới
+const getDataFromResponse = (response) => {
+  console.log('Response data:', response.data);
+  return response.data.data !== undefined ? response.data.data : response.data;
+};
+
 // Thunk to fetch user's friends
 export const fetchFriends = createAsyncThunk(
   'friends/fetchFriends',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('/friend/list');
-      return response.data.friends;
+      const data = getDataFromResponse(response);
+      console.log('Fetched friends:', data);
+      return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch friends');
+      console.error('Error fetching friends:', error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch friends';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -20,12 +30,16 @@ export const fetchUserFriends = createAsyncThunk(
   async (userId, { rejectWithValue }) => {
     try {
       const response = await axios.get(`/friend/list/${userId}`);
+      const data = getDataFromResponse(response);
+      console.log(`Fetched user ${userId} friends:`, data);
       return {
         userId,
-        friends: response.data.friends
+        friends: data
       };
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch user friends');
+      console.error(`Error fetching user ${userId} friends:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch user friends';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -35,10 +49,21 @@ export const fetchFriendRequests = createAsyncThunk(
   'friends/fetchFriendRequests',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/friend/requests');
-      return response.data;
+      const receivedResponse = await axios.get('/friend/pending');
+      const sentResponse = await axios.get('/friend/sent');
+      
+      const receivedData = getDataFromResponse(receivedResponse);
+      const sentData = getDataFromResponse(sentResponse);
+      
+      console.log('Fetched friend requests:', { received: receivedData, sent: sentData });
+      return {
+        received: receivedData || [],
+        sent: sentData || []
+      };
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch friend requests');
+      console.error('Error fetching friend requests:', error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch friend requests';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -49,12 +74,16 @@ export const checkFriendshipStatus = createAsyncThunk(
   async (userId, { rejectWithValue }) => {
     try {
       const response = await axios.get(`/friend/status/${userId}`);
+      const data = getDataFromResponse(response);
+      console.log(`Checked friendship status with ${userId}:`, data);
       return {
         userId,
-        status: response.data
+        status: data
       };
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to check friendship status');
+      console.error(`Error checking friendship status with ${userId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to check friendship status';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -65,12 +94,16 @@ export const sendFriendRequest = createAsyncThunk(
   async (recipientId, { rejectWithValue }) => {
     try {
       const response = await axios.post('/friend/request', { recipientId });
+      const data = getDataFromResponse(response);
+      console.log(`Sent friend request to ${recipientId}:`, data);
       return {
-        ...response.data,
+        ...data,
         recipientId
       };
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to send friend request');
+      console.error(`Error sending friend request to ${recipientId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to send friend request';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -80,10 +113,14 @@ export const acceptFriendRequest = createAsyncThunk(
   'friends/acceptFriendRequest',
   async (requestId, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/friend/accept', { requestId });
-      return response.data;
+      const response = await axios.post(`/friend/accept/${requestId}`);
+      const data = getDataFromResponse(response);
+      console.log(`Accepted friend request ${requestId}:`, data);
+      return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to accept friend request');
+      console.error(`Error accepting friend request ${requestId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to accept friend request';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -93,10 +130,14 @@ export const rejectFriendRequest = createAsyncThunk(
   'friends/rejectFriendRequest',
   async (requestId, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/friend/reject', { requestId });
-      return response.data;
+      const response = await axios.post(`/friend/reject/${requestId}`);
+      const data = getDataFromResponse(response);
+      console.log(`Rejected friend request ${requestId}:`, data);
+      return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to reject friend request');
+      console.error(`Error rejecting friend request ${requestId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to reject friend request';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -106,13 +147,17 @@ export const cancelFriendRequest = createAsyncThunk(
   'friends/cancelFriendRequest',
   async (requestId, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/friend/cancel', { requestId });
+      const response = await axios.post(`/friend/cancel/${requestId}`);
+      const data = getDataFromResponse(response);
+      console.log(`Cancelled friend request ${requestId}:`, data);
       return {
         requestId,
-        ...response.data
+        ...data
       };
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to cancel friend request');
+      console.error(`Error cancelling friend request ${requestId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to cancel friend request';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -122,13 +167,17 @@ export const removeFriend = createAsyncThunk(
   'friends/removeFriend',
   async (friendId, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/friend/remove', { friendId });
+      const response = await axios.post(`/friend/remove/${friendId}`);
+      const data = getDataFromResponse(response);
+      console.log(`Removed friend ${friendId}:`, data);
       return {
         friendId,
-        ...response.data
+        ...data
       };
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to remove friend');
+      console.error(`Error removing friend ${friendId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to remove friend';
+      return rejectWithValue(errorData);
     }
   }
 );

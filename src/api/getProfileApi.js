@@ -10,10 +10,27 @@ async function getProfileApi(userId) {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response.data)
-    return response.data; // Trả về dữ liệu profile
+    console.log('Get profile API response:', response.data);
+    
+    // Kiểm tra và xử lý cấu trúc phản hồi mới
+    if (response.data && response.data.data) {
+      return response.data.data; // Trả về data từ cấu trúc mới
+    }
+    
+    return response.data; // Trả về dữ liệu profile (cấu trúc cũ)
   } catch (error) {
-    throw error.response ? error.response.data : new Error("Unknown error occurred");
+    console.error('Get profile API error:', error);
+    
+    // Xử lý lỗi theo cấu trúc mới
+    if (error.response && error.response.data) {
+      if (error.response.data.error) {
+        throw error.response.data.error;
+      } else {
+        throw error.response.data;
+      }
+    } else {
+      throw new Error("Unknown error occurred");
+    }
   }
 }
 

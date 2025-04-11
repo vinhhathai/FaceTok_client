@@ -1,15 +1,25 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Hàm trợ giúp để xử lý dữ liệu từ API mới
+const getDataFromResponse = (response) => {
+  console.log('Response data:', response.data);
+  return response.data.data !== undefined ? response.data.data : response.data;
+};
+
 // Thunks
 export const fetchConversations = createAsyncThunk(
   'messages/fetchConversations',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('/message/conversations');
-      return response.data;
+      const data = getDataFromResponse(response);
+      console.log('Fetched conversations:', data);
+      return Array.isArray(data) ? data : [];
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      console.error('Error fetching conversations:', error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch conversations';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -19,9 +29,13 @@ export const fetchMessages = createAsyncThunk(
   async (conversationId, { rejectWithValue }) => {
     try {
       const response = await axios.get(`/message/messages/${conversationId}`);
-      return response.data;
+      const data = getDataFromResponse(response);
+      console.log(`Fetched messages for conversation ${conversationId}:`, data);
+      return Array.isArray(data) ? data : [];
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      console.error(`Error fetching messages for conversation ${conversationId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch messages';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -31,9 +45,13 @@ export const sendMessage = createAsyncThunk(
   async ({ conversationId, text }, { rejectWithValue }) => {
     try {
       const response = await axios.post(`/message/messages`, { conversationId, text });
-      return response.data;
+      const data = getDataFromResponse(response);
+      console.log(`Sent message to conversation ${conversationId}:`, data);
+      return data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      console.error(`Error sending message to conversation ${conversationId}:`, error);
+      const errorData = error.response?.data?.error || error.response?.data || 'Failed to send message';
+      return rejectWithValue(errorData);
     }
   }
 );
@@ -130,7 +148,7 @@ const messageSlice = createSlice({
       })
       .addCase(fetchConversations.fulfilled, (state, action) => {
         state.loading = false;
-        state.conversations = action.payload;
+        state.conversations = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchConversations.rejected, (state, action) => {
         state.loading = false;
@@ -144,7 +162,7 @@ const messageSlice = createSlice({
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
         state.loading = false;
-        state.messages = action.payload;
+        state.messages = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.loading = false;
@@ -158,16 +176,18 @@ const messageSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.loading = false;
-        state.messages.push(action.payload);
-        
-        // Update the last message in the conversation
-        const conversationIndex = state.conversations.findIndex(
-          c => c.id === action.payload.conversationId
-        );
-        
-        if (conversationIndex !== -1) {
-          state.conversations[conversationIndex].lastMessage = action.payload.text;
-          state.conversations[conversationIndex].timestamp = action.payload.timestamp;
+        if (action.payload) {
+          state.messages.push(action.payload);
+          
+          // Update the last message in the conversation
+          const conversationIndex = state.conversations.findIndex(
+            c => c.id === action.payload.conversationId
+          );
+          
+          if (conversationIndex !== -1) {
+            state.conversations[conversationIndex].lastMessage = action.payload.text;
+            state.conversations[conversationIndex].timestamp = action.payload.timestamp;
+          }
         }
       })
       .addCase(sendMessage.rejected, (state, action) => {

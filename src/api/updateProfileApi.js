@@ -31,18 +31,26 @@ const updateProfileApi = async (profileData) => {
     );
 
     console.log('Update profile response:', response.data);
-    return response.data;
+    
+    // Kiểm tra và xử lý cấu trúc phản hồi mới
+    if (response.data && response.data.data) {
+      return response.data.data; // Trả về data từ cấu trúc mới
+    }
+    
+    return response.data; // Trả về dữ liệu theo cấu trúc cũ
   } catch (error) {
     console.error('Update profile API error:', error);
     
     if (error.response) {
       // Phản hồi có mã lỗi từ server
       console.error('Error response:', error.response.data);
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể cập nhật thông tin cá nhân';
-      throw new Error(errorMsg);
+      
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể cập nhật thông tin cá nhân');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể cập nhật thông tin cá nhân');
+      }
     } else if (error.request) {
       // Request được gửi nhưng không nhận được phản hồi
       console.error('No response from server');

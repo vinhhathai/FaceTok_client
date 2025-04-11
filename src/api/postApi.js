@@ -47,6 +47,8 @@ export const createPost = async (postData) => {
       );
       
       console.log('createPost API - Response:', response.data);
+      // Lấy dữ liệu từ cấu trúc mới
+      response.data = response.data.data || response.data;
       return response;
     } else {
       // Gửi request JSON thông thường nếu không có file
@@ -66,6 +68,8 @@ export const createPost = async (postData) => {
       );
       
       console.log('createPost API - Response:', response.data);
+      // Lấy dữ liệu từ cấu trúc mới
+      response.data = response.data.data || response.data;
       return response;
     }
   } catch (error) {
@@ -73,11 +77,12 @@ export const createPost = async (postData) => {
     
     if (error.response) {
       // Phản hồi có mã lỗi từ server
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể tạo bài viết';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể tạo bài viết');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể tạo bài viết');
+      }
     } else if (error.request) {
       // Request được gửi nhưng không nhận được phản hồi
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
@@ -111,16 +116,23 @@ export const getTimelinePosts = async (page = 1, limit = 10) => {
       }
     );
     
+    console.log('Timeline posts response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Get timeline posts error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể tải bài viết';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể tải bài viết');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể tải bài viết');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -159,16 +171,23 @@ export const getUserPosts = async (userId, page = 1, limit = 10) => {
       }
     );
     
+    console.log('User posts response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Get user posts error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể tải bài viết';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể tải bài viết');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể tải bài viết');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -203,16 +222,23 @@ export const deletePost = async (postId) => {
       }
     );
     
+    console.log('Delete post response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Delete post error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể xóa bài viết';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể xóa bài viết');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể xóa bài viết');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -250,16 +276,23 @@ export const updatePost = async (postId, caption) => {
       }
     );
     
+    console.log('Update post response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Update post error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể cập nhật bài viết';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể cập nhật bài viết');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể cập nhật bài viết');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -295,16 +328,23 @@ export const likePost = async (postId) => {
       }
     );
     
+    console.log('Like post response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Like post error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể thích/bỏ thích bài viết';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể thích/bỏ thích bài viết');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể thích/bỏ thích bài viết');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -339,16 +379,23 @@ export const checkLikeStatus = async (postId) => {
       }
     );
     
+    console.log('Check like status response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Check like status error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể kiểm tra trạng thái thích';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể kiểm tra trạng thái thích');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể kiểm tra trạng thái thích');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -390,16 +437,23 @@ export const addComment = async (postId, text) => {
       }
     );
     
+    console.log('Add comment response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Add comment error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể thêm bình luận';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể thêm bình luận');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể thêm bình luận');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -436,16 +490,23 @@ export const getComments = async (postId, page = 1, limit = 10) => {
       }
     );
     
+    console.log('Get comments response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Get comments error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể tải bình luận';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể tải bình luận');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể tải bình luận');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {
@@ -480,16 +541,23 @@ export const deleteComment = async (commentId) => {
       }
     );
     
+    console.log('Delete comment response:', response.data);
+    // Cập nhật cấu trúc dữ liệu theo API mới
+    if (response.data && response.data.data) {
+      response.data = response.data.data;
+    }
+    
     return response;
   } catch (error) {
     console.error('Delete comment error:', error);
     
     if (error.response) {
-      const errorMsg = error.response.data.error?.name || 
-                      error.response.data.error?.message ||
-                      error.response.data.message || 
-                      'Không thể xóa bình luận';
-      throw new Error(errorMsg);
+      // Cấu trúc lỗi mới: error.response.data.error
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error.message || 'Không thể xóa bình luận');
+      } else {
+        throw new Error(error.response.data.message || 'Không thể xóa bình luận');
+      }
     } else if (error.request) {
       throw new Error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.');
     } else {

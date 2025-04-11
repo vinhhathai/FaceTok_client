@@ -24,10 +24,15 @@ function ProfilePage() {
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true); // Start loading
+      console.log("Fetching profile for user ID:", id);
       const data = await getProfileApi(id);
-      setProfile(data.data); // Dữ liệu trả về từ API
+      console.log("Profile data received:", data);
+      
+      // API đã được cập nhật để trả về data trực tiếp (không còn data.data)
+      setProfile(data); 
       setError(null); // Clear previous error
     } catch (err) {
+      console.error("Error fetching profile:", err);
       setError(err.message || "Unable to fetch profile");
       setProfile(null); // Clear profile on error
     } finally {

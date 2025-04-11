@@ -50,7 +50,7 @@ const MessageArea = ({
 
   // Handle message sending with Enter key
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && isFriend(activeConversation.user._id)) {
+    if (e.key === 'Enter' && !e.shiftKey && activeConversation?.user && isFriend(activeConversation.user._id)) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -58,14 +58,21 @@ const MessageArea = ({
 
   // Kiểm tra trạng thái online
   const getOnlineStatus = (userId) => {
+    if (!userId) return false;
     const online = isUserOnline(userId);
     console.log('User online status:', userId, online); // Debug log
     return online;
   };
 
+  // Kiểm tra có phải là bạn bè hay không, với xử lý null/undefined
+  const checkIsFriend = (userId) => {
+    if (!userId) return false;
+    return isFriend(userId);
+  }
+
   return (
     <MessageAreaContainer>
-      {activeConversation ? (
+      {activeConversation && activeConversation.user ? (
         <>
           {/* Conversation header */}
           <ConversationHeader2>
@@ -105,7 +112,7 @@ const MessageArea = ({
             </Box>
             
             {/* Friend button for non-friends */}
-            {!isFriend(activeConversation.user._id) && (
+            {!checkIsFriend(activeConversation.user._id) && (
               <FriendButton 
                 userId={activeConversation.user._id}
                 size="small"
@@ -150,7 +157,7 @@ const MessageArea = ({
             <div ref={messagesEndRef} style={{ height: '1px', marginBottom: '8px' }} />
             
             {/* Friendship notice for non-friends */}
-            {!isFriend(activeConversation.user._id) && (
+            {!checkIsFriend(activeConversation.user._id) && (
               <Box sx={{ textAlign: 'center', my: 2, p: 2, backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: 2 }}>
                 <Typography color="text.secondary" gutterBottom>
                   To continue messaging, become friends with {activeConversation.user.fullName}
@@ -168,7 +175,7 @@ const MessageArea = ({
           <MessageInputContainer>
             <TextField
               fullWidth
-              placeholder={isFriend(activeConversation.user._id) 
+              placeholder={checkIsFriend(activeConversation.user._id) 
                 ? "Type a message..." 
                 : "Add as friend to send messages"}
               variant="outlined"
@@ -180,13 +187,13 @@ const MessageArea = ({
               }}
               onKeyPress={handleKeyPress}
               onBlur={handleStopTyping}
-              disabled={!isFriend(activeConversation.user._id)}
+              disabled={!checkIsFriend(activeConversation.user._id)}
             />
             <IconButton 
               color="primary" 
               sx={{ ml: 1 }} 
               onClick={handleSendMessage}
-              disabled={!messageText.trim() || !isFriend(activeConversation.user._id)}
+              disabled={!messageText.trim() || !checkIsFriend(activeConversation.user._id)}
             >
               <SendIcon />
             </IconButton>
@@ -198,10 +205,7 @@ const MessageArea = ({
             Chưa có tin nhắn nào
           </Typography>
           <Typography color="text.secondary" gutterBottom>
-            Hãy chọn một cuộc trò chuyện để bắt đầu nhắn tin
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Bạn chỉ có thể trao đổi tin nhắn với bạn bè của mình
+            Chọn một cuộc trò chuyện hoặc bắt đầu một cuộc trò chuyện mới
           </Typography>
         </EmptyStateContainer>
       )}

@@ -12,14 +12,22 @@ export const resetPassword = async (email) => {
       }),
     });
 
-    const data = await response.json();
+    const responseData = await response.json();
+    console.log('Reset password API response:', responseData);
 
     if (!response.ok) {
-      throw new Error(data.error?.name || "Something went wrong!");
+      // Xử lý lỗi theo cấu trúc mới
+      if (responseData.error) {
+        throw new Error(responseData.error.message || "Không thể đặt lại mật khẩu");
+      }
+      throw new Error("Không thể đặt lại mật khẩu");
     }
 
-    return { success: true, message: data.message };
+    // Trả về dữ liệu theo cấu trúc mới
+    const data = responseData.data || responseData;
+    return { success: true, message: data.message || "Đã gửi email đặt lại mật khẩu" };
   } catch (err) {
+    console.error('Reset password error:', err);
     return { success: false, error: err.message };
   }
 };
