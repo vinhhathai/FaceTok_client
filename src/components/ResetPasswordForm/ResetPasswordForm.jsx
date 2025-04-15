@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { resetPassword } from "../../api/resetPasswordApi";
+import { requestPasswordReset } from "../../api/resetPasswordApi";
 import { setEmail } from "../../redux/features/emailSlice";
 
 // Material UI Imports
@@ -25,7 +25,7 @@ function ResetPasswordForm({ handleShowOTPForm }) {
   const handleSubmitToEmail = async (e) => {
     e.preventDefault();
     if (email.trim().length === 0) {
-      setMessage("Please enter a valid email address.");
+      setMessage("Vui lòng nhập địa chỉ email hợp lệ");
       setIsError(true);
       return;
     }
@@ -35,12 +35,12 @@ function ResetPasswordForm({ handleShowOTPForm }) {
     setIsError(false);
 
     try {
-      const result = await resetPassword(email);
+      const result = await requestPasswordReset(email);
 
       if (result.success) {
-        // Lưu email vào Redux
+        // Lưu email vào Redux để sử dụng ở form OTP
         dispatch(setEmail(email));
-        setMessage(result.message || "An email has been sent to reset your password.");
+        setMessage(result.message);
         setIsError(false);
         
         // Chuyển sang giao diện OTPForm sau 2 giây
@@ -48,11 +48,11 @@ function ResetPasswordForm({ handleShowOTPForm }) {
           handleShowOTPForm();
         }, 2000);
       } else {
-        setMessage(`Error: ${result.error}`);
+        setMessage(result.error);
         setIsError(true);
       }
     } catch (error) {
-      setMessage(`Error: ${error.message || "An unknown error occurred"}`);
+      setMessage(error.message || "Đã xảy ra lỗi không xác định");
       setIsError(true);
     } finally {
       setIsLoading(false);
@@ -65,7 +65,7 @@ function ResetPasswordForm({ handleShowOTPForm }) {
         required
         fullWidth
         id="email"
-        label="Email Address"
+        label="Địa chỉ Email"
         name="email"
         autoComplete="email"
         autoFocus
@@ -89,7 +89,7 @@ function ResetPasswordForm({ handleShowOTPForm }) {
           variant="contained"
           disabled={isLoading}
         >
-          {isLoading ? "Sending..." : "Send"}
+          {isLoading ? "Đang gửi..." : "Gửi"}
         </SubmitButton>
         {isLoading && (
           <CircularProgress

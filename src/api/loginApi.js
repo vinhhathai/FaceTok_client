@@ -5,8 +5,14 @@ async function loginApi(email, password) {
     return await axios.post(link_api.LOGIN_LINK, { email, password })
         .then(response => {
             console.log('Login API response:', response.data);
-            // Trả về response.data.data nếu có, mặc định là response.data
-            // Response mới sẽ có cấu trúc { data: {...}, success: true, statusCode: 200 }
+            // Trả về đúng format từ server mới
+            if (response.data.accessToken) {
+                return {
+                    accessToken: response.data.accessToken,
+                    refreshToken: response.data.refreshToken
+                };
+            }
+            // Fallback to old format if needed
             return response.data.data || response.data;
         })
         .catch(error => {
