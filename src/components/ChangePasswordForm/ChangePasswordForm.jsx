@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import changePasswordApi from "../../api/changePasswordApi";
 import Cookies from 'js-cookie';
 
 // Material UI Imports
@@ -14,6 +13,7 @@ import {
   SubmitButton,
   LoaderContainer 
 } from "./styles";
+import { resetPassword } from "../../api/resetPasswordApi";
 
 function ChangePasswordForm() {
   const [newPassword, setNewPassword] = useState("");
@@ -35,6 +35,7 @@ function ChangePasswordForm() {
 
     // Lấy resetPasswordToken từ cookie
     const resetPasswordToken = Cookies.get("resetPasswordToken");
+    console.log("Token from cookie:", resetPasswordToken);
 
     if (!resetPasswordToken) {
       setMessage("Reset password token is missing. Please try again.");
@@ -48,17 +49,23 @@ function ChangePasswordForm() {
 
     try {
       // Gọi API đổi mật khẩu
-      await changePasswordApi(newPassword, confirmNewPassword, resetPasswordToken);
+      const result = await resetPassword(resetPasswordToken, newPassword, confirmNewPassword);
 
-      setMessage("Password changed successfully!");
-      setIsError(false);
+      if (result.success) {
+        setMessage("Password changed successfully!");
+        setIsError(false);
 
-      // Chuyển hướng sang trang login sau 2 giây
-      setTimeout(() => {
-        navigate("/auth/login");
-      }, 2000);
+        // Chuyển hướng sang trang login sau 2 giây
+        setTimeout(() => {
+          navigate("/auth/login");
+        }, 2000);
+      } else {
+        setMessage(result.error || "Failed to change password. Please try again.");
+        setIsError(true);
+      }
     } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to change password. Please try again.");
+      console.error("Error in handleSubmitChangePassword:", error);
+      setMessage(error.message || "Failed to change password. Please try again.");
       setIsError(true);
     } finally {
       setIsLoading(false);

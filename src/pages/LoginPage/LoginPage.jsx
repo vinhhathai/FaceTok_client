@@ -98,26 +98,32 @@ function LoginPage() {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error("Please enter email and password");
+      toast.error("Vui lòng nhập email và mật khẩu");
       return;
     }
     
     setLoading(true);
     
     try {
-      // Call login API with email and password
+      // Gọi API đăng nhập
       const loginResult = await loginApi(email, password);
+      console.log("Login result:", loginResult);
 
-      // Save information to cookie
-      await saveDataToCookie(loginResult, "accountInformation", 1500);
-      
-      // Also save accessToken to a separate cookie
-      if (loginResult.accessToken) {
-        await saveDataToCookie(loginResult.accessToken, "accessToken", 1500);
+      if (!loginResult || !loginResult.accessToken) {
+        throw new Error("Thông tin đăng nhập không hợp lệ");
       }
 
-      // Show success toast message
-      toast.success("Login successful!", {
+      // Lưu thông tin vào cookie
+      await saveDataToCookie(loginResult, "accountInformation", 1500);
+      
+      // Lưu accessToken riêng
+        await saveDataToCookie(loginResult.accessToken, "accessToken", 1500);
+      
+      // Dispatch action để load dữ liệu người dùng từ token
+      dispatch(setUserFromToken());
+
+      // Hiển thị thông báo thành công
+      toast.success("Đăng nhập thành công!", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -126,19 +132,17 @@ function LoginPage() {
         draggable: true
       });
       
-      // Dispatch action to load user data from token
-      dispatch(setUserFromToken());
-      
-      // Longer delay to ensure authentication state is updated properly
+      // Chuyển hướng đến trang người dùng đã truy cập trước đó hoặc trang chủ
       setTimeout(() => {
-        // Navigate user to the original page they were trying to access or to home page
         navigate(from, { replace: true });
         setLoading(false);
-      }, 1500);
+      }, 1200);
       
     } catch (error) {
       console.error("Login failed:", error);
-      toast.error("Login failed. Please check your login information.");
+      
+      // Hiển thị thông báo lỗi
+      toast.error(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.");
       setLoading(false);
     }
   };

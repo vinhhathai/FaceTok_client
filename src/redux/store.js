@@ -5,6 +5,7 @@ import postReducer from './features/postSlice';
 import messageReducer from './features/messageSlice';
 import friendReducer from './features/friendSlice';
 import notificationReducer from './features/notificationSlice';
+import emailReducer from './features/emailSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     messages: messageReducer,
     friends: friendReducer,
     notifications: notificationReducer,
+    email: emailReducer
   },
 });
 

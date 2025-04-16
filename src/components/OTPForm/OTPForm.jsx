@@ -14,7 +14,7 @@ import {
   SubmitButton,
   LoaderContainer 
 } from "./styles";
-
+import saveDataToCookie from "../../utils/saveDataToCookie";
 function OTPForm({ handleShowChangePasswordForm }) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,12 +36,12 @@ function OTPForm({ handleShowChangePasswordForm }) {
     
     try {
       const result = await verifyOtp(otp, email);
+      console.log(result.data.data.resetPasswordToken)
 
       if (result.success) {
-        const resetPasswordToken = result.data.resetPasswordToken;
+        const resetPasswordToken = result.data.data.resetPasswordToken;
 
-        // Save resetPasswordToken in cookie (valid for 5 minutes)
-        Cookies.set("resetPasswordToken", resetPasswordToken, { expires: 1/288 }); // 1/288 is 5 minutes in days
+        saveDataToCookie(resetPasswordToken, resetPasswordToken, 5000) 
 
         setMessage(result.message || "OTP Verification Success");
         setIsError(false);
