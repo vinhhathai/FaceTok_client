@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
@@ -19,69 +19,14 @@ import { styled } from '@mui/material/styles';
 import loginApi from "../../api/loginApi";
 import saveDataToCookie from "../../utils/saveDataToCookie";
 import styles from './LoginPage.module.css';
-
-// Styled components
-const LoginContainer = styled(Box)(({ theme }) => ({
-  minHeight: '100vh',
-  backgroundColor: '#f7f9fc',
-}));
-
-const BackgroundSection = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(45deg, #1a237e, #283593, #3949ab, #3f51b5)',
-  backgroundSize: '400% 400%',
-  animation: 'gradient 15s ease infinite',
-  height: '100%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'white',
-  '& h1': {
-    fontSize: '2.5rem',
-    fontWeight: 600,
-    marginBottom: theme.spacing(2),
-  },
-  '& p': {
-    fontSize: '1.25rem',
-  }
-}));
-
-const FormPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  borderRadius: theme.spacing(1),
-  maxWidth: '450px',
-  width: '100%',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-  [theme.breakpoints.down('md')]: {
-    boxShadow: 'none',
-    backgroundColor: 'transparent',
-  }
-}));
-
-const LogoImg = styled('img')(({ theme }) => ({
-  width: '100%',
-  maxWidth: '80px',
-  height: 'auto',
-  borderRadius: theme.spacing(1),
-}));
-
-const MobileLogo = styled(Box)(({ theme }) => ({
-  display: 'none',
-  backgroundColor: '#fff',
-  padding: theme.spacing(2),
-  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-  [theme.breakpoints.down('md')]: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  }
-}));
-
-const LogoMobileImg = styled('img')(({ theme }) => ({
-  height: '60px',
-  width: 'auto',
-  borderRadius: theme.spacing(1),
-  marginBottom: theme.spacing(1),
-}));
+import { 
+  LoginContainer, 
+  BackgroundSection, 
+  FormPaper, 
+  LogoImg, 
+  MobileLogo, 
+  LogoMobileImg 
+} from './LoginPage.styles';
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -93,6 +38,11 @@ function LoginPage() {
 
   // Get the page to redirect after login from state (if available)
   const from = location.state?.from || "/";
+  
+  // Debug the redirect path
+  useEffect(() => {
+    console.log("LoginPage - Redirect path:", from);
+  }, [from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,7 +67,7 @@ function LoginPage() {
       await saveDataToCookie(loginResult, "accountInformation", 1500);
       
       // Lưu accessToken riêng
-        await saveDataToCookie(loginResult.accessToken, "accessToken", 1500);
+      await saveDataToCookie(loginResult.accessToken, "accessToken", 1500);
       
       // Dispatch action để load dữ liệu người dùng từ token
       dispatch(setUserFromToken());
@@ -125,19 +75,26 @@ function LoginPage() {
       // Hiển thị thông báo thành công
       toast.success("Đăng nhập thành công!", {
         position: "top-right",
-        autoClose: 3000,
+        autoClose: 2000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true
       });
       
-      // Chuyển hướng đến trang người dùng đã truy cập trước đó hoặc trang chủ
-      setTimeout(() => {
-        navigate(from, { replace: true });
-        setLoading(false);
-      }, 1200);
+      // Cải thiện logic chuyển hướng: navigate ngay lập tức thay vì setTimeout
+      console.log("Attempting to navigate to:", from || "/");
       
+      try {
+        navigate(from || "/", { replace: true });
+        console.log("Navigation successful");
+      } catch (navError) {
+        console.error("Navigation error:", navError);
+        // Nếu có lỗi, thử navigate đến trang chủ
+        navigate("/", { replace: true });
+      } finally {
+        setLoading(false);
+      }
     } catch (error) {
       console.error("Login failed:", error);
       

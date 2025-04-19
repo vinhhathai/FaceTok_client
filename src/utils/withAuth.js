@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserFromToken } from '../redux/features/userSlice';
@@ -16,72 +16,87 @@ const withAuth = (Component, options = {}) => {
   const WithAuthComponent = (props) => {
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [authChecked, setAuthChecked] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     
     // Get authentication state from Redux
-    const { isAuthenticated, id } = useSelector(state => state.user);
+    const { isAuthenticated, user } = useSelector(state => state.user || {});
+    
+    console.log("withAuth - Current route:", location.pathname);
+    console.log("withAuth - Auth state:", { isAuthenticated, user: user?._id ? "User present" : "No user" });
 
     useEffect(() => {
       const checkAuth = async () => {
         try {
+          console.log("Checking authentication...");
+          
           // First check if Redux already has the user authenticated
-          if (isAuthenticated && id) {
+          if (isAuthenticated && user && user._id) {
+            console.log("Already authenticated in Redux, proceeding");
             setLoading(false);
+            setAuthChecked(true);
             return;
           }
           
-          const accountInfo = Cookies.get('accountInformation');
+          // Check for accessToken directly
+          const accessToken = Cookies.get('accessToken');
+          console.log("Direct accessToken check:", accessToken ? "Found" : "Not found");
           
-          if (!accountInfo) {
+          // Check for accountInformation 
+          const accountInfo = Cookies.get('accountInformation');
+          console.log("accountInformation check:", accountInfo ? "Found" : "Not found");
+          
+          if (!accessToken && !accountInfo) {
+            console.log("No authentication tokens found");
             setLoading(false);
+            setAuthChecked(true);
             return;
           }
 
-          // If we have account info in cookie but not in Redux, load it
-          try {
-            const parsedInfo = JSON.parse(accountInfo);
-            
-            // Check if token exists and is valid
-            if (parsedInfo && parsedInfo.accessToken && parsedInfo.accessToken.trim() !== '') {
-              // Check if token has expired (if it contains expiration info)
-              const currentTime = Math.floor(Date.now() / 1000);
-              let tokenExpired = false;
-              
-              if (parsedInfo.expiresAt && parsedInfo.expiresAt < currentTime) {
-                tokenExpired = true;
-              }
-              
-              if (!tokenExpired) {
-                // Load user data into Redux from token
-                dispatch(setUserFromToken());
-                
-                // Give a small delay to ensure Redux state updates
-                setTimeout(() => {
-                  setLoading(false);
-                }, 500);
-                
-                return;
-              } else {
-                // Clear expired token
-                Cookies.remove('accountInformation');
-                setLoading(false);
-              }
-            } else {
-              setLoading(false);
-            }
-          } catch (error) {
-            console.error('Error parsing account info:', error);
+          // If we have tokens but not authenticated in Redux, load data
+          console.log("Found auth tokens, dispatching setUserFromToken");
+          await dispatch(setUserFromToken());
+          
+          // Check if authentication succeeded after token loading
+          const storeState = await dispatch((_, getState) => {
+            return getState().user?.isAuthenticated || false;
+          });
+          
+          console.log("Authentication state after token loading:", storeState);
+          
+          // Wait a bit for React to update
+          setTimeout(() => {
             setLoading(false);
-          }
+            setAuthChecked(true);
+          }, 100);
+          
         } catch (error) {
           console.error('Authentication check error:', error);
           setLoading(false);
+          setAuthChecked(true);
         }
       };
 
-      checkAuth();
-    }, [dispatch, isAuthenticated, id]);
+      if (!authChecked) {
+        checkAuth();
+      }
+    }, [dispatch, isAuthenticated, user, authChecked]);
+
+    // After auth is checked and component is mounted, verify if we should be on this page
+    useEffect(() => {
+      if (!loading && authChecked) {
+        // Get the latest auth state after all checks
+        const currentAuthState = user && user._id && isAuthenticated;
+        console.log("Final auth check result:", currentAuthState);
+        
+        if (!currentAuthState && location.pathname !== '/auth/login') {
+          console.log("Not authenticated, navigating to login");
+          navigate('/auth/login', { state: { from: location.pathname }, replace: true });
+        }
+      }
+    }, [loading, authChecked, isAuthenticated, user, location.pathname, navigate]);
 
     if (loading) {
       return (
@@ -92,8 +107,10 @@ const withAuth = (Component, options = {}) => {
       );
     }
 
-    if (!isAuthenticated) {
-      // Redirect to login with return URL
+    // After all checks, if we're still here and not authenticated, show login
+    if (!isAuthenticated && !user?._id) {
+      // This is a fallback, the useEffect should handle redirection
+      console.log("Fallback redirect to login");
       return (
         <Navigate 
           to="/auth/login" 
@@ -108,6 +125,7 @@ const withAuth = (Component, options = {}) => {
       return <Navigate to="/" replace />;
     }
 
+    console.log("Authentication successful, rendering protected component");
     return <Component {...props} />;
   };
 

@@ -9,7 +9,6 @@ import { link_api } from "../config/api-config";
 export const requestPasswordReset = async (email) => {
   try {
     const response = await axios.post(`${link_api.BASE_URL}/auth/request-reset`, { email });
-    console.log('Request password reset API response:', response.data);
 
     if (!response.data || !response.data.success) {
       throw new Error(response.data?.error?.message || 'Không thể yêu cầu đặt lại mật khẩu');
@@ -21,9 +20,6 @@ export const requestPasswordReset = async (email) => {
       data: response.data.data
     };
   } catch (error) {
-    console.error('Request password reset error:', error);
-    
-    // Xử lý lỗi từ server
     if (error.response?.data?.error) {
       return { 
         success: false, 
@@ -31,7 +27,6 @@ export const requestPasswordReset = async (email) => {
       };
     }
     
-    // Lỗi network hoặc lỗi không xác định
     return { 
       success: false, 
       error: error.message || 'Không thể kết nối đến server' 
@@ -41,27 +36,30 @@ export const requestPasswordReset = async (email) => {
 
 /**
  * Gọi API xác thực OTP
- * @param {string} email - Email của người dùng
  * @param {string} otp - Mã OTP
+ * @param {string} email - Email của người dùng
  * @returns {Promise<Object>} - Kết quả xác thực OTP
  */
-export const verifyOTP = async (email, otp) => {
+export const verifyOTP = async (otp, email) => {
   try {
-    const response = await axios.post(`${link_api.VERIFY_OTP_LINK}`, { email, otp });
-    console.log('Verify OTP API response:', response.data);
+    const response = await axios.post(`${link_api.VERIFY_OTP_LINK}`, { 
+      email: email,
+      otp: otp
+    });
 
     if (!response.data || !response.data.success) {
       throw new Error(response.data?.error?.message || 'Xác thực OTP thất bại');
     }
 
+    // Trích xuất resetToken từ response
+    const resetToken = response.data.data?.resetToken || null;
+
     return {
       success: true,
       message: response.data.message || 'Xác thực OTP thành công',
-      resetToken: response.data.data?.resetToken
+      data: { resetToken }
     };
   } catch (error) {
-    console.error('Verify OTP error:', error);
-    
     if (error.response?.data?.error) {
       return { 
         success: false, 
@@ -85,14 +83,11 @@ export const verifyOTP = async (email, otp) => {
  */
 export const resetPassword = async (token, newPassword, confirmPassword) => {
   try {
-    console.log("Token used for reset:", token);
     const response = await axios.post(
       `${link_api.BASE_URL}/auth/reset-password`, 
       { newPassword, confirmPassword },
       { headers: { "Authorization": `Bearer ${token}` } }
     );
-    
-    console.log('Reset password API response:', response.data);
 
     if (!response.data || !response.data.success) {
       throw new Error(response.data?.error?.message || 'Đặt lại mật khẩu thất bại');
@@ -103,8 +98,6 @@ export const resetPassword = async (token, newPassword, confirmPassword) => {
       message: response.data.message || 'Đặt lại mật khẩu thành công'
     };
   } catch (error) {
-    console.error('Reset password error:', error);
-    
     if (error.response?.data?.error) {
       return { 
         success: false, 

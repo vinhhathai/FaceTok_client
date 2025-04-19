@@ -1,14 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Header from "../../components/Header/Header";
 import ProfileContent from "../../components/ProfileContent/ProfileContent";
 import ProfileInfo from "../../components/ProfileInfo/ProfileInfo";
 import ProfileThumbnail from "../../components/ProfileThumbnail/ProfileThumbnail";
 import WeatherBar from "../../components/WeatherBar/WeatherBar";
 import MainLayout from "../../layout/MainLayout/MainLayout";
-import { useSelector } from "react-redux";
-
-import { useParams } from "react-router-dom"; // Để lấy tham số từ URL
 import getProfileApi from "../../api/getProfileApi";
+import { ProfileContainer } from "./styles";
 
 function ProfilePage() {
   // Lấy userId từ URL
@@ -47,7 +47,7 @@ function ProfilePage() {
   }, [fetchProfile, id]);
 
   return (
-    <>
+    <ProfileContainer>
       <Header />
       <MainLayout
         thumbnail={<ProfileThumbnail userId={id}/>}
@@ -62,7 +62,7 @@ function ProfilePage() {
         content={<ProfileContent profile={profile} loading={loading} error={error} />}
         rightSidebar={<WeatherBar />}
       />
-    </>
+    </ProfileContainer>
   );
 }
 

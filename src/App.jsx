@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
 import './App.css';
 import { ThemeProvider, CssBaseline, useTheme } from "@mui/material";
 import socketService from "./services/socketService";
+import Cookies from 'js-cookie';
 
 // Import CSS files
 
@@ -51,6 +52,8 @@ const RedirectToLogin = () => {
 
 function App() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [initializing, setInitializing] = useState(true);
   const { isAuthenticated, user } = useSelector(state => state.user || {});
   const theme = useTheme();
@@ -59,7 +62,22 @@ function App() {
     // Initialize user data from token
     const initApp = async () => {
       try {
-        await dispatch(setUserFromToken());
+        console.log("App initializing, current path:", location.pathname);
+        
+        // Check if we have tokens
+        const accessToken = Cookies.get('accessToken');
+        const accountInfo = Cookies.get('accountInformation');
+        
+        console.log("Tokens at startup:", {
+          hasAccessToken: !!accessToken, 
+          hasAccountInfo: !!accountInfo
+        });
+        
+        // Load user data if tokens exist
+        if (accessToken || accountInfo) {
+          await dispatch(setUserFromToken());
+          console.log("User data loaded from tokens");
+        }
         
         // Wait a bit to ensure user is properly initialized
         setTimeout(() => {
@@ -72,7 +90,20 @@ function App() {
     };
 
     initApp();
-  }, [dispatch]);
+  }, [dispatch, location.pathname]);
+
+  // Handle redirection after authentication
+  useEffect(() => {
+    if (!initializing && isAuthenticated && user?._id) {
+      console.log("App: User is authenticated, current path:", location.pathname);
+      
+      // If on login page but already authenticated, redirect to home
+      if (location.pathname.includes('/auth/login')) {
+        console.log("Already authenticated but on login page, redirecting to home");
+        navigate('/', { replace: true });
+      }
+    }
+  }, [initializing, isAuthenticated, user, location.pathname, navigate]);
 
   useEffect(() => {
     if (isAuthenticated && user) {

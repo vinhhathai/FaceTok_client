@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -8,22 +8,31 @@ import Typography from '@mui/material/Typography';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 import { UserAvatar, UserButton } from './styles';
 
 const UserDropdown = ({ id, profilePicture, handleLogout }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   
+  // Debug props received
+  useEffect(() => {
+    console.log("UserDropdown props:", { id, profilePicture });
+  }, [id, profilePicture]);
+  
   const handleClick = (event) => {
+    console.log("Dropdown button clicked", event.currentTarget);
     setAnchorEl(event.currentTarget);
   };
   
   const handleClose = () => {
+    console.log("Closing dropdown menu");
     setAnchorEl(null);
   };
 
   // Nếu id bị undefined, hiển thị chỉ avatar với indicator
   if (!id) {
+    console.log("UserDropdown: ID is undefined, showing loading state");
     return (
       <UserButton
         color="inherit"
@@ -40,13 +49,24 @@ const UserDropdown = ({ id, profilePicture, handleLogout }) => {
   }
 
   return (
-    <>
+    <Box sx={{ position: 'relative', zIndex: 1000 }}>
       <UserButton
         aria-controls={open ? 'user-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
         color="inherit"
+        sx={{ 
+          p: 0.5, 
+          border: '1px solid transparent',
+          '&:hover': {
+            border: '1px solid rgba(25, 118, 210, 0.2)',
+            backgroundColor: 'rgba(25, 118, 210, 0.04)'
+          },
+          '&:active': {
+            backgroundColor: 'rgba(25, 118, 210, 0.1)'
+          }
+        }}
       >
         <UserAvatar 
           src={profilePicture || "/assets/images/avatar_default.jpg"}
@@ -61,7 +81,7 @@ const UserDropdown = ({ id, profilePicture, handleLogout }) => {
         onClose={handleClose}
         onClick={handleClose}
         PaperProps={{
-          elevation: 2,
+          elevation: 3,
           sx: { 
             minWidth: 180,
             mt: 1,
@@ -83,6 +103,11 @@ const UserDropdown = ({ id, profilePicture, handleLogout }) => {
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{
+          backdrop: {
+            invisible: false,
+          },
+        }}
       >
         <MenuItem component={Link} to={`/profile/${id}`} sx={{ py: 1.5 }}>
           <ListItemIcon>
@@ -100,7 +125,7 @@ const UserDropdown = ({ id, profilePicture, handleLogout }) => {
           <Typography variant="body2">Logout</Typography>
         </MenuItem>
       </Menu>
-    </>
+    </Box>
   );
 };
 

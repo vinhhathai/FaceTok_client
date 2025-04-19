@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from 'js-cookie';
 
@@ -21,7 +21,29 @@ function ChangePasswordForm() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [resetToken, setResetToken] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = Cookies.get("resetPasswordToken");
+    
+    if (!token) {
+      setMessage("Reset password token is missing. Please try again.");
+      setIsError(true);
+      return;
+    }
+    
+    // Nếu token là chuỗi JSON, thử parse
+    try {
+      if (token.startsWith('"') && token.endsWith('"')) {
+        setResetToken(JSON.parse(token));
+      } else {
+        setResetToken(token);
+      }
+    } catch (error) {
+      setResetToken(token); // Nếu parse lỗi, sử dụng token nguyên bản
+    }
+  }, []);
 
   const handleSubmitChangePassword = async (e) => {
     e.preventDefault();
@@ -33,11 +55,7 @@ function ChangePasswordForm() {
       return;
     }
 
-    // Lấy resetPasswordToken từ cookie
-    const resetPasswordToken = Cookies.get("resetPasswordToken");
-    console.log("Token from cookie:", resetPasswordToken);
-
-    if (!resetPasswordToken) {
+    if (!resetToken) {
       setMessage("Reset password token is missing. Please try again.");
       setIsError(true);
       return;
@@ -49,11 +67,12 @@ function ChangePasswordForm() {
 
     try {
       // Gọi API đổi mật khẩu
-      const result = await resetPassword(resetPasswordToken, newPassword, confirmNewPassword);
+      const result = await resetPassword(resetToken, newPassword, confirmNewPassword);
 
       if (result.success) {
         setMessage("Password changed successfully!");
         setIsError(false);
+        Cookies.remove("resetPasswordToken");
 
         // Chuyển hướng sang trang login sau 2 giây
         setTimeout(() => {
@@ -64,7 +83,6 @@ function ChangePasswordForm() {
         setIsError(true);
       }
     } catch (error) {
-      console.error("Error in handleSubmitChangePassword:", error);
       setMessage(error.message || "Failed to change password. Please try again.");
       setIsError(true);
     } finally {

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import LogoHeader from "../../components/LogoHeader/LogoHeader";
 import SearchForm from "../../components/Search/SearchForm/SearchForm";
@@ -44,6 +44,11 @@ function Header() {
   // Lấy thông tin người dùng từ Redux store
   const user = useSelector(state => state.user?.user);
   const isAuthenticated = useSelector(state => state.user?.isAuthenticated);
+  
+  // Debug user authentication state
+  useEffect(() => {
+    console.log("Header Component - Auth State:", { isAuthenticated, user });
+  }, [isAuthenticated, user]);
   
   // Get friend requests safely
   const friends = useSelector(state => state.friends || {});

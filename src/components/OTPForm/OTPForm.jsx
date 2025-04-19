@@ -15,6 +15,7 @@ import {
   LoaderContainer 
 } from "./styles";
 import saveDataToCookie from "../../utils/saveDataToCookie";
+
 function OTPForm({ handleShowChangePasswordForm }) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,20 +37,26 @@ function OTPForm({ handleShowChangePasswordForm }) {
     
     try {
       const result = await verifyOtp(otp, email);
-      console.log(result.data.data.resetPasswordToken)
 
       if (result.success) {
-        const resetPasswordToken = result.data.data.resetPasswordToken;
+        const resetToken = result.data?.resetToken;
 
-        saveDataToCookie(resetPasswordToken, resetPasswordToken, 5000) 
+        if (!resetToken) {
+          setMessage("Invalid server response - Reset token missing");
+          setIsError(true);
+          return;
+        }
 
+        // Lưu token vào cookie
+        saveDataToCookie(resetToken, "resetPasswordToken", 5000);
+        
         setMessage(result.message || "OTP Verification Success");
         setIsError(false);
 
         // Hiển thị thông báo thành công trước khi chuyển sang form đổi mật khẩu
         setTimeout(() => {
-          handleShowChangePasswordForm(); // Chuyển sang ChangePasswordForm
-        }, 2000); // 2 giây
+          handleShowChangePasswordForm(resetToken);
+        }, 2000);
       } else {
         setMessage(`Error: ${result.error}`);
         setIsError(true);
@@ -57,7 +64,6 @@ function OTPForm({ handleShowChangePasswordForm }) {
     } catch (error) {
       setMessage("An error occurred. Please try again.");
       setIsError(true);
-      console.error("Error verifying OTP:", error);
     } finally {
       setIsLoading(false);
     }

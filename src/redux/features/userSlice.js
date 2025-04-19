@@ -20,16 +20,43 @@ const updateLocalUserData = (userData) => {
 // Lấy thông tin từ token JWT
 const getUserFromToken = () => {
   try {
+    console.log('Getting user from token...');
     const accountInfo = Cookies.get('accountInformation');
+    console.log('Cookie accountInformation:', accountInfo ? 'Found' : 'Not found');
+    
     if (accountInfo) {
-      const parsedAccountInfo = JSON.parse(accountInfo);
+      let parsedAccountInfo;
+      try {
+        parsedAccountInfo = JSON.parse(accountInfo);
+        console.log('Parsed account info:', parsedAccountInfo ? 'Success' : 'Failed');
+      } catch (parseError) {
+        console.error('Error parsing accountInformation:', parseError);
+        console.log('Raw cookie content:', accountInfo);
+        return null;
+      }
       
       if (parsedAccountInfo && parsedAccountInfo.accessToken) {
-        const decoded = jwtDecode(parsedAccountInfo.accessToken);
+        console.log('AccessToken found in cookie');
+        let decoded;
+        
+        try {
+          decoded = jwtDecode(parsedAccountInfo.accessToken);
+          console.log('Decoded token (full):', decoded);
+        } catch (decodeError) {
+          console.error('Error decoding token:', decodeError);
+          return null;
+        }
         
         if (decoded) {
-          // Lấy ID từ token - ID có thể là _id hoặc id tùy vào cấu trúc token
-          const userId = decoded._id || decoded.id || '';
+          // Lấy ID từ token - ID có thể là _id, id hoặc userId tùy vào cấu trúc token
+          const userId = decoded._id || decoded.id || decoded.userId || '';
+          
+          if (!userId) {
+            console.error('No user ID found in token. Available fields:', Object.keys(decoded));
+            return null;
+          }
+          
+          console.log('Successfully extracted user data from token, userId:', userId);
           
           return {
             user: {
@@ -42,11 +69,52 @@ const getUserFromToken = () => {
             isAuthenticated: true
           };
         }
+      } else {
+        console.error('No accessToken found in parsed accountInformation');
+      }
+    } else {
+      console.log('Checking for direct accessToken cookie');
+      const accessToken = Cookies.get('accessToken');
+      
+      if (accessToken) {
+        console.log('Direct accessToken found');
+        let decoded;
+        
+        try {
+          decoded = jwtDecode(accessToken);
+          console.log('Decoded direct token (full):', decoded);
+          
+          if (decoded) {
+            const userId = decoded._id || decoded.id || decoded.userId || '';
+            
+            if (!userId) {
+              console.error('No user ID found in direct token. Available fields:', Object.keys(decoded));
+              return null;
+            }
+            
+            console.log('Successfully extracted user data from direct token, userId:', userId);
+            
+            return {
+              user: {
+                _id: userId,
+                fullName: decoded.fullName || decoded.name || '',
+                profilePicture: decoded.profilePicture || '',
+                username: decoded.username || decoded.fullName || '',
+                email: decoded.email || ''
+              },
+              isAuthenticated: true
+            };
+          }
+        } catch (decodeError) {
+          console.error('Error decoding direct token:', decodeError);
+        }
+      } else {
+        console.log('No authentication tokens found in cookies');
       }
     }
     return null;
   } catch (error) {
-    console.error('Error decoding token:', error);
+    console.error('Error in getUserFromToken:', error);
     return null;
   }
 };
