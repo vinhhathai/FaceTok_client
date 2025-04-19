@@ -18,9 +18,9 @@ const updateProfileApi = async (profileData) => {
 
     console.log('Sending update profile request with data:', profileData);
     
-    // Gửi request PUT để cập nhật thông tin
+    // Gửi request PUT để cập nhật thông tin - đã bỏ ID khỏi URL
     const response = await axios.put(
-      `${BASE_URL}/user/update-profile/${profileData.id}`,
+      `${BASE_URL}/user/update-profile`,
       profileData,
       {
         headers: {
