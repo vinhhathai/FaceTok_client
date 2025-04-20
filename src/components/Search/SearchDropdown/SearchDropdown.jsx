@@ -101,16 +101,18 @@ function SearchDropdown({ searchResult, loading, error }) {
         <CategoryHeader variant="subtitle2">People</CategoryHeader>
         <List disablePadding>
           {searchResult.map((user, index) => {
-            const userFriendshipStatus = getFriendshipStatus(user._id);
+            // Normalize user ID (could be _id or id)
+            const userId = user._id || user.id;
+            const userFriendshipStatus = getFriendshipStatus(userId);
             const isAlreadyFriend = userFriendshipStatus === 'friends';
             const requestSent = userFriendshipStatus === 'request_sent' || requestedMap[index];
             
             return (
               <ListItem 
-                key={user._id}
+                key={userId}
                 divider
                 sx={{ py: 1, cursor: 'pointer' }}
-                onClick={(e) => handleUserClick(user._id, e)}
+                onClick={(e) => handleUserClick(userId, e)}
               >
                 <ListItemAvatar>
                   <Avatar 
@@ -130,7 +132,7 @@ function SearchDropdown({ searchResult, loading, error }) {
                     variant="contained"
                     size="small"
                     requested={requestSent}
-                    onClick={(event) => handleAddFriendClick(user._id, index, event)}
+                    onClick={(event) => handleAddFriendClick(userId, index, event)}
                     disabled={requestSent}
                     startIcon={requestSent ? <HowToRegIcon /> : <PersonAddIcon />}
                   >

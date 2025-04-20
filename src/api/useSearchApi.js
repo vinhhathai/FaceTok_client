@@ -15,13 +15,21 @@ function useSearchApi(searchValue) {
     }
     
     setLoading(true);
+    console.log('Searching for:', searchValue);
     
-    // Gọi API tìm kiếm với axios đã cấu hình
-    axios.get(`/search/users?query=${encodeURIComponent(searchValue)}`)
+    // Gọi API tìm kiếm với axios đã cấu hình - Sử dụng GET thay vì POST
+    axios.get(`/user/search?query=${encodeURIComponent(searchValue)}&page=1&limit=20`)
       .then(response => {
-        if (response.data.users) {
+        console.log('Search API response:', response.data);
+        
+        if (response.data.data && response.data.data.users) {
+          console.log('Using new response structure with data.users');
+          setDataUser(response.data.data.users);
+        } else if (response.data.users) {
+          console.log('Using response structure with users directly');
           setDataUser(response.data.users);
         } else {
+          console.log('No users found in response');
           setDataUser([]);
         }
         setLoading(false);
