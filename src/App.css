@@ -1,0 +1,18 @@
+/* App.css - Global styles */
+
+.App {
+  text-align: center;
+  min-height: 100vh;
+  font-family: 'Roboto', Arial, sans-serif;
+}
+
+/* Global reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f5f5f5;
+}

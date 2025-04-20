@@ -12,9 +12,9 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 
 // Components
-import ResetPasswordForm from "../../sub_components/ResetPasswordForm/ResetPasswordForm";
-import OTPForm from "../../sub_components/OTPForm/OTPForm";
-import ChangePasswordForm from "../../sub_components/ChangePasswordForm/ChangePasswordForm";
+import ResetPasswordForm from "../../components/ResetPasswordForm/ResetPasswordForm";
+import OTPForm from "../../components/OTPForm/OTPForm";
+import ChangePasswordForm from "../../components/ChangePasswordForm/ChangePasswordForm";
 
 // Styles
 import {
@@ -30,13 +30,22 @@ import {
 import styles from './ResetPasswordPage.module.css';
 
 // Định nghĩa các bước
-const steps = ['Enter Email', 'Verify OTP', 'Reset Password'];
+const steps = ['Nhập Email', 'Xác thực OTP', 'Đặt lại mật khẩu'];
 
 function ResetPasswordPage() {
   const [activeStep, setActiveStep] = useState(0);
+  const [email, setEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
 
-  const handleShowOTPForm = () => setActiveStep(1);
-  const handleShowChangePasswordForm = () => setActiveStep(2);
+  const handleShowOTPForm = (userEmail) => {
+    setEmail(userEmail);
+    setActiveStep(1);
+  };
+  
+  const handleShowChangePasswordForm = (token) => {
+    setResetToken(token);
+    setActiveStep(2);
+  };
 
   return (
     <ResetPasswordContainer>
@@ -65,10 +74,10 @@ function ResetPasswordPage() {
             <BackgroundSection>
               <Box sx={{ p: 4, maxWidth: '450px' }}>
                 <Typography variant="h1" component="h1">
-                  Reset Your Password
+                  Đặt lại mật khẩu
                 </Typography>
                 <Typography variant="body1">
-                  Follow the steps to reset your password and secure your account
+                  Làm theo các bước để đặt lại mật khẩu và bảo vệ tài khoản của bạn
                 </Typography>
               </Box>
             </BackgroundSection>
@@ -98,7 +107,7 @@ function ResetPasswordPage() {
                   </Grid>
                   <Grid item xs={10}>
                     <Typography variant="h5" component="p" sx={{ fontWeight: 'bold', mb: 0 }}>
-                      Reset Password 
+                      Đặt lại mật khẩu
                     </Typography>
                   </Grid>
                 </Grid>
@@ -118,19 +127,19 @@ function ResetPasswordPage() {
               {/* Form Content */}
               <Box className={styles.stepContent}>
                 {activeStep === 0 && <ResetPasswordForm handleShowOTPForm={handleShowOTPForm} />}
-                {activeStep === 1 && <OTPForm handleShowChangePasswordForm={handleShowChangePasswordForm} />}
-                {activeStep === 2 && <ChangePasswordForm />}
+                {activeStep === 1 && <OTPForm email={email} handleShowChangePasswordForm={handleShowChangePasswordForm} />}
+                {activeStep === 2 && <ChangePasswordForm resetToken={resetToken} />}
               </Box>
               
               <ActionsContainer>
                 <Typography variant="body2" textAlign="center" sx={{ mt: 3 }}>
-                  Back to login page?{' '}
+                  Quay lại trang đăng nhập?{' '}
                   <Link 
                     component={RouterLink} 
-                    to="/auth/login" 
+                    to="/login" 
                     className={styles.loginLink}
                   >
-                    Login
+                    Đăng nhập
                   </Link>
                 </Typography>
               </ActionsContainer>

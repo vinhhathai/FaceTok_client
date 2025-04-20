@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import CreatingPost from "../../components/CreatingPost/CreatingPost";
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Header from "../../components/Header/Header";
 import ProfileContent from "../../components/ProfileContent/ProfileContent";
 import ProfileInfo from "../../components/ProfileInfo/ProfileInfo";
 import ProfileThumbnail from "../../components/ProfileThumbnail/ProfileThumbnail";
 import WeatherBar from "../../components/WeatherBar/WeatherBar";
 import MainLayout from "../../layout/MainLayout/MainLayout";
-
-import { useParams } from "react-router-dom"; // Để lấy tham số từ URL
 import getProfileApi from "../../api/getProfileApi";
+import { ProfileContainer } from "./styles";
 
 function ProfilePage() {
   // Lấy userId từ URL
@@ -16,35 +16,53 @@ function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Get current user to check if viewing own profile
+  const currentUser = useSelector(state => state.user.user);
+  const isOwnProfile = currentUser && id && currentUser._id === id;
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getProfileApi(id);
-        setProfile(data.data); // Dữ liệu trả về từ API
-        setLoading(false);
-      } catch (err) {
-        setError(err.message || "Unable to fetch profile");
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true); // Start loading
+      console.log("Fetching profile for user ID:", id);
+      const data = await getProfileApi(id);
+      console.log("Profile data received:", data);
+      
+      // API đã được cập nhật để trả về data trực tiếp (không còn data.data)
+      setProfile(data); 
+      setError(null); // Clear previous error
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError(err.message || "Unable to fetch profile");
+      setProfile(null); // Clear profile on error
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
+  useEffect(() => {
+    if (id) {
+      fetchProfile();
+    }
+  }, [fetchProfile, id]);
+
   return (
-    <>
-      <Header
-      />
-      <ProfileThumbnail userId={id}/>
+    <ProfileContainer>
+      <Header />
       <MainLayout
+        thumbnail={<ProfileThumbnail userId={id}/>}
         leftSidebar={
-          <ProfileInfo profile={profile} loading={loading} error={error} />
+          <ProfileInfo 
+            profile={profile} 
+            loading={loading} 
+            error={error} 
+            refreshProfile={fetchProfile} 
+          />
         }
-        content={<ProfileContent />}
+        content={<ProfileContent profile={profile} loading={loading} error={error} />}
         rightSidebar={<WeatherBar />}
       />
-    </>
+    </ProfileContainer>
   );
 }
 

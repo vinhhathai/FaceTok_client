@@ -1,6 +1,5 @@
 import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
+import { Box, Paper } from '@mui/material';
 
 // Styled components cho trang Login
 export const LoginContainer = styled(Box)(({ theme }) => ({

@@ -10,7 +10,6 @@ import Alert from '@mui/material/Alert';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import IconButton from '@mui/material/IconButton';
-import weatherIcon from "../../assets/images/icons/weather/sun.png";
 
 import {
   WeatherBarContainer,
@@ -25,6 +24,9 @@ import {
   WeatherDetailItem
 } from './styles';
 
+// Default weather icon as fallback (placeholder URL)
+const weatherIcon = "https://openweathermap.org/img/wn/04d@2x.png";
+
 function WeatherBar() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [weather, setWeather] = useState(null);
@@ -34,6 +36,7 @@ function WeatherBar() {
 
   const getLocation = () => {
     setLoading(true);
+    setError(null); // Reset error on refresh
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         position => {
@@ -44,25 +47,38 @@ function WeatherBar() {
         error => {
           console.error("Error getting location:", error);
           setError("Không thể lấy vị trí. Vui lòng cho phép truy cập vị trí.");
+          // Fallback for demo if location access denied
+          setWeather({
+            temp: 28,
+            humidity: 15,
+            windSpeed: 10,
+            icon: weatherIcon
+          });
+          setLocation("CẦN THƠ, VN");
           setLoading(false);
-        }
+        },
+        { timeout: 10000 } // Add timeout
       );
     } else {
       setError("Trình duyệt của bạn không hỗ trợ định vị.");
+      // Fallback for demo if geolocation not supported
+      setWeather({
+        temp: 28,
+        humidity: 15,
+        windSpeed: 10,
+        icon: weatherIcon
+      });
+      setLocation("CẦN THƠ, VN");
       setLoading(false);
     }
   };
 
   const fetchWeatherData = async (lat, lon) => {
     try {
-      // Sử dụng OpenWeatherMap API - bạn cần đăng ký API key
-      const apiKey = "YOUR_OPENWEATHERMAP_API_KEY"; // Thay bằng API key thực tế
-      
-      // Thực hiện API call
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`);
-      
-      // Nếu API key chưa được cung cấp, sử dụng dữ liệu mô phỏng
+      const apiKey = "YOUR_OPENWEATHERMAP_API_KEY"; // Replace with your key
+
       if (!apiKey || apiKey === "YOUR_OPENWEATHERMAP_API_KEY") {
+        // Demo fallback
         setTimeout(() => {
           setWeather({
             temp: 28,
@@ -71,9 +87,11 @@ function WeatherBar() {
             icon: weatherIcon
           });
           setLoading(false);
-        }, 1000);
+        }, 500);
       } else {
-        // Xử lý response từ API thực tế
+        // Real API call
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`);
+        if (!response.ok) throw new Error('Failed to fetch weather');
         const data = await response.json();
         setWeather({
           temp: Math.round(data.main.temp),
@@ -85,163 +103,129 @@ function WeatherBar() {
       }
     } catch (err) {
       console.error("Error fetching weather data:", err);
-      
-      // Fallback cho mục đích demo
-      setTimeout(() => {
-        setWeather({
-          temp: 28,
-          humidity: 15,
-          windSpeed: 10,
-          icon: weatherIcon
-        });
-        setLoading(false);
-      }, 1000);
+      setError("Không thể tải dữ liệu thời tiết.");
+      // Demo fallback on error
+      setWeather({
+        temp: 28,
+        humidity: 15,
+        windSpeed: 10,
+        icon: weatherIcon
+      });
+      setLoading(false);
     }
   };
 
   const reverseGeocode = async (lat, lon) => {
     try {
-      // Sử dụng Nominatim OpenStreetMap API (miễn phí, không cần API key)
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`);
+      if (!response.ok) throw new Error('Failed to geocode');
       const data = await response.json();
-      
-      // Parse kết quả để lấy tên thành phố hoặc khu vực
-      let locationName = "";
-      
+      let locationName = "Không xác định";
       if (data.address) {
-        // Ưu tiên city, nếu không có thì dùng town, village, county theo thứ tự đó
-        locationName = data.address.city || 
-                      data.address.town || 
-                      data.address.village || 
-                      data.address.county || 
-                      data.address.state ||
-                      "Không xác định";
-        
-        // Thêm tên quốc gia nếu có
+        locationName = data.address.city || data.address.town || data.address.village || data.address.county || data.address.state || "Không xác định";
         if (data.address.country_code) {
           locationName += `, ${data.address.country_code.toUpperCase()}`;
         }
-      } else {
-        // Fallback nếu không parse được địa chỉ
-        locationName = data.display_name?.split(',')[0] || "Không xác định";
       }
-      
       setLocation(locationName);
     } catch (err) {
       console.error("Error reverse geocoding:", err);
-      
-      // Sử dụng browser's locale information nếu geocode thất bại
-      try {
-        const locale = navigator.language;
-        const options = { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
-        const formatter = new Intl.DateTimeFormat(locale, options);
-        
-        // Extract timezone city
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const cityFromTimezone = timezone.split('/').pop().replace(/_/g, ' ');
-        
-        setLocation(cityFromTimezone || "Vị trí không xác định");
-      } catch (localeErr) {
-        setLocation("Vị trí không xác định");
-      }
+      setLocation("CẦN THƠ, VN"); // Demo fallback on error
     }
   };
 
-  // Cập nhật thời gian mỗi phút
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // Lấy vị trí khi component mount
   useEffect(() => {
     getLocation();
   }, []);
 
-  // Format time
   const formattedTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Xử lý refresh thời tiết
   const handleRefresh = () => {
     getLocation();
   };
 
-  if (error) {
+  if (error && !weather) { // Show error only if weather data couldn't be loaded
     return (
-      <Grid item xs={12} md={4} lg={3}>
-        <WeatherBarContainer elevation={3}>
-          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <IconButton color="primary" onClick={handleRefresh}>
-              <RefreshIcon />
-            </IconButton>
-          </Box>
-        </WeatherBarContainer>
-      </Grid>
+      <WeatherBarContainer elevation={1} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <Alert severity="warning" sx={{ mb: 1, width: '100%' }}>{error}</Alert>
+        <IconButton color="primary" onClick={handleRefresh} size="small">
+          <RefreshIcon />
+          <Typography variant="caption" sx={{ ml: 0.5 }}>Thử lại</Typography>
+        </IconButton>
+      </WeatherBarContainer>
     );
   }
-
+  
+  // Always render the container, show loading or content inside
   return (
-    <Grid item xs={12} md={4} lg={3}>
-      <WeatherBarContainer elevation={3}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 220 }}>
-            <CircularProgress size={40} thickness={4} />
-          </Box>
-        ) : (
-          <>
-            <WeatherHeader>
-              <WeatherTime variant="h4">{formattedTime}</WeatherTime>
-              <LocationButton>
-                <Typography variant="button" color="primary">
-                  {location || "Đang cập nhật..."}
-                </Typography>
-                <MyLocationIcon color="primary" fontSize="small" sx={{ ml: 0.5 }} />
-              </LocationButton>
-            </WeatherHeader>
+    <WeatherBarContainer elevation={1} sx={{ p: 2, height: '100%' }}>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <CircularProgress size={30} />
+        </Box>
+      ) : (
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <WeatherHeader>
+            <WeatherTime variant="h4">{formattedTime}</WeatherTime>
+            <LocationButton>
+              <Typography variant="button" color="primary">
+                {location || "..."}
+              </Typography>
+              <MyLocationIcon color="primary" fontSize="small" sx={{ ml: 0.5 }} />
+            </LocationButton>
+          </WeatherHeader>
 
-            <WeatherContent>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={7}>
-                  <TemperatureContainer>
-                    <WeatherIcon src={weather?.icon} alt="Weather icon" />
-                    <Temperature>
-                      {weather?.temp}<span className="degree">&deg;</span>
-                    </Temperature>
-                  </TemperatureContainer>
-                </Grid>
-                <Grid item xs={5}>
-                  <WeatherDetails>
-                    <WeatherDetailItem>
-                      <OpacityIcon fontSize="medium" />
-                      <Typography variant="body1">{weather?.humidity}%</Typography>
-                    </WeatherDetailItem>
-                    <WeatherDetailItem>
-                      <FlagIcon fontSize="medium" />
-                      <Typography variant="body1">{weather?.windSpeed}km/h</Typography>
-                    </WeatherDetailItem>
-                  </WeatherDetails>
-                </Grid>
+          <WeatherContent sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            <Grid container spacing={1} alignItems="center" justifyContent="center">
+              <Grid item xs={6}>
+                <TemperatureContainer>
+                  <WeatherIcon src={weather?.icon || weatherIcon} alt="Weather icon" />
+                  <Temperature>
+                    {weather?.temp}<span className="degree">&deg;</span>
+                  </Temperature>
+                </TemperatureContainer>
               </Grid>
-            </WeatherContent>
-            
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <IconButton 
-                size="medium" 
-                onClick={handleRefresh} 
-                color="primary"
-                sx={{ '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.08)' } }}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Box>
-          </>
-        )}
-      </WeatherBarContainer>
-    </Grid>
+              <Grid item xs={6}>
+                <WeatherDetails>
+                  <WeatherDetailItem>
+                    <OpacityIcon fontSize="small" />
+                    <Typography variant="body2">{weather?.humidity}%</Typography>
+                  </WeatherDetailItem>
+                  <WeatherDetailItem>
+                    <FlagIcon fontSize="small" />
+                    <Typography variant="body2">{weather?.windSpeed}km/h</Typography>
+                  </WeatherDetailItem>
+                </WeatherDetails>
+              </Grid>
+            </Grid>
+          </WeatherContent>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto' }}>
+            <IconButton 
+              size="small" 
+              onClick={handleRefresh} 
+              color="primary"
+              title="Refresh weather"
+              sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
+            >
+              <RefreshIcon fontSize="small"/>
+            </IconButton>
+          </Box>
+        </Box>
+      )}
+      {error && weather && ( // Show small error message at bottom if refresh fails but old data exists
+        <Alert severity="warning" variant="outlined" sx={{ fontSize: '0.75rem', p: '0 4px', mt: 1 }}>
+          {error}
+        </Alert>
+      )}
+    </WeatherBarContainer>
   );
 }
 

@@ -1,36 +1,25 @@
 import React from 'react';
-import './LoadingSpinner.css';
+import CircularProgress from '@mui/material/CircularProgress';
+import { SpinnerContainer, SpinnerWrapper, SpinnerText, getSize } from './styles';
 
 /**
- * LoadingSpinner component hiển thị khi đang tải dữ liệu
+ * LoadingSpinner component using MUI CircularProgress
  * @param {Object} props - Component props
- * @param {string} props.size - Kích thước spinner: 'small', 'medium', or 'large'
- * @param {string} props.color - Màu sắc của spinner
- * @param {string} props.text - Văn bản hiển thị dưới spinner
- * @param {boolean} props.fullScreen - Nếu true, spinner sẽ hiển thị ở giữa màn hình
+ * @param {'small' | 'medium' | 'large'} [props.size='medium'] - Size of the spinner.
+ * @param {'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | 'inherit'} [props.color='primary'] - Color of the spinner.
+ * @param {string} [props.text] - Optional text displayed below the spinner.
+ * @param {boolean} [props.fullScreen=false] - If true, spinner covers the entire screen.
  */
-const LoadingSpinner = ({ size = 'medium', color = 'primary', text, fullScreen }) => {
-  const spinnerClasses = [
-    'spinner-border',
-    size === 'small' ? 'spinner-border-sm' : '',
-    size === 'large' ? 'spinner-border-lg' : '',
-    `text-${color}`
-  ].filter(Boolean).join(' ');
-
-  const containerClasses = [
-    'loading-spinner-container',
-    fullScreen ? 'loading-fullscreen' : ''
-  ].filter(Boolean).join(' ');
+const LoadingSpinner = ({ size = 'medium', color = 'primary', text, fullScreen = false }) => {
+  const spinnerSize = getSize(size);
 
   return (
-    <div className={containerClasses}>
-      <div className="spinner-wrapper">
-        <div className={spinnerClasses} role="status">
-          <span className="sr-only">Loading...</span>
-        </div>
-        {text && <p className="spinner-text mt-2">{text}</p>}
-      </div>
-    </div>
+    <SpinnerContainer fullScreen={fullScreen}>
+      <SpinnerWrapper>
+        <CircularProgress size={spinnerSize} color={color} />
+        {text && <SpinnerText variant="caption">{text}</SpinnerText>}
+      </SpinnerWrapper>
+    </SpinnerContainer>
   );
 };
 

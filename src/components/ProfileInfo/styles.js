@@ -1,4 +1,4 @@
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
@@ -11,6 +11,9 @@ export const ProfileInfoContainer = styled(Paper)(({ theme }) => ({
   boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
   padding: theme.spacing(2),
   borderRadius: theme.shape.borderRadius,
+  position: 'sticky',
+  top: `calc(${theme.mixins.toolbar.minHeight}px + ${theme.spacing(3)})`,
+  height: 'fit-content',
 }));
 
 export const ProfileImageWrapper = styled(Box)(({ theme }) => ({
@@ -35,20 +38,25 @@ export const ProfileImage = styled(Avatar)(({ theme }) => ({
 export const ProfileImageCaption = styled(Box)(({ theme }) => ({
   position: 'absolute',
   bottom: 0,
-  left: 0,
-  right: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  backgroundColor: alpha(theme.palette.common.black, 0.6),
   color: theme.palette.common.white,
-  padding: theme.spacing(0.5),
-  textAlign: 'center',
+  padding: '4px 8px',
+  borderRadius: '4px',
+  fontSize: '0.75rem',
   opacity: 0,
-  transition: 'opacity 0.3s ease',
-  borderBottomLeftRadius: '50%',
-  borderBottomRightRadius: '50%',
+  transition: 'opacity 0.2s ease-in-out',
+  whiteSpace: 'nowrap',
   cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  [theme.breakpoints.down('sm')]: {
+    opacity: 1,
+    backgroundColor: alpha(theme.palette.common.black, 0.5),
+    padding: '2px 6px',
+  },
+  [`${ProfileImageWrapper}:hover &`]: {
+    opacity: 1,
+  },
 }));
 
 export const ProfileFullName = styled(Typography)(({ theme }) => ({

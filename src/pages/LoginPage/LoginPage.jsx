@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { setUserFromToken } from "../../redux/features/userSlice";
 // Material UI imports
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -17,69 +19,14 @@ import { styled } from '@mui/material/styles';
 import loginApi from "../../api/loginApi";
 import saveDataToCookie from "../../utils/saveDataToCookie";
 import styles from './LoginPage.module.css';
-
-// Styled components
-const LoginContainer = styled(Box)(({ theme }) => ({
-  minHeight: '100vh',
-  backgroundColor: '#f7f9fc',
-}));
-
-const BackgroundSection = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(45deg, #1a237e, #283593, #3949ab, #3f51b5)',
-  backgroundSize: '400% 400%',
-  animation: 'gradient 15s ease infinite',
-  height: '100%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'white',
-  '& h1': {
-    fontSize: '2.5rem',
-    fontWeight: 600,
-    marginBottom: theme.spacing(2),
-  },
-  '& p': {
-    fontSize: '1.25rem',
-  }
-}));
-
-const FormPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  borderRadius: theme.spacing(1),
-  maxWidth: '450px',
-  width: '100%',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-  [theme.breakpoints.down('md')]: {
-    boxShadow: 'none',
-    backgroundColor: 'transparent',
-  }
-}));
-
-const LogoImg = styled('img')(({ theme }) => ({
-  width: '100%',
-  maxWidth: '80px',
-  height: 'auto',
-  borderRadius: theme.spacing(1),
-}));
-
-const MobileLogo = styled(Box)(({ theme }) => ({
-  display: 'none',
-  backgroundColor: '#fff',
-  padding: theme.spacing(2),
-  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-  [theme.breakpoints.down('md')]: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  }
-}));
-
-const LogoMobileImg = styled('img')(({ theme }) => ({
-  height: '60px',
-  width: 'auto',
-  borderRadius: theme.spacing(1),
-  marginBottom: theme.spacing(1),
-}));
+import { 
+  LoginContainer, 
+  BackgroundSection, 
+  FormPaper, 
+  LogoImg, 
+  MobileLogo, 
+  LogoMobileImg 
+} from './LoginPage.styles';
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -87,52 +34,72 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
   // Get the page to redirect after login from state (if available)
   const from = location.state?.from || "/";
+  
+  // Debug the redirect path
+  useEffect(() => {
+    console.log("LoginPage - Redirect path:", from);
+  }, [from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error("Please enter email and password");
+      toast.error("Vui lòng nhập email và mật khẩu");
       return;
     }
     
     setLoading(true);
     
     try {
-      // Call login API with email and password
+      // Gọi API đăng nhập
       const loginResult = await loginApi(email, password);
+      console.log("Login result:", loginResult);
 
-      // Save information to cookie
-      await saveDataToCookie(loginResult, "accountInformation", 1500);
-      
-      // Save access token to localStorage if available
-      if (loginResult.accessToken) {
-        localStorage.setItem("accessToken", loginResult.accessToken);
+      if (!loginResult || !loginResult.accessToken) {
+        throw new Error("Thông tin đăng nhập không hợp lệ");
       }
 
-      // Show success toast message
-      toast.success("Login successful!", {
+      // Lưu thông tin vào cookie
+      await saveDataToCookie(loginResult, "accountInformation", 1500);
+      
+      // Lưu accessToken riêng
+      await saveDataToCookie(loginResult.accessToken, "accessToken", 1500);
+      
+      // Dispatch action để load dữ liệu người dùng từ token
+      dispatch(setUserFromToken());
+
+      // Hiển thị thông báo thành công
+      toast.success("Đăng nhập thành công!", {
         position: "top-right",
-        autoClose: 3000,
+        autoClose: 2000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true
       });
       
-      // Short delay to allow the toast to be visible before navigating
-      setTimeout(() => {
-        // Navigate user to the original page they were trying to access or to home page
-        navigate(from, { replace: true });
-      }, 1000);
+      // Cải thiện logic chuyển hướng: navigate ngay lập tức thay vì setTimeout
+      console.log("Attempting to navigate to:", from || "/");
       
+      try {
+        navigate(from || "/", { replace: true });
+        console.log("Navigation successful");
+      } catch (navError) {
+        console.error("Navigation error:", navError);
+        // Nếu có lỗi, thử navigate đến trang chủ
+        navigate("/", { replace: true });
+      } finally {
+        setLoading(false);
+      }
     } catch (error) {
       console.error("Login failed:", error);
-      toast.error("Login failed. Please check your login information.");
-    } finally {
+      
+      // Hiển thị thông báo lỗi
+      toast.error(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.");
       setLoading(false);
     }
   };
@@ -266,23 +233,22 @@ function LoginPage() {
                   type="submit"
                   fullWidth
                   variant="contained"
+                  color="primary"
                   size="large"
                   disabled={loading}
-                  className={styles.btn}
                   sx={{ 
-                    py: 1.5,
-                    mb: 2,
-                    fontWeight: 'bold',
-                    borderRadius: 2
+                    mt: 2, 
+                    mb: 3,
+                    height: '48px',
+                    fontSize: '16px',
+                    fontWeight: 'bold' 
                   }}
+                  className={styles.loginButton}
                 >
                   {loading ? (
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <CircularProgress size={20} color="inherit" />
-                      <span>Logging in...</span>
-                    </Stack>
+                    <CircularProgress size={24} color="inherit" />
                   ) : (
-                    "Login"
+                    'Login'
                   )}
                 </Button>
                 

@@ -4,59 +4,59 @@ import Container from '@mui/material/Container';
 import Paper from '@mui/material/Paper';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import Button from '@mui/material/Button';
 
-export const ProfileContentContainer = styled(Container)(({ theme }) => ({
-  marginTop: theme.spacing(3),
+export const ProfileContentContainer = styled(Paper)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  overflow: 'hidden',
   marginBottom: theme.spacing(3),
-  padding: theme.spacing(0, 2),
-  [theme.breakpoints.up('md')]: {
-    maxWidth: 800,
-  },
+  boxShadow: theme.shadows[1],
 }));
 
 export const NavigationTabs = styled(Tabs)(({ theme }) => ({
+  borderBottom: `1px solid ${theme.palette.divider}`,
   backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  marginBottom: theme.spacing(3),
-  '& .MuiTabs-flexContainer': {
-    justifyContent: 'space-around',
-  },
-  '& .MuiTabs-indicator': {
-    backgroundColor: theme.palette.primary.main,
-    height: 3,
-  },
 }));
 
 export const StyledTab = styled(Tab)(({ theme }) => ({
   textTransform: 'none',
-  fontWeight: 600,
-  fontSize: 16,
   minWidth: 0,
+  fontWeight: theme.typography.fontWeightMedium,
   padding: theme.spacing(1.5, 2),
-  [theme.breakpoints.up('sm')]: {
-    minWidth: 0,
-  },
+  color: theme.palette.text.secondary,
   '&.Mui-selected': {
     color: theme.palette.primary.main,
-  },
-  '&:hover': {
-    color: theme.palette.primary.main,
-    opacity: 0.8,
+    fontWeight: theme.typography.fontWeightBold,
   },
 }));
 
-export const ContentWrapper = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+export const ContentWrapper = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
 }));
 
 export const TabPanel = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2, 0),
-  '&[hidden]': {
-    display: 'none',
-  },
+  padding: theme.spacing(1, 0),
+}));
+
+// New styled components for posts
+export const PostsContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(3),
+}));
+
+export const LoadMoreButton = styled(Button)(({ theme }) => ({
+  textTransform: 'none',
+  fontWeight: theme.typography.fontWeightMedium,
+}));
+
+export const EmptyStateContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(4),
+  minHeight: 200,
+  textAlign: 'center',
+  gap: theme.spacing(1),
 })); 

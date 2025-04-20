@@ -1,51 +1,90 @@
-import message from "../../assets/images/icons/left-sidebar/message.png";
-import group from "../../assets/images/icons/left-sidebar/group.png";
-import findFriend from "../../assets/images/icons/left-sidebar/find-friends.png";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ListItemText, Divider } from '@mui/material'; // Keep only necessary direct imports
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import EmailIcon from '@mui/icons-material/Email';
+import GroupsIcon from '@mui/icons-material/Groups';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import HomeIcon from '@mui/icons-material/Home';
+import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
+import VideoCameraBackOutlinedIcon from '@mui/icons-material/VideoCameraBackOutlined';
+import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
+import {
+  SidebarContainer,
+  SidebarCard,
+  SidebarList,
+  HomeListItem,
+  HomeTypography,
+  ItemListItem,
+  ItemListItemButton,
+  ItemListItemIcon,
+  StyledBadge
+} from './styles';
+
+// Main navigation items with Material-UI icons
+const mainItems = [
+  { text: 'Messages', icon: <EmailIcon color="primary" />, to: '/messages' },
+  { text: 'Groups', icon: <GroupsIcon color="secondary" />,  to: '/groups' },
+  { text: 'Find Friends', icon: <PeopleAltIcon style={{ color: '#f0a04b' }} />, to: '/friends' },
+];
+
+// Additional items
+const additionalItems = [
+  // { text: 'Saved', icon: <BookmarkBorderOutlinedIcon style={{ color: '#3f8cb8' }} />, to: '/saved' },
+  // { text: 'Videos', icon: <VideoCameraBackOutlinedIcon style={{ color: '#e74c3c' }} />, to: '/videos' },
+  // { text: 'Events', icon: <EventNoteOutlinedIcon style={{ color: '#9b59b6' }} />, to: '/events' },
+];
 
 function Sidebar() {
   return (
-    <>
-    
-        <div
-          className="col-md-3 newsfeed-left-side sticky-top shadow-sm"
-          id="sidebar-wrapper"
-        >
-          <div className="card newsfeed-user-card h-100">
-            <ul className="list-group list-group-flush newsfeed-left-sidebar">
-              <li className="list-group-item">
-                <h6>Home</h6>
-              </li>
+    <SidebarContainer>
+      <SidebarCard>
+        <SidebarList>
+          <ItemListItem disablePadding>
+            <ItemListItemButton component={Link} to="/">
+              <ItemListItemIcon>
+                <HomeIcon color="primary" />
+              </ItemListItemIcon>
+              <ListItemText primary="Home" sx={{ '& .MuiTypography-root': { fontWeight: 'bold' } }} />
+            </ItemListItemButton>
+          </ItemListItem>
 
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                <a href="messages.html" className="sidebar-item">
-                  <img src={message} alt="message" />
-                  Messages
-                </a>
-                
-                <span className="badge badge-primary badge-pill">2</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                <a href="groups.html" className="sidebar-item">
-                  <img src={group} alt="group" />
-                  Groups
-                </a>
-                <span className="badge badge-primary badge-pill">17</span>
-              </li>
-
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                <a href="find-friends.html" className="sidebar-item">
-                  <img src={findFriend} alt="find-friends" />
-                  Find Friends
-                </a>
-                <span className="badge badge-primary badge-pill">
-                  <i className="bx bx-chevron-right"></i>
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
-     
-    </>
+          {mainItems.map((item, index) => (
+            <ItemListItem key={index} disablePadding>
+              <ItemListItemButton 
+                component={Link} 
+                to={item.to}
+              >
+                <ItemListItemIcon>
+                  {item.icon}
+                </ItemListItemIcon>
+                <ListItemText primary={item.text} sx={{ opacity: 1 }} />
+                {item.count !== undefined && (
+                  <StyledBadge badgeContent={item.count} sx={{ mr: 1 }} />
+                )}
+                <ChevronRightIcon color="action" fontSize="small" />
+              </ItemListItemButton>
+            </ItemListItem>
+          ))}
+          
+          <Divider sx={{ my: 2, mx: 2 }} />
+          
+          {additionalItems.map((item, index) => (
+            <ItemListItem key={index} disablePadding>
+              <ItemListItemButton 
+                component={Link} 
+                to={item.to}
+              >
+                <ItemListItemIcon>
+                  {item.icon}
+                </ItemListItemIcon>
+                <ListItemText primary={item.text} sx={{ opacity: 1 }} />
+              </ItemListItemButton>
+            </ItemListItem>
+          ))}
+        </SidebarList>
+      </SidebarCard>
+    </SidebarContainer>
   );
 }
 

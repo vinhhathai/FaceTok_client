@@ -10,8 +10,9 @@ export const WeatherBarContainer = styled(Paper)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
   backgroundColor: theme.palette.background.paper,
   width: '100%',
-  height: '100%',
+  height: 'auto',
   minHeight: 220,
+  marginBottom: '16px',
 }));
 
 export const WeatherHeader = styled(Box)(({ theme }) => ({

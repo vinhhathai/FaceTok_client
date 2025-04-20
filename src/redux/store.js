@@ -1,11 +1,21 @@
 import { configureStore } from '@reduxjs/toolkit';
+import userReducer from './features/userSlice';
+import profileReducer from './features/profileSlice';
+import postReducer from './features/postSlice';
+import messageReducer from './features/messageSlice';
+import friendReducer from './features/friendSlice';
+import notificationReducer from './features/notificationSlice';
 import emailReducer from './features/emailSlice';
-import profileReducer from './features/profileSlice'; // Thêm import
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
-    email: emailReducer,
-    profile: profileReducer, // Thêm profileReducer vào Redux store
+    user: userReducer,
+    profile: profileReducer,
+    posts: postReducer,
+    messages: messageReducer,
+    friends: friendReducer,
+    notifications: notificationReducer,
+    email: emailReducer
   },
 });
 

@@ -1,21 +1,28 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
-import LogoHeader from "../../sub_components/LogoHeader/LogoHeader";
-import SearchForm from "../../sub_components/Search/SearchForm/SearchForm";
-import CreateNavbar from "../../sub_components/Create/CreateNavbar/CreateNavbar";
-import UserDropdown from "../../sub_components/UserDropdown/UserDropdown";
-import MessagesDropdown from "../../sub_components/MessagesDropdown/MessagesDropdown";
-import NotificationsDropdown from "../../sub_components/NotificationsDropdown/NotificationsDropdown";
+import LogoHeader from "../../components/LogoHeader/LogoHeader";
+import SearchForm from "../../components/Search/SearchForm/SearchForm";
+import CreateNavbar from "../Create/CreateNavbar/CreateNavbar";
+import UserDropdown from "../../components/UserDropdown/UserDropdown";
+import MessagesDropdown from "../../components/MessagesDropdown/MessagesDropdown";
+import NotificationsDropdown from "../../components/NotificationsDropdown/NotificationsDropdown";
+import { useSelector, useDispatch } from 'react-redux';
+import { clearUserData } from '../../redux/features/userSlice';
 
 // Material UI Imports
 import Container from '@mui/material/Container';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
+import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import { useTheme } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
+import Badge from '@mui/material/Badge';
 
 // Import styled components
 import {
@@ -24,57 +31,56 @@ import {
   LogoContainer,
   ActionsContainer,
   SearchContainer,
-  ActionButtonsContainer
+  ActionButtonsContainer,
+  IconAvatar
 } from './styles';
 
-// Import icons
-import message from "../../assets/images/icons/navbar/message.png";
-import notificationIcon from "../../assets/images/icons/navbar/notification.png";
-import avatarMessage from "../../assets/images/users/user-6.png";
-import avatarFriend1 from "../../assets/images/users/user-6.png";
-import avatarFriend2 from "../../assets/images/users/user-5.png";
-import avatarGroup from "../../assets/images/groups/group-2.jpg";
-
 function Header() {
-  const [id, setId] = useState("");
-  const [profilePicture, setProfilePicture] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
+  const dispatch = useDispatch();
+  
+  // Lấy thông tin người dùng từ Redux store
+  const user = useSelector(state => state.user?.user);
+  const isAuthenticated = useSelector(state => state.user?.isAuthenticated);
+  
+  // Debug user authentication state
+  useEffect(() => {
+    console.log("Header Component - Auth State:", { isAuthenticated, user });
+  }, [isAuthenticated, user]);
+  
+  // Get friend requests safely
+  const friends = useSelector(state => state.friends || {});
+  const friendRequests = friends.friendRequests || { received: [] };
+  const requestCount = friendRequests.received?.length || 0;
+  
+  // Log notification data from Redux store for debugging
+  const notificationState = useSelector(state => state.notifications);
+  console.log("Current notification state:", notificationState);
+  
   const isExtraSmall = useMediaQuery(theme.breakpoints.down('xs'));
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
   const isMedium = useMediaQuery(theme.breakpoints.down('md'));
 
-  useEffect(() => {
-    // Kiểm tra sự tồn tại của cookie có tên là 'accountInformation'
-    const accountInfo = Cookies.get("accountInformation");
-
-    // Nếu token tồn tại, parse chuỗi JSON để lấy accessToken
-    if (accountInfo) {
-      try {
-        const parsedAccountInfo = JSON.parse(accountInfo);
-
-        if (parsedAccountInfo.accessToken) {
-          // Giải mã token để lấy thông tin userId
-          const decoded = jwtDecode(parsedAccountInfo.accessToken);
-          setId(decoded._id);
-          setProfilePicture(decoded.profilePicture);
-        }
-      } catch (error) {
-        console.error("Token is invalid or expired", error);
-      }
-    }
-  }, []);
-
   const handleLogout = () => {
-    // Xóa toàn bộ localStorage
-    localStorage.clear();
-    
-    // Xóa cookie `accountInformation`
+    // Xóa cookie `accountInformation` và `accessToken`
     Cookies.remove("accountInformation", { path: "/" });
+    Cookies.remove("accessToken", { path: "/" });
+    
+    // Xóa thông tin người dùng trong Redux store
+    dispatch(clearUserData());
     
     // Điều hướng đến trang đăng nhập
     navigate("/auth/login");
+  };
+
+  const handleNavigateHome = () => {
+    navigate("/");
+  };
+  
+  const handleNavigateFriends = () => {
+    navigate("/friends");
   };
 
   return (
@@ -86,11 +92,7 @@ function Header() {
             <LogoHeader />
             {!isSmall && (
               <SearchContainer>
-                <SearchForm
-                  avatarFriend1={avatarFriend1}
-                  avatarFriend2={avatarFriend2}
-                  avatarGroup={avatarGroup}
-                />
+                <SearchForm isMobile={false} />
               </SearchContainer>
             )}
           </LogoContainer>
@@ -100,25 +102,46 @@ function Header() {
             {/* Search form for small screens */}
             {isSmall && (
               <SearchContainer>
-                <SearchForm
-                  avatarFriend1={avatarFriend1}
-                  avatarFriend2={avatarFriend2}
-                  avatarGroup={avatarGroup}
-                  isMobile={true}
-                />
+                <SearchForm isMobile={true} />
               </SearchContainer>
             )}
             
             {/* Action buttons */}
             <ActionButtonsContainer>
+              <Tooltip title="Trang chủ">
+                <IconButton
+                  onClick={handleNavigateHome}
+                  sx={{
+                    mr: 1
+                  }}
+                >
+                  <HomeOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Bạn bè">
+                <IconButton
+                  onClick={handleNavigateFriends}
+                  sx={{
+                    mr: 1
+                  }}
+                >
+                  <Badge badgeContent={requestCount} color="error">
+                    <PeopleAltOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+              
               <CreateNavbar />
-              <MessagesDropdown messageIcon={message} avatarMessage={avatarMessage} />
-              <NotificationsDropdown notificationIcon={notificationIcon} />
-              <UserDropdown 
-                id={id} 
-                profilePicture={profilePicture} 
-                handleLogout={handleLogout} 
-              />
+              <MessagesDropdown messageIcon={<ChatOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />} />
+              <NotificationsDropdown notificationIcon={<NotificationsOutlinedIcon sx={{ fontSize: 28, color: '#616161' }} />} />
+              {isAuthenticated && user && (
+                <UserDropdown 
+                  id={user._id} 
+                  profilePicture={user.profilePicture} 
+                  handleLogout={handleLogout} 
+                />
+              )}
             </ActionButtonsContainer>
           </ActionsContainer>
         </StyledToolbar>

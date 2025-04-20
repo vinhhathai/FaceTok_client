@@ -43,13 +43,26 @@ function SignUpPage() {
   
     // Kiểm tra các trường đã được điền đầy đủ
     if (!fullName || !password || !confirmPassword || !email) {
-      toast.error("Please enter all fields!");
+      toast.error("Vui lòng điền đầy đủ thông tin!");
       return;
     }
   
     // Kiểm tra mật khẩu và mật khẩu xác nhận
     if (password !== confirmPassword) {
-      toast.error("Password and confirm password do not match!");
+      toast.error("Mật khẩu và xác nhận mật khẩu không khớp!");
+      return;
+    }
+    
+    // Kiểm tra định dạng email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Định dạng email không hợp lệ!");
+      return;
+    }
+    
+    // Kiểm tra độ dài mật khẩu
+    if (password.length < 6) {
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự!");
       return;
     }
     
@@ -57,23 +70,31 @@ function SignUpPage() {
   
     try {
       // Gọi API đăng ký
-      const isSignUp = await signUpApi(fullName, password, confirmPassword, email);
-      console.log(isSignUp);
+      const signUpResult = await signUpApi(fullName, password, confirmPassword, email);
+      console.log("Sign up result:", signUpResult);
       
-      if (isSignUp && isSignUp.status === true) {
-        toast.success("Sign up successful!");
-        setTimeout(() => {
-          navigate('/auth/login');
-        }, 1500);
-      } else if (isSignUp && isSignUp.error) {
-        toast.error(isSignUp.error.name);
-      } else {
-        toast.error("Unexpected response format");
+      if (!signUpResult || !signUpResult.status) {
+        throw new Error(signUpResult?.error?.message || "Đăng ký thất bại");
       }
+      
+      // Hiển thị thông báo thành công
+      toast.success(signUpResult.message || "Đăng ký thành công!");
+      
+      // Chuyển hướng đến trang đăng nhập
+        setTimeout(() => {
+        navigate('/login');
+        setLoading(false);
+      }, 1500);
     } catch (error) {
       console.error("Sign up failed:", error);
-      toast.error(`Sign up failed: ${error.message || "An error occurred"}`);
-    } finally {
+      
+      // Hiển thị thông báo lỗi
+      if (error.error) {
+        toast.error(error.error.message || "Đăng ký thất bại!");
+      } else {
+        toast.error("Đăng ký thất bại. Vui lòng thử lại sau!");
+      }
+      
       setLoading(false);
     }
   };
