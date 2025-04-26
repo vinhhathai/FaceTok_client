@@ -85,19 +85,19 @@ export const initializeSocket = (token) => {
   // Friend request received
   socket.on('friendRequestReceived', (request) => {
     console.log('Friend request received:', request);
-    store.dispatch(addFriendRequest({ request, isIncoming: true }));
+    store.dispatch(addFriendRequest(request));
   });
 
   // Friend request accepted
   socket.on('friendRequestAccepted', (friend) => {
     console.log('Friend request accepted:', friend);
-    store.dispatch(addFriend({ friend }));
+    store.dispatch(addFriend(friend));
   });
 
   // Friend removed
   socket.on('friendRemoved', (data) => {
     console.log('Friend removed:', data);
-    store.dispatch(removeFriendAction({ friendId: data.userId }));
+    store.dispatch(removeFriendAction(data.userId));
   });
   
   // New notification received

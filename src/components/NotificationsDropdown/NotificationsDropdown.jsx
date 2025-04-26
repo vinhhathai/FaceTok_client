@@ -10,24 +10,29 @@ const NotificationsDropdown = ({ notificationIcon }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const dispatch = useDispatch();
   
-  // Get unread count from Redux
+  // Get unread count from Redux and check authentication
   const { unreadCount, notifications } = useSelector(state => state.notifications);
+  const { isAuthenticated, user } = useSelector(state => state.user || {});
   
-  console.log('NotificationsDropdown rendering:', { unreadCount, notificationsCount: notifications?.length });
+
   
-  // Fetch unread count initially and on interval
+  // Fetch unread count initially and on interval - ONLY if authenticated
   useEffect(() => {
-    console.log('NotificationsDropdown: Fetching unread count');
-    dispatch(getUnreadCount());
-    
-    // Poll for new notifications every minute
-    const intervalId = setInterval(() => {
-      console.log('NotificationsDropdown: Polling for updates');
+    // Chỉ fetch notifications khi người dùng đã đăng nhập
+    if (isAuthenticated && user) {
       dispatch(getUnreadCount());
-    }, 60000);
-    
-    return () => clearInterval(intervalId);
-  }, [dispatch]);
+      
+      // Poll for new notifications every minute
+      const intervalId = setInterval(() => {
+        // Kiểm tra lại trạng thái xác thực hiện tại trước khi gọi API
+        if (isAuthenticated && user) {
+          dispatch(getUnreadCount());
+        }
+      }, 60000);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [dispatch, isAuthenticated, user]);
   
   const handleOpenSidebar = () => {
     setSidebarOpen(true);
@@ -44,7 +49,7 @@ const NotificationsDropdown = ({ notificationIcon }) => {
         onClick={handleOpenSidebar}
         color="inherit"
       >
-        <Badge badgeContent={unreadCount} color="error">
+        <Badge badgeContent={isAuthenticated ? unreadCount : 0} color="error">
           {notificationIcon}
         </Badge>
       </IconButton>

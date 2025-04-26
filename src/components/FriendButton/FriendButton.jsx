@@ -14,7 +14,7 @@ import {
   rejectFriendRequest, 
   cancelFriendRequest, 
   removeFriend,
-  checkFriendshipStatus
+  getFriendshipStatus
 } from '../../redux/features/friendSlice';
 
 import {
@@ -41,14 +41,17 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
   const currentUser = useSelector(state => state.user.user);
   const { friendshipStatus, error } = useSelector(state => state.friends);
   
-  // Get status for this specific user
-  const status = friendshipStatus[userId]?.status || 'not_friends';
-  const requestId = friendshipStatus[userId]?.requestId;
+  // Get status for this specific user - đảm bảo xử lý đúng cả khi status là string
+  const userStatus = friendshipStatus[userId];
+  const status = typeof userStatus === 'string' 
+    ? userStatus 
+    : (userStatus?.status || 'none');
+  const requestId = typeof userStatus === 'object' ? userStatus?.requestId : undefined;
   
   useEffect(() => {
     // Check friendship status if not already available and currentUser exists
     if (currentUser && userId && !friendshipStatus[userId] && userId !== currentUser._id) {
-      dispatch(checkFriendshipStatus(userId));
+      dispatch(getFriendshipStatus(userId));
     }
   }, [userId, dispatch, friendshipStatus, currentUser]);
   
@@ -131,6 +134,7 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
         </>
       );
       
+    case 'pending_sent':
     case 'request_sent':
       return (
         <Tooltip title="Cancel Friend Request">
@@ -147,6 +151,7 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
         </Tooltip>
       );
       
+    case 'pending_received':
     case 'request_received':
       return (
         <>
@@ -178,7 +183,24 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
           </FriendActionMenu>
         </>
       );
+    
+    case 'rejected':
+      return (
+        <Tooltip title="Request Rejected">
+          <FriendActionButton
+            variant={variant}
+            size={size}
+            color="secondary"
+            startIcon={<PersonAddIcon fontSize={iconSize} />}
+            onClick={handleSendRequest}
+            disabled={loading}
+          >
+            {showText && 'Request Again'}
+          </FriendActionButton>
+        </Tooltip>
+      );
       
+    case 'none':
     case 'not_friends':
     default:
       return (

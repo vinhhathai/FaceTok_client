@@ -29,6 +29,7 @@ function SearchDropdown({ searchResult, loading, error }) {
   
   // Lấy trạng thái kết bạn từ Redux để biết ai đã là bạn hoặc đã gửi lời mời
   const { friendshipStatus } = useSelector(state => state.friends);
+  const currentUser = useSelector(state => state.user.user);
 
   const handleAddFriendClick = (userId, index, event) => {
     event.preventDefault();
@@ -106,6 +107,7 @@ function SearchDropdown({ searchResult, loading, error }) {
             const userFriendshipStatus = getFriendshipStatus(userId);
             const isAlreadyFriend = userFriendshipStatus === 'friends';
             const requestSent = userFriendshipStatus === 'request_sent' || requestedMap[index];
+            const isCurrentUser = currentUser && (userId === currentUser._id || userId === currentUser.id);
             
             return (
               <ListItem 
@@ -127,7 +129,7 @@ function SearchDropdown({ searchResult, loading, error }) {
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
                 
-                {!isAlreadyFriend && (
+                {!isAlreadyFriend && !isCurrentUser && (
                   <AddFriendButton
                     variant="contained"
                     size="small"

@@ -1,183 +1,393 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { BASE_URL } from '../../config/config';
+import { getTokenFromCookie } from '../../services/socketService';
 
-// Hàm trợ giúp để xử lý dữ liệu từ API mới
+// Helper function to extract data from different response formats
 const getDataFromResponse = (response) => {
-  console.log('Response data:', response.data);
-  return response.data.data !== undefined ? response.data.data : response.data;
+  if (!response) return null;
+  
+  // Check if response has a data property that contains the actual data
+  if (response.data !== undefined) {
+    return response.data;
+  }
+  
+  // Check if response has a friends property (for list endpoints)
+  if (response.friends !== undefined) {
+    return response.friends;
+  }
+  
+  return response;
 };
 
-// Thunk to fetch user's friends
+// Async thunks
 export const fetchFriends = createAsyncThunk(
   'friends/fetchFriends',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/friend/list');
-      const data = getDataFromResponse(response);
-      console.log('Fetched friends:', data);
-      return data;
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      const response = await axios.get(`${BASE_URL}/friend/list`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        return rejectWithValue(response.data.error || 'Failed to fetch friends');
+      }
     } catch (error) {
-      console.error('Error fetching friends:', error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch friends';
-      return rejectWithValue(errorData);
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
     }
   }
 );
 
-// Thunk to fetch a specific user's friends by userId
 export const fetchUserFriends = createAsyncThunk(
   'friends/fetchUserFriends',
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/friend/list/${userId}`);
-      const data = getDataFromResponse(response);
-      console.log(`Fetched user ${userId} friends:`, data);
-      return {
-        userId,
-        friends: data
-      };
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      const response = await axios.get(`${BASE_URL}/friend/user/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.success) {
+        return {
+          userId,
+          friends: response.data.data.friends || [],
+          totalFriends: response.data.data.totalFriends || 0
+        };
+      } else {
+        return rejectWithValue(response.data.error || 'Failed to fetch user friends');
+      }
     } catch (error) {
-      console.error(`Error fetching user ${userId} friends:`, error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch user friends';
-      return rejectWithValue(errorData);
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
     }
   }
 );
 
-// Thunk to fetch friend requests
 export const fetchFriendRequests = createAsyncThunk(
   'friends/fetchFriendRequests',
   async (_, { rejectWithValue }) => {
     try {
-      const receivedResponse = await axios.get('/friend/pending');
-      const sentResponse = await axios.get('/friend/sent');
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      const response = await axios.get(`${BASE_URL}/friend/requests`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
-      const receivedData = getDataFromResponse(receivedResponse);
-      const sentData = getDataFromResponse(sentResponse);
-      
-      console.log('Fetched friend requests:', { received: receivedData, sent: sentData });
-      return {
-        received: receivedData || [],
-        sent: sentData || []
-      };
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        return rejectWithValue(response.data.error || 'Failed to fetch friend requests');
+      }
     } catch (error) {
-      console.error('Error fetching friend requests:', error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to fetch friend requests';
-      return rejectWithValue(errorData);
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
     }
   }
 );
 
-// Thunk to check friendship status
-export const checkFriendshipStatus = createAsyncThunk(
-  'friends/checkFriendshipStatus',
-  async (userId, { rejectWithValue }) => {
-    try {
-      const response = await axios.get(`/friend/status/${userId}`);
-      const data = getDataFromResponse(response);
-      console.log(`Checked friendship status with ${userId}:`, data);
-      return {
-        userId,
-        status: data
-      };
-    } catch (error) {
-      console.error(`Error checking friendship status with ${userId}:`, error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to check friendship status';
-      return rejectWithValue(errorData);
-    }
-  }
-);
-
-// Thunk to send friend request
 export const sendFriendRequest = createAsyncThunk(
   'friends/sendFriendRequest',
   async (recipientId, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/friend/request', { recipientId });
-      const data = getDataFromResponse(response);
-      console.log(`Sent friend request to ${recipientId}:`, data);
-      return {
-        ...data,
-        recipientId
-      };
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      console.log(`Sending friend request to user ID: ${recipientId}`);
+      console.log(`Using token (first 10 chars): ${token.substring(0, 10)}...`);
+
+      const response = await axios.post(
+        `${BASE_URL}/friend/request`,
+        { recipientId }, // Make sure we're using the correct parameter name
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('Friend request response:', response.data);
+      
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        console.error('Friend request failed:', response.data.error);
+        return rejectWithValue(response.data.error || 'Failed to send friend request');
+      }
     } catch (error) {
-      console.error(`Error sending friend request to ${recipientId}:`, error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to send friend request';
-      return rejectWithValue(errorData);
+      console.error('Error in sendFriendRequest:', error);
+      console.error('Error response:', error.response?.data);
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
     }
   }
 );
 
-// Thunk to accept friend request
 export const acceptFriendRequest = createAsyncThunk(
   'friends/acceptFriendRequest',
   async (requestId, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`/friend/accept/${requestId}`);
-      const data = getDataFromResponse(response);
-      console.log(`Accepted friend request ${requestId}:`, data);
-      return data;
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      const response = await axios.put(
+        `${BASE_URL}/friend/accept/${requestId}`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        return { ...response.data.data, requestId };
+      } else {
+        return rejectWithValue(response.data.error || 'Failed to accept friend request');
+      }
     } catch (error) {
-      console.error(`Error accepting friend request ${requestId}:`, error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to accept friend request';
-      return rejectWithValue(errorData);
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
     }
   }
 );
 
-// Thunk to reject friend request
 export const rejectFriendRequest = createAsyncThunk(
   'friends/rejectFriendRequest',
-  async (requestId, { rejectWithValue }) => {
+  async (requestId, { rejectWithValue, getState }) => {
     try {
-      const response = await axios.post(`/friend/reject/${requestId}`);
-      const data = getDataFromResponse(response);
-      console.log(`Rejected friend request ${requestId}:`, data);
-      return data;
+      console.log(`Rejecting friend request with ID: ${requestId}`);
+      
+      // Make sure the requestId is valid
+      if (!requestId) {
+        console.error('No valid requestId provided');
+        return rejectWithValue('Invalid request ID');
+      }
+      
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+      
+      // Log the request that we're about to make
+      console.log(`Making PUT request to: ${BASE_URL}/friend/reject/${requestId}`);
+      console.log('Using token (first 10 chars):', token.substring(0, 10) + '...');
+      
+      const response = await axios.put(
+        `${BASE_URL}/friend/reject/${requestId}`,
+        {}, // Empty body
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('Reject request response:', response.data);
+      
+      if (response.data.success) {
+        return { ...response.data.data, requestId };
+      } else {
+        console.error('Reject request failed:', response.data.error);
+        return rejectWithValue(response.data.error || 'Failed to reject friend request');
+      }
     } catch (error) {
-      console.error(`Error rejecting friend request ${requestId}:`, error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to reject friend request';
-      return rejectWithValue(errorData);
+      console.error('Error in rejectFriendRequest:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      // Check for specific permission error
+      if (error.response?.data?.error?.code === 'VAL_VALIDATION_FAILED' && 
+          error.response?.data?.error?.message?.includes('không có quyền')) {
+        return rejectWithValue('Bạn không có quyền từ chối lời mời kết bạn này');
+      }
+      
+      return rejectWithValue(
+        error.response?.data?.error?.message || 
+        error.response?.data?.message || 
+        error.message || 
+        'Could not connect to server'
+      );
     }
   }
 );
 
-// Thunk to cancel friend request
 export const cancelFriendRequest = createAsyncThunk(
   'friends/cancelFriendRequest',
   async (requestId, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`/friend/cancel/${requestId}`);
-      const data = getDataFromResponse(response);
-      console.log(`Cancelled friend request ${requestId}:`, data);
-      return {
-        requestId,
-        ...data
-      };
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      const response = await axios.delete(
+        `${BASE_URL}/friend/cancel/${requestId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        return { ...response.data.data, requestId };
+      } else {
+        return rejectWithValue(response.data.error || 'Failed to cancel friend request');
+      }
     } catch (error) {
-      console.error(`Error cancelling friend request ${requestId}:`, error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to cancel friend request';
-      return rejectWithValue(errorData);
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
     }
   }
 );
 
-// Thunk to remove friend
 export const removeFriend = createAsyncThunk(
   'friends/removeFriend',
   async (friendId, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`/friend/remove/${friendId}`);
-      const data = getDataFromResponse(response);
-      console.log(`Removed friend ${friendId}:`, data);
-      return {
-        friendId,
-        ...data
-      };
+      console.log("Starting to remove friend with ID:", friendId);
+      
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      console.log(`Making DELETE request to ${BASE_URL}/friend/remove/${friendId}`);
+      
+      const response = await axios.delete(
+        `${BASE_URL}/friend/remove/${friendId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log("Remove friend response:", response.data);
+      
+      if (response.data.success) {
+        console.log("Friend removed successfully:", response.data.data);
+        return { ...response.data.data, friendId };
+      } else {
+        console.error("Failed to remove friend:", response.data.error);
+        return rejectWithValue(response.data.error || 'Failed to remove friend');
+      }
     } catch (error) {
-      console.error(`Error removing friend ${friendId}:`, error);
-      const errorData = error.response?.data?.error || error.response?.data || 'Failed to remove friend';
-      return rejectWithValue(errorData);
+      console.error("Error in removeFriend action:", error);
+      console.error("Error response:", error.response?.data);
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
+    }
+  }
+);
+
+export const getFriendshipStatus = createAsyncThunk(
+  'friends/getFriendshipStatus',
+  async (userId, { rejectWithValue }) => {
+    try {
+      // Get token from cookies
+      const token = getTokenFromCookie();
+      if (!token) {
+        console.error('No authorization token found in cookies');
+        return rejectWithValue('Authentication required');
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/friend/status`,
+        { targetUserId: userId },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        // The response contains status and possibly requestId
+        return {
+          userId,
+          status: response.data.data
+        };
+      } else {
+        return rejectWithValue(response.data.error || 'Failed to get friendship status');
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || {
+          message: 'Could not connect to server'
+        }
+      );
     }
   }
 );
@@ -185,338 +395,250 @@ export const removeFriend = createAsyncThunk(
 // Initial state
 const initialState = {
   friends: [],
-  userFriends: {}, // { userId: friends[] }
-  friendRequests: {
-    received: [],
-    sent: []
-  },
-  friendshipStatus: {}, // { userId: { status, requestId } }
+  totalFriends: 0,
+  receivedRequests: [],
+  sentRequests: [],
+  totalReceivedRequests: 0,
+  totalSentRequests: 0,
   loading: false,
   error: null,
-  successMessage: null
+  friendRequestLoading: false,
+  friendRequestError: null,
+  friendshipStatus: {}, // Map of userId to status
+  lastFetched: null,
+  userFriends: {}, // Map of userId to their friends
 };
 
-// Create the slice
+// Create slice
 const friendSlice = createSlice({
   name: 'friends',
   initialState,
   reducers: {
     clearFriendError: (state) => {
       state.error = null;
-    },
-    clearSuccessMessage: (state) => {
-      state.successMessage = null;
-    },
-    // For real-time updates
-    addFriend: (state, action) => {
-      const { friend } = action.payload;
-      if (!state.friends.some(f => f._id === friend._id)) {
-        state.friends.push(friend);
-      }
-      
-      // Remove from pending requests if it exists
-      state.friendRequests.received = state.friendRequests.received.filter(
-        req => req.sender._id !== friend._id
-      );
-      state.friendRequests.sent = state.friendRequests.sent.filter(
-        req => req.recipient._id !== friend._id
-      );
-      
-      // Update status
-      state.friendshipStatus[friend._id] = { status: 'friends' };
-    },
-    removeFriendAction: (state, action) => {
-      const { friendId } = action.payload;
-      state.friends = state.friends.filter(friend => friend._id !== friendId);
-      
-      // Update status
-      if (state.friendshipStatus[friendId]) {
-        state.friendshipStatus[friendId] = { status: 'not_friends' };
-      }
+      state.friendRequestError = null;
     },
     addFriendRequest: (state, action) => {
-      const { request, isIncoming } = action.payload;
-      if (isIncoming) {
-        // Check if request already exists
-        if (!state.friendRequests.received.some(req => req._id === request._id)) {
-          state.friendRequests.received.push(request);
-        }
-        
-        // Update status
-        state.friendshipStatus[request.sender._id] = { 
-          status: 'request_received', 
-          requestId: request._id 
-        };
-      } else {
-        // Check if request already exists
-        if (!state.friendRequests.sent.some(req => req._id === request._id)) {
-          state.friendRequests.sent.push(request);
-        }
-        
-        // Update status
-        state.friendshipStatus[request.recipient._id] = {
-          status: 'request_sent',
-          requestId: request._id
-        };
+      const request = action.payload;
+      const existingRequestIndex = state.receivedRequests.findIndex(req => req._id === request._id);
+      if (existingRequestIndex === -1) {
+        state.receivedRequests.push(request);
+        state.totalReceivedRequests += 1;
       }
     },
-    removeFriendRequest: (state, action) => {
-      const { requestId, userId, status } = action.payload;
-      
-      // Remove from pending requests
-      state.friendRequests.received = state.friendRequests.received.filter(
-        req => req._id !== requestId
-      );
-      state.friendRequests.sent = state.friendRequests.sent.filter(
-        req => req._id !== requestId
-      );
-      
-      // Update status if userId is provided
-      if (userId) {
-        state.friendshipStatus[userId] = { status };
+    addFriend: (state, action) => {
+      const friend = action.payload;
+      const existingFriendIndex = state.friends.findIndex(f => f._id === friend._id);
+      if (existingFriendIndex === -1) {
+        state.friends.push(friend);
+        state.totalFriends += 1;
       }
+    },
+    removeFriendAction: (state, action) => {
+      const friendId = action.payload;
+      state.friends = state.friends.filter(friend => friend._id !== friendId);
+      state.totalFriends = Math.max(0, state.totalFriends - 1);
     }
   },
   extraReducers: (builder) => {
     builder
-      // fetchFriends
+      // Fetch friends
       .addCase(fetchFriends.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchFriends.fulfilled, (state, action) => {
         state.loading = false;
-        state.friends = action.payload;
-        
-        // Update friendship status for all friends
-        action.payload.forEach(friend => {
-          state.friendshipStatus[friend._id] = { status: 'friends' };
-        });
+        state.friends = action.payload.friends || [];
+        state.totalFriends = action.payload.totalFriends || 0;
       })
       .addCase(fetchFriends.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to fetch friends';
+        state.error = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to fetch friends' 
+          : action.payload;
       })
       
-      // fetchUserFriends
-      .addCase(fetchUserFriends.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchUserFriends.fulfilled, (state, action) => {
-        state.loading = false;
-        const { userId, friends } = action.payload;
-        state.userFriends[userId] = friends;
-      })
-      .addCase(fetchUserFriends.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'Failed to fetch user friends';
-      })
-      
-      // fetchFriendRequests
+      // Fetch friend requests
       .addCase(fetchFriendRequests.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchFriendRequests.fulfilled, (state, action) => {
         state.loading = false;
-        state.friendRequests = action.payload;
-        
-        // Update friendship status for all requests
-        action.payload.received.forEach(request => {
-          state.friendshipStatus[request.sender._id] = { 
-            status: 'request_received', 
-            requestId: request._id 
-          };
-        });
-        
-        action.payload.sent.forEach(request => {
-          state.friendshipStatus[request.recipient._id] = { 
-            status: 'request_sent',
-            requestId: request._id 
-          };
-        });
+        state.receivedRequests = action.payload.received || [];
+        state.sentRequests = action.payload.sent || [];
+        state.totalReceivedRequests = action.payload.totalReceived || 0;
+        state.totalSentRequests = action.payload.totalSent || 0;
       })
       .addCase(fetchFriendRequests.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to fetch friend requests';
+        state.error = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to fetch friend requests' 
+          : action.payload;
       })
       
-      // checkFriendshipStatus
-      .addCase(checkFriendshipStatus.fulfilled, (state, action) => {
-        const { userId, status } = action.payload;
-        state.friendshipStatus[userId] = status;
-      })
-      
-      // sendFriendRequest
+      // Send friend request
       .addCase(sendFriendRequest.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.friendRequestLoading = true;
+        state.friendRequestError = null;
       })
       .addCase(sendFriendRequest.fulfilled, (state, action) => {
-        state.loading = false;
-        state.successMessage = action.payload.message;
-        
-        // If request was accepted (mutual friend request)
-        if (action.payload.message === 'Friend request accepted') {
-          const newFriend = {
-            _id: action.payload.friendRequest.sender.toString() === action.payload.recipientId ? 
-                action.payload.friendRequest.recipient :
-                action.payload.friendRequest.sender
-          };
-          
-          // Add to friends list if not there
-          if (!state.friends.some(f => f._id === newFriend._id)) {
-            state.friends.push(newFriend);
-          }
-          
-          // Update status
-          state.friendshipStatus[newFriend._id] = { status: 'friends' };
-        } else {
-          // Regular friend request was sent
-          const requestId = action.payload.friendRequest._id;
-          const recipientId = action.payload.recipientId;
-          
-          // Update status
-          state.friendshipStatus[recipientId] = { 
-            status: 'request_sent',
-            requestId 
-          };
-          
-          // Add to sent requests
-          state.friendRequests.sent.push({
-            _id: requestId,
-            recipient: {
-              _id: recipientId
-            }
-          });
+        state.friendRequestLoading = false;
+        if (action.payload.friendRequest) {
+          state.sentRequests.push(action.payload.friendRequest);
+          state.totalSentRequests += 1;
         }
       })
       .addCase(sendFriendRequest.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || 'Failed to send friend request';
+        state.friendRequestLoading = false;
+        state.friendRequestError = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to send friend request' 
+          : action.payload;
       })
       
-      // acceptFriendRequest
+      // Accept friend request
       .addCase(acceptFriendRequest.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.friendRequestLoading = true;
+        state.friendRequestError = null;
       })
       .addCase(acceptFriendRequest.fulfilled, (state, action) => {
-        state.loading = false;
-        state.successMessage = action.payload.message;
+        state.friendRequestLoading = false;
         
-        const request = action.payload.friendRequest;
-        const senderId = request.sender;
-        
-        // Add to friends list if not already there
-        if (!state.friends.some(f => f._id === senderId)) {
-          state.friends.push({ _id: senderId });
-        }
-        
-        // Remove from pending requests
-        state.friendRequests.received = state.friendRequests.received.filter(
-          req => req._id !== request._id
+        state.receivedRequests = state.receivedRequests.filter(
+          request => request._id !== action.payload.requestId
         );
+        state.totalReceivedRequests = Math.max(0, state.totalReceivedRequests - 1);
         
-        // Update status
-        state.friendshipStatus[senderId] = { status: 'friends' };
+        if (action.payload.friend) {
+          state.friends.push(action.payload.friend);
+          state.totalFriends += 1;
+          
+          // Cập nhật friendshipStatus khi chấp nhận lời mời kết bạn
+          if (action.payload.friend._id) {
+            state.friendshipStatus[action.payload.friend._id] = "friends";
+          }
+        }
       })
       .addCase(acceptFriendRequest.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || 'Failed to accept friend request';
+        state.friendRequestLoading = false;
+        state.friendRequestError = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to accept friend request' 
+          : action.payload;
       })
       
-      // rejectFriendRequest
+      // Reject friend request
       .addCase(rejectFriendRequest.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.friendRequestLoading = true;
+        state.friendRequestError = null;
       })
       .addCase(rejectFriendRequest.fulfilled, (state, action) => {
-        state.loading = false;
-        state.successMessage = action.payload.message;
+        state.friendRequestLoading = false;
         
-        const request = action.payload.friendRequest;
-        const senderId = request.sender;
-        
-        // Remove from pending requests
-        state.friendRequests.received = state.friendRequests.received.filter(
-          req => req._id !== request._id
+        state.receivedRequests = state.receivedRequests.filter(
+          request => request._id !== action.payload.requestId
         );
-        
-        // Update status
-        state.friendshipStatus[senderId] = { 
-          status: 'request_rejected',
-          requestId: request._id 
-        };
+        state.totalReceivedRequests = Math.max(0, state.totalReceivedRequests - 1);
       })
       .addCase(rejectFriendRequest.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || 'Failed to reject friend request';
+        state.friendRequestLoading = false;
+        state.friendRequestError = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to reject friend request' 
+          : action.payload;
       })
       
-      // cancelFriendRequest
+      // Cancel friend request
       .addCase(cancelFriendRequest.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.friendRequestLoading = true;
+        state.friendRequestError = null;
       })
       .addCase(cancelFriendRequest.fulfilled, (state, action) => {
-        state.loading = false;
-        state.successMessage = action.payload.message;
+        state.friendRequestLoading = false;
         
-        const requestId = action.payload.requestId;
-        
-        // Find the request to get recipient ID
-        const request = state.friendRequests.sent.find(req => req._id === requestId);
-        
-        if (request) {
-          // Update status
-          state.friendshipStatus[request.recipient._id] = { 
-            status: 'not_friends' 
-          };
-          
-          // Remove from sent requests
-          state.friendRequests.sent = state.friendRequests.sent.filter(
-            req => req._id !== requestId
-          );
-        }
+        state.sentRequests = state.sentRequests.filter(
+          request => request._id !== action.payload.requestId
+        );
+        state.totalSentRequests = Math.max(0, state.totalSentRequests - 1);
       })
       .addCase(cancelFriendRequest.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || 'Failed to cancel friend request';
+        state.friendRequestLoading = false;
+        state.friendRequestError = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to cancel friend request' 
+          : action.payload;
       })
       
-      // removeFriend
+      // Remove friend
       .addCase(removeFriend.pending, (state) => {
+        console.log("removeFriend.pending state");
+        state.friendRequestLoading = true;
+        state.friendRequestError = null;
+      })
+      .addCase(removeFriend.fulfilled, (state, action) => {
+        console.log("removeFriend.fulfilled with payload:", action.payload);
+        state.friendRequestLoading = false;
+        
+        state.friends = state.friends.filter(
+          friend => friend._id !== action.payload.friendId
+        );
+        console.log("After filter, friends list length:", state.friends.length);
+        state.totalFriends = Math.max(0, state.totalFriends - 1);
+        
+        // Also update friendshipStatus to reflect the friend removal
+        if (action.payload.friendId) {
+          delete state.friendshipStatus[action.payload.friendId];
+          console.log("Updated friendshipStatus, removed:", action.payload.friendId);
+        }
+      })
+      .addCase(removeFriend.rejected, (state, action) => {
+        console.log("removeFriend.rejected with error:", action.payload);
+        state.friendRequestLoading = false;
+        state.friendRequestError = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to remove friend' 
+          : action.payload;
+      })
+      
+      // Handle getFriendshipStatus
+      .addCase(getFriendshipStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(removeFriend.fulfilled, (state, action) => {
+      .addCase(getFriendshipStatus.fulfilled, (state, action) => {
         state.loading = false;
-        state.successMessage = action.payload.message;
-        
-        const { friendId } = action.payload;
-        
-        // Remove from friends list
-        state.friends = state.friends.filter(friend => friend._id !== friendId);
-        
-        // Update status
-        state.friendshipStatus[friendId] = { status: 'not_friends' };
+        state.friendshipStatus[action.payload.userId] = action.payload.status;
       })
-      .addCase(removeFriend.rejected, (state, action) => {
+      .addCase(getFriendshipStatus.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Failed to remove friend';
+        state.error = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to get friendship status' 
+          : action.payload || 'Failed to get friendship status';
+      })
+      
+      // Handle fetchUserFriends
+      .addCase(fetchUserFriends.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserFriends.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userFriends[action.payload.userId] = {
+          friends: action.payload.friends,
+          totalFriends: action.payload.totalFriends
+        };
+      })
+      .addCase(fetchUserFriends.rejected, (state, action) => {
+        state.loading = false;
+        state.error = typeof action.payload === 'object' 
+          ? action.payload.message || 'Failed to fetch user friends' 
+          : action.payload || 'Failed to fetch user friends';
       });
-  }
+  },
 });
 
 export const { 
   clearFriendError, 
-  clearSuccessMessage,
-  addFriend,
-  removeFriendAction,
-  addFriendRequest,
-  removeFriendRequest
+  addFriendRequest, 
+  addFriend, 
+  removeFriendAction 
 } = friendSlice.actions;
 
 export default friendSlice.reducer; 

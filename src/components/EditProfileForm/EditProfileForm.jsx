@@ -174,7 +174,7 @@ const EditProfileForm = ({ open, onClose, profile, refreshProfile }) => {
                   </MenuItem>
                   <MenuItem value="male">Nam</MenuItem>
                   <MenuItem value="female">Nữ</MenuItem>
-                  <MenuItem value="No gender">Không xác định</MenuItem>
+                  <MenuItem value="undefined">Không xác định</MenuItem>
                 </Select>
                 {errors.gender && <Typography color="error" variant="caption">{errors.gender}</Typography>}
               </FormControl>

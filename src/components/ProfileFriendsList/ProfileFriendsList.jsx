@@ -27,7 +27,9 @@ const ProfileFriendsList = ({ userId, isOwnProfile }) => {
   
   // Get user friends from Redux store
   const { userFriends, loading, error } = useSelector(state => state.friends);
-  const friends = userFriends[userId] || [];
+  const userFriendsData = userFriends[userId];
+  const friends = userFriendsData?.friends || [];
+  const totalFriends = userFriendsData?.totalFriends || 0;
   
   // Fetch user's friends when component mounts
   useEffect(() => {

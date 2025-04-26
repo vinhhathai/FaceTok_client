@@ -1,6 +1,8 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
+import { BASE_URL } from '../../config/config';
 
 // Thiết lập giá trị cho localStorage để sử dụng trong các components khác
 const updateLocalUserData = (userData) => {
@@ -137,6 +139,25 @@ if (initialUserState.user && initialUserState.user._id) {
   updateLocalUserData(initialUserState.user);
 }
 
+// Add search users thunk
+export const searchUsers = createAsyncThunk(
+  'user/searchUsers',
+  async (query, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/user/search?query=${encodeURIComponent(query)}`, {
+        withCredentials: true
+      });
+      
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        return rejectWithValue(error.response.data);
+      }
+      return rejectWithValue({ message: 'Failed to search users' });
+    }
+  }
+);
+
 // Tạo userSlice để quản lý thông tin người dùng hiện tại
 const userSlice = createSlice({
   name: 'user',
@@ -214,10 +235,32 @@ const userSlice = createSlice({
       localStorage.removeItem('userFullName');
       localStorage.removeItem('userProfilePicture');
       localStorage.removeItem('userThumbnail');
-    }
+    },
+    clearSearchResults: (state) => {
+      state.searchResults = [];
+      state.searchError = null;
+    },
+  },
+  extraReducers: (builder) => {
+    // Search users reducers
+    builder
+      .addCase(searchUsers.pending, (state) => {
+        state.searchLoading = true;
+        state.searchError = null;
+      })
+      .addCase(searchUsers.fulfilled, (state, action) => {
+        state.searchLoading = false;
+        state.searchResults = action.payload.data || [];
+      })
+      .addCase(searchUsers.rejected, (state, action) => {
+        state.searchLoading = false;
+        state.searchError = action.payload && typeof action.payload === 'object' && action.payload.message
+          ? action.payload.message
+          : 'Failed to search users';
+      });
   }
 });
 
-export const { setUserFromToken, updateUserAvatar, updateUserThumbnail, updateUserInfo, clearUserData } = userSlice.actions;
+export const { setUserFromToken, updateUserAvatar, updateUserThumbnail, updateUserInfo, clearUserData, clearSearchResults } = userSlice.actions;
 
 export default userSlice.reducer; 

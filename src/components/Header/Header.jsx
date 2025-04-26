@@ -47,7 +47,6 @@ function Header() {
   
   // Debug user authentication state
   useEffect(() => {
-    console.log("Header Component - Auth State:", { isAuthenticated, user });
   }, [isAuthenticated, user]);
   
   // Get friend requests safely
@@ -57,7 +56,6 @@ function Header() {
   
   // Log notification data from Redux store for debugging
   const notificationState = useSelector(state => state.notifications);
-  console.log("Current notification state:", notificationState);
   
   const isExtraSmall = useMediaQuery(theme.breakpoints.down('xs'));
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));

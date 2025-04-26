@@ -14,17 +14,34 @@ import {
   Tabs, 
   CircularProgress,
   Button,
-  Stack
+  Stack,
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from '@mui/material';
 import { 
   fetchFriends, 
-  fetchFriendRequests 
+  fetchFriendRequests, 
+  acceptFriendRequest, 
+  rejectFriendRequest, 
+  cancelFriendRequest,
+  removeFriend,
+  clearFriendError
 } from '../../redux/features/friendSlice';
 import { Link, useNavigate } from 'react-router-dom';
 import FriendButton from '../FriendButton/FriendButton';
 import ChatIcon from '@mui/icons-material/Chat';
 import socketService from '../../services/socketService';
 import { fetchConversations } from '../../redux/features/messageSlice';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import MessageIcon from '@mui/icons-material/Message';
+import './FriendsList.css';
 
 import {
   FriendListContainer,
@@ -67,9 +84,22 @@ const FriendsList = () => {
   const [tabValue, setTabValue] = useState(0);
   const [startingChat, setStartingChat] = useState(false);
   
+  // Modal states
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [selectedFriendId, setSelectedFriendId] = useState(null);
+  const [openErrorModal, setOpenErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
   // Get data from Redux store
-  const { friends = [], friendRequests = { received: [], sent: [] }, loading, error } = useSelector(state => state.friends || {});
-  const { received = [], sent = [] } = friendRequests;
+  const { 
+    friends, 
+    receivedRequests, 
+    sentRequests,
+    loading, 
+    error,
+    friendRequestLoading,
+    friendRequestError
+  } = useSelector(state => state.friends);
   
   // Check if current user is loaded
   const currentUser = useSelector(state => state.user.user);
@@ -85,7 +115,24 @@ const FriendsList = () => {
   // Debug: Log friends data to console
   useEffect(() => {
     console.log('Friends data:', friends);
-  }, [friends]);
+    console.log('Received requests data:', receivedRequests);
+  }, [friends, receivedRequests]);
+  
+  // Show error modal when there's an error
+  useEffect(() => {
+    if (friendRequestError) {
+      setErrorMessage(typeof friendRequestError === 'object' ? friendRequestError.message : friendRequestError);
+      setOpenErrorModal(true);
+    }
+  }, [friendRequestError]);
+
+  // Show error modal for general errors
+  useEffect(() => {
+    if (error && error !== 'Resource not found') {
+      setErrorMessage(typeof error === 'object' ? (error.message || 'Đã xảy ra lỗi khi tải danh sách bạn bè') : error);
+      setOpenErrorModal(true);
+    }
+  }, [error]);
   
   const handleChangeTab = (event, newValue) => {
     setTabValue(newValue);
@@ -123,8 +170,74 @@ const FriendsList = () => {
   };
   
   // Calculate badge counts for tabs
-  const requestCount = received.length;
+  const requestCount = receivedRequests.length;
   
+  const handleAcceptRequest = (requestId) => {
+    dispatch(acceptFriendRequest(requestId));
+  };
+
+  const handleRejectRequest = (requestId) => {
+    console.log('Attempting to reject friend request with ID:', requestId);
+    if (!requestId) {
+      console.error('No request ID provided for rejection');
+      return;
+    }
+    
+    // Clear any previous errors
+    dispatch(clearFriendError());
+    
+    // Show loading indicator
+    setTabValue(1); // Switch to the Requests tab
+    
+    dispatch(rejectFriendRequest(requestId))
+      .then((result) => {
+        if (result.type.endsWith('/fulfilled')) {
+          console.log('Friend request rejected successfully');
+          // Refresh the friend requests list
+          dispatch(fetchFriendRequests());
+        } else {
+          console.error('Rejection failed:', result);
+        }
+      })
+      .catch((error) => {
+        console.error('Error rejecting friend request:', error);
+      });
+  };
+
+  const handleCancelRequest = (requestId) => {
+    dispatch(cancelFriendRequest(requestId));
+  };
+
+  // Mở modal xác nhận khi muốn xóa bạn bè
+  const openRemoveFriendModal = (friendId) => {
+    console.log("Opening modal for friend ID:", friendId);
+    setSelectedFriendId(friendId);
+    setOpenConfirmModal(true);
+  };
+  
+  // Đóng modal và xóa bạn bè
+  const handleConfirmRemoveFriend = () => {
+    console.log("Confirming remove friend with ID:", selectedFriendId);
+    if (selectedFriendId) {
+      dispatch(removeFriend(selectedFriendId));
+    } else {
+      console.error("No friend ID selected for removal");
+    }
+    setOpenConfirmModal(false);
+  };
+  
+  // Đóng modal
+  const handleCloseConfirmModal = () => {
+    setOpenConfirmModal(false);
+    setSelectedFriendId(null);
+  };
+  
+  // Đóng modal lỗi
+  const handleCloseErrorModal = () => {
+    setOpenErrorModal(false);
+    dispatch(clearFriendError());
+  };
+
   if (!currentUser) {
     return (
       <LoadingContainer>
@@ -135,51 +248,38 @@ const FriendsList = () => {
   }
   
   return (
-    <FriendListContainer>
-      <Tabs 
-        value={tabValue} 
-        onChange={handleChangeTab}
-        variant="fullWidth"
-        indicatorColor="primary"
-        textColor="primary"
-      >
-        <Tab 
-          label="Friends" 
-          id="friends-tab-0" 
-          aria-controls="friends-tabpanel-0" 
-        />
-        <Tab 
-          label={
-            <Badge 
-              badgeContent={requestCount} 
-              color="error"
-              sx={{ '& .MuiBadge-badge': { right: -15 } }}
-            >
-              Requests
-            </Badge>
-          } 
-          id="friends-tab-1" 
-          aria-controls="friends-tabpanel-1" 
-        />
-        <Tab 
-          label="Sent" 
-          id="friends-tab-2" 
-          aria-controls="friends-tabpanel-2" 
-        />
-      </Tabs>
+    <div className="friends-container">
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleChangeTab}
+          variant="fullWidth"
+          indicatorColor="primary"
+          textColor="primary"
+        >
+          <Tab 
+            label="Friends" 
+            id="friends-tab-0" 
+            aria-controls="friends-tabpanel-0" 
+          />
+          <Tab 
+            label={`Requests${receivedRequests.length > 0 ? ` (${receivedRequests.length})` : ''}`} 
+            id="friends-tab-1" 
+            aria-controls="friends-tabpanel-1" 
+          />
+          <Tab 
+            label={`Sent${sentRequests.length > 0 ? ` (${sentRequests.length})` : ''}`} 
+            id="friends-tab-2" 
+            aria-controls="friends-tabpanel-2" 
+          />
+        </Tabs>
+      </Box>
       
       {/* Loading indicator */}
       {loading && (
         <LoadingContainer>
           <CircularProgress />
         </LoadingContainer>
-      )}
-      
-      {/* Error message */}
-      {error && (
-        <ErrorContainer>
-          <Typography color="error">{error}</Typography>
-        </ErrorContainer>
       )}
       
       {/* Friends tab */}
@@ -204,7 +304,16 @@ const FriendsList = () => {
                       >
                         Nhắn tin
                       </MessageButton>
-                      <FriendButton userId={friend._id} />
+                      {/* <FriendButton userId={friend._id} /> */}
+                      <Button 
+                        size="small" 
+                        variant="outlined" 
+                        color="error" 
+                        startIcon={<PersonRemoveIcon />}
+                        onClick={() => openRemoveFriendModal(friend._id)}
+                      >
+                        Xóa
+                      </Button>
                     </Stack>
                   }
                 >
@@ -249,18 +358,41 @@ const FriendsList = () => {
       
       {/* Friend requests tab */}
       <TabPanel value={tabValue} index={1}>
-        {!loading && received.length === 0 ? (
+        {!loading && receivedRequests.length === 0 ? (
           <Typography variant="body1" sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
             You don't have any friend requests.
           </Typography>
         ) : (
           <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-            {received.map((request, index) => (
+            {receivedRequests.map((request, index) => (
               <React.Fragment key={request._id}>
                 <ListItem 
                   alignItems="flex-start"
                   secondaryAction={
-                    request.sender && <FriendButton userId={request.sender._id} />
+                    request.sender && (
+                      <Stack direction="row" spacing={1}>
+                        <Button 
+                          size="small" 
+                          variant="contained" 
+                          color="success" 
+                          startIcon={<CheckIcon />}
+                          onClick={() => handleAcceptRequest(request._id)}
+                          disabled={friendRequestLoading}
+                        >
+                          Đồng ý
+                        </Button>
+                        <Button 
+                          size="small" 
+                          variant="outlined" 
+                          color="error" 
+                          startIcon={<CloseIcon />}
+                          onClick={() => handleRejectRequest(request._id)}
+                          disabled={friendRequestLoading}
+                        >
+                          Từ chối
+                        </Button>
+                      </Stack>
+                    )
                   }
                 >
                   <ListItemAvatar>
@@ -305,7 +437,7 @@ const FriendsList = () => {
                     }
                   />
                 </ListItem>
-                {index < received.length - 1 && <Divider variant="inset" component="li" />}
+                {index < receivedRequests.length - 1 && <Divider variant="inset" component="li" />}
               </React.Fragment>
             ))}
           </List>
@@ -314,18 +446,29 @@ const FriendsList = () => {
       
       {/* Sent requests tab */}
       <TabPanel value={tabValue} index={2}>
-        {!loading && sent.length === 0 ? (
+        {!loading && sentRequests.length === 0 ? (
           <Typography variant="body1" sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
             You haven't sent any friend requests.
           </Typography>
         ) : (
           <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-            {sent.map((request, index) => (
+            {sentRequests.map((request, index) => (
               <React.Fragment key={request._id}>
                 <ListItem 
                   alignItems="flex-start"
                   secondaryAction={
-                    request.recipient && <FriendButton userId={request.recipient._id} />
+                    request.recipient && (
+                      <Button 
+                        size="small" 
+                        variant="outlined" 
+                        color="error" 
+                        startIcon={<CloseIcon />}
+                        onClick={() => handleCancelRequest(request._id)}
+                        disabled={friendRequestLoading}
+                      >
+                        Hủy
+                      </Button>
+                    )
                   }
                 >
                   <ListItemAvatar>
@@ -370,13 +513,60 @@ const FriendsList = () => {
                     }
                   />
                 </ListItem>
-                {index < sent.length - 1 && <Divider variant="inset" component="li" />}
+                {index < sentRequests.length - 1 && <Divider variant="inset" component="li" />}
               </React.Fragment>
             ))}
           </List>
         )}
       </TabPanel>
-    </FriendListContainer>
+      
+      {/* Modal xác nhận xóa bạn bè */}
+      <Dialog
+        open={openConfirmModal}
+        onClose={handleCloseConfirmModal}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          Xác nhận xóa bạn bè
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Bạn có chắc chắn muốn xóa bạn bè này không?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirmModal} color="primary">
+            Hủy
+          </Button>
+          <Button onClick={handleConfirmRemoveFriend} color="error" autoFocus>
+            Xóa
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Modal hiển thị lỗi */}
+      <Dialog
+        open={openErrorModal}
+        onClose={handleCloseErrorModal}
+        aria-labelledby="error-dialog-title"
+        aria-describedby="error-dialog-description"
+      >
+        <DialogTitle id="error-dialog-title" sx={{ color: 'error.main' }}>
+          Lỗi
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="error-dialog-description">
+            {errorMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseErrorModal} color="primary" autoFocus>
+            Đóng
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
   );
 };
 
