@@ -1,8 +1,7 @@
 // Code đã được chỉnh sửa để thêm dấu sao (*) vào các placeholder và thêm chú thích dưới biểu mẫu
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { showError, showSuccess } from '../../utils/toast';
 
 // Material UI imports
 import Box from '@mui/material/Box';
@@ -43,26 +42,26 @@ function SignUpPage() {
   
     // Kiểm tra các trường đã được điền đầy đủ
     if (!fullName || !password || !confirmPassword || !email) {
-      toast.error("Vui lòng điền đầy đủ thông tin!");
+      showError("Vui lòng điền đầy đủ thông tin!");
       return;
     }
   
     // Kiểm tra mật khẩu và mật khẩu xác nhận
     if (password !== confirmPassword) {
-      toast.error("Mật khẩu và xác nhận mật khẩu không khớp!");
+      showError("Mật khẩu và xác nhận mật khẩu không khớp!");
       return;
     }
     
     // Kiểm tra định dạng email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error("Định dạng email không hợp lệ!");
+      showError("Định dạng email không hợp lệ!");
       return;
     }
     
     // Kiểm tra độ dài mật khẩu
     if (password.length < 6) {
-      toast.error("Mật khẩu phải có ít nhất 6 ký tự!");
+      showError("Mật khẩu phải có ít nhất 6 ký tự!");
       return;
     }
     
@@ -78,7 +77,7 @@ function SignUpPage() {
       }
       
       // Hiển thị thông báo thành công
-      toast.success(signUpResult.message || "Đăng ký thành công!");
+      showSuccess(signUpResult.message || "Đăng ký thành công!");
       
       // Chuyển hướng đến trang đăng nhập
         setTimeout(() => {
@@ -90,9 +89,9 @@ function SignUpPage() {
       
       // Hiển thị thông báo lỗi
       if (error.error) {
-        toast.error(error.error.message || "Đăng ký thất bại!");
+        showError(error.error.message || "Đăng ký thất bại!");
       } else {
-        toast.error("Đăng ký thất bại. Vui lòng thử lại sau!");
+        showError("Đăng ký thất bại. Vui lòng thử lại sau!");
       }
       
       setLoading(false);

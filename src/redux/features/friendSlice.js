@@ -171,8 +171,22 @@ export const sendFriendRequest = createAsyncThunk(
 
 export const acceptFriendRequest = createAsyncThunk(
   'friends/acceptFriendRequest',
-  async (requestId, { rejectWithValue }) => {
+  async (requestId, { rejectWithValue, getState, dispatch }) => {
     try {
+      // Get current state
+      const state = getState();
+      
+      // Find the request in state
+      const request = state.friends.receivedRequests.find(req => req._id === requestId);
+      
+      // Apply optimistic update - locally remove from received requests and add to friends
+      if (request) {
+        dispatch({
+          type: 'friends/optimisticAcceptRequest',
+          payload: { requestId, request }
+        });
+      }
+      
       // Get token from cookies
       const token = getTokenFromCookie();
       if (!token) {
@@ -194,9 +208,26 @@ export const acceptFriendRequest = createAsyncThunk(
       if (response.data.success) {
         return { ...response.data.data, requestId };
       } else {
+        // Revert optimistic update on error
+        if (request) {
+          dispatch({
+            type: 'friends/revertOptimisticAccept',
+            payload: { requestId, request }
+          });
+        }
         return rejectWithValue(response.data.error || 'Failed to accept friend request');
       }
     } catch (error) {
+      // Revert optimistic update on error
+      const state = getState();
+      const request = state.friends.receivedRequests.find(req => req._id === requestId);
+      if (request) {
+        dispatch({
+          type: 'friends/revertOptimisticAccept',
+          payload: { requestId, request }
+        });
+      }
+      
       return rejectWithValue(
         error.response?.data?.error || {
           message: 'Could not connect to server'
@@ -208,7 +239,7 @@ export const acceptFriendRequest = createAsyncThunk(
 
 export const rejectFriendRequest = createAsyncThunk(
   'friends/rejectFriendRequest',
-  async (requestId, { rejectWithValue, getState }) => {
+  async (requestId, { rejectWithValue, getState, dispatch }) => {
     try {
       console.log(`Rejecting friend request with ID: ${requestId}`);
       
@@ -216,6 +247,20 @@ export const rejectFriendRequest = createAsyncThunk(
       if (!requestId) {
         console.error('No valid requestId provided');
         return rejectWithValue('Invalid request ID');
+      }
+      
+      // Get current state
+      const state = getState();
+      
+      // Find the request in state
+      const request = state.friends.receivedRequests.find(req => req._id === requestId);
+      
+      // Apply optimistic update - locally remove from received requests
+      if (request) {
+        dispatch({
+          type: 'friends/optimisticRejectRequest',
+          payload: { requestId }
+        });
       }
       
       // Get token from cookies
@@ -246,12 +291,31 @@ export const rejectFriendRequest = createAsyncThunk(
         return { ...response.data.data, requestId };
       } else {
         console.error('Reject request failed:', response.data.error);
+        
+        // Revert optimistic update on error
+        if (request) {
+          dispatch({
+            type: 'friends/revertOptimisticReject',
+            payload: { requestId, request }
+          });
+        }
+        
         return rejectWithValue(response.data.error || 'Failed to reject friend request');
       }
     } catch (error) {
       console.error('Error in rejectFriendRequest:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
+      
+      // Revert optimistic update on error
+      const state = getState();
+      const request = state.friends.receivedRequests.find(req => req._id === requestId);
+      if (request) {
+        dispatch({
+          type: 'friends/revertOptimisticReject',
+          payload: { requestId, request }
+        });
+      }
       
       // Check for specific permission error
       if (error.response?.data?.error?.code === 'VAL_VALIDATION_FAILED' && 
@@ -271,8 +335,22 @@ export const rejectFriendRequest = createAsyncThunk(
 
 export const cancelFriendRequest = createAsyncThunk(
   'friends/cancelFriendRequest',
-  async (requestId, { rejectWithValue }) => {
+  async (requestId, { rejectWithValue, getState, dispatch }) => {
     try {
+      // Get current state
+      const state = getState();
+      
+      // Find the request in state
+      const request = state.friends.sentRequests.find(req => req._id === requestId);
+      
+      // Apply optimistic update - locally remove from sent requests
+      if (request) {
+        dispatch({
+          type: 'friends/optimisticCancelRequest',
+          payload: { requestId }
+        });
+      }
+      
       // Get token from cookies
       const token = getTokenFromCookie();
       if (!token) {
@@ -293,9 +371,27 @@ export const cancelFriendRequest = createAsyncThunk(
       if (response.data.success) {
         return { ...response.data.data, requestId };
       } else {
+        // Revert optimistic update on error
+        if (request) {
+          dispatch({
+            type: 'friends/revertOptimisticCancel',
+            payload: { requestId, request }
+          });
+        }
+        
         return rejectWithValue(response.data.error || 'Failed to cancel friend request');
       }
     } catch (error) {
+      // Revert optimistic update on error
+      const state = getState();
+      const request = state.friends.sentRequests.find(req => req._id === requestId);
+      if (request) {
+        dispatch({
+          type: 'friends/revertOptimisticCancel',
+          payload: { requestId, request }
+        });
+      }
+      
       return rejectWithValue(
         error.response?.data?.error || {
           message: 'Could not connect to server'
@@ -307,9 +403,28 @@ export const cancelFriendRequest = createAsyncThunk(
 
 export const removeFriend = createAsyncThunk(
   'friends/removeFriend',
-  async (friendId, { rejectWithValue }) => {
+  async (friendId, { rejectWithValue, getState, dispatch }) => {
     try {
       console.log("Starting to remove friend with ID:", friendId);
+      
+      // Validate friendId
+      if (!friendId) {
+        throw new Error('Invalid friend ID');
+      }
+      
+      // Get current state
+      const state = getState();
+      
+      // Find the friend in state
+      const friend = state.friends.friends.find(f => f._id === friendId);
+      
+      // Apply optimistic update
+      if (friend) {
+        dispatch({
+          type: 'friends/optimisticRemoveFriend',
+          payload: { friendId, friend }
+        });
+      }
       
       // Get token from cookies
       const token = getTokenFromCookie();
@@ -337,15 +452,33 @@ export const removeFriend = createAsyncThunk(
         return { ...response.data.data, friendId };
       } else {
         console.error("Failed to remove friend:", response.data.error);
+        
+        // Revert optimistic update
+        if (friend) {
+          dispatch({
+            type: 'friends/revertOptimisticRemoveFriend',
+            payload: { friendId, friend }
+          });
+        }
+        
         return rejectWithValue(response.data.error || 'Failed to remove friend');
       }
     } catch (error) {
       console.error("Error in removeFriend action:", error);
       console.error("Error response:", error.response?.data);
+      
+      // Revert optimistic update
+      const state = getState();
+      const friend = state.friends.friends.find(f => f._id === friendId);
+      if (friend) {
+        dispatch({
+          type: 'friends/revertOptimisticRemoveFriend',
+          payload: { friendId, friend }
+        });
+      }
+      
       return rejectWithValue(
-        error.response?.data?.error || {
-          message: 'Could not connect to server'
-        }
+        error.response?.data?.error || error.message || 'Could not connect to server'
       );
     }
   }
@@ -438,6 +571,114 @@ const friendSlice = createSlice({
       const friendId = action.payload;
       state.friends = state.friends.filter(friend => friend._id !== friendId);
       state.totalFriends = Math.max(0, state.totalFriends - 1);
+    },
+    // Optimistic updates
+    optimisticAcceptRequest: (state, action) => {
+      const { requestId, request } = action.payload;
+      // Remove from received requests
+      state.receivedRequests = state.receivedRequests.filter(req => req._id !== requestId);
+      state.totalReceivedRequests = Math.max(0, state.totalReceivedRequests - 1);
+      
+      // Add to friends
+      if (request && request.sender) {
+        const newFriend = {
+          _id: request.sender._id,
+          fullName: request.sender.fullName,
+          profilePicture: request.sender.profilePicture,
+          email: request.sender.email
+        };
+        
+        const existingFriendIndex = state.friends.findIndex(f => f._id === newFriend._id);
+        if (existingFriendIndex === -1) {
+          state.friends.push(newFriend);
+          state.totalFriends += 1;
+          
+          // Update friendship status
+          state.friendshipStatus[newFriend._id] = "friends";
+        }
+      }
+    },
+    revertOptimisticAccept: (state, action) => {
+      const { requestId, request } = action.payload;
+      
+      // Add back to received requests
+      if (request) {
+        const existingRequestIndex = state.receivedRequests.findIndex(req => req._id === requestId);
+        if (existingRequestIndex === -1) {
+          state.receivedRequests.push(request);
+          state.totalReceivedRequests += 1;
+        }
+        
+        // Remove from friends
+        if (request.sender) {
+          state.friends = state.friends.filter(friend => friend._id !== request.sender._id);
+          state.totalFriends = Math.max(0, state.totalFriends - 1);
+          
+          // Update friendship status
+          delete state.friendshipStatus[request.sender._id];
+        }
+      }
+    },
+    optimisticRejectRequest: (state, action) => {
+      const { requestId } = action.payload;
+      // Remove from received requests
+      state.receivedRequests = state.receivedRequests.filter(req => req._id !== requestId);
+      state.totalReceivedRequests = Math.max(0, state.totalReceivedRequests - 1);
+    },
+    revertOptimisticReject: (state, action) => {
+      const { requestId, request } = action.payload;
+      
+      // Add back to received requests
+      if (request) {
+        const existingRequestIndex = state.receivedRequests.findIndex(req => req._id === requestId);
+        if (existingRequestIndex === -1) {
+          state.receivedRequests.push(request);
+          state.totalReceivedRequests += 1;
+        }
+      }
+    },
+    optimisticCancelRequest: (state, action) => {
+      const { requestId } = action.payload;
+      // Remove from sent requests
+      state.sentRequests = state.sentRequests.filter(req => req._id !== requestId);
+      state.totalSentRequests = Math.max(0, state.totalSentRequests - 1);
+    },
+    revertOptimisticCancel: (state, action) => {
+      const { requestId, request } = action.payload;
+      
+      // Add back to sent requests
+      if (request) {
+        const existingRequestIndex = state.sentRequests.findIndex(req => req._id === requestId);
+        if (existingRequestIndex === -1) {
+          state.sentRequests.push(request);
+          state.totalSentRequests += 1;
+        }
+      }
+    },
+    optimisticRemoveFriend: (state, action) => {
+      const { friendId } = action.payload;
+      
+      // Remove from friends list
+      state.friends = state.friends.filter(friend => friend._id !== friendId);
+      state.totalFriends = Math.max(0, state.totalFriends - 1);
+      
+      // Update friendship status
+      delete state.friendshipStatus[friendId];
+    },
+    revertOptimisticRemoveFriend: (state, action) => {
+      const { friendId, friend } = action.payload;
+      
+      // Add back to friends
+      if (friend) {
+        const existingFriendIndex = state.friends.findIndex(f => f._id === friendId);
+        if (existingFriendIndex === -1) {
+          state.friends.push(friend);
+          state.totalFriends += 1;
+          
+          // Update friendship status
+          state.friendshipStatus[friendId] = "friends";
+        }
+      }
     }
   },
   extraReducers: (builder) => {
@@ -511,8 +752,12 @@ const friendSlice = createSlice({
         state.totalReceivedRequests = Math.max(0, state.totalReceivedRequests - 1);
         
         if (action.payload.friend) {
-          state.friends.push(action.payload.friend);
-          state.totalFriends += 1;
+          // Kiểm tra xem bạn bè đã tồn tại trong danh sách chưa trước khi thêm mới
+          const friendExists = state.friends.some(friend => friend._id === action.payload.friend._id);
+          if (!friendExists) {
+            state.friends.push(action.payload.friend);
+            state.totalFriends += 1;
+          }
           
           // Cập nhật friendshipStatus khi chấp nhận lời mời kết bạn
           if (action.payload.friend._id) {
@@ -638,7 +883,15 @@ export const {
   clearFriendError, 
   addFriendRequest, 
   addFriend, 
-  removeFriendAction 
+  removeFriendAction,
+  optimisticAcceptRequest,
+  revertOptimisticAccept,
+  optimisticRejectRequest,
+  revertOptimisticReject,
+  optimisticCancelRequest,
+  revertOptimisticCancel,
+  optimisticRemoveFriend,
+  revertOptimisticRemoveFriend
 } = friendSlice.actions;
 
 export default friendSlice.reducer; 

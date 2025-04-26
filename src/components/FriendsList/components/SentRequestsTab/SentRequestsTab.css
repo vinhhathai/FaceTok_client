@@ -1,0 +1,36 @@
+.empty-sent-requests {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+  padding: 32px 0;
+}
+
+.sent-request-item {
+  position: relative;
+  padding-right: 80px; /* Space for cancel button */
+}
+
+.recipient-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.recipient-link:hover {
+  text-decoration: underline;
+}
+
+.sent-request-text {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.request-cancel-action {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.cancel-button {
+  border-color: #f44336;
+  color: #f44336;
+} 

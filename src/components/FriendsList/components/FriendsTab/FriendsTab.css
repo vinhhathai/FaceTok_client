@@ -1,0 +1,87 @@
+.empty-state {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.styled-list-item {
+  display: flex;
+  padding: 16px;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  min-height: 72px;
+  justify-content: space-between;
+}
+
+.friend-info-container {
+  display: flex;
+  align-items: center;
+}
+
+.friend-text-container {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+  align-items: flex-start;
+}
+
+.action-buttons {
+  display: flex;
+}
+
+.user-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+  text-align: left;
+}
+
+.user-link:hover {
+  text-decoration: underline;
+}
+
+.message-button {
+  border-color: #2196f3 !important;
+  color: #2196f3 !important;
+  margin-right: 8px !important;
+}
+
+.message-button:hover {
+  border-color: #1976d2 !important;
+  background-color: rgba(33, 150, 243, 0.04) !important;
+}
+
+@media (max-width: 600px) {
+  .styled-list-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-bottom: 70px;
+  }
+  
+  .friend-info-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .friend-text-container {
+    margin-left: 0;
+    margin-top: 8px;
+    text-align: center;
+    align-items: center;
+  }
+  
+  .action-buttons {
+    position: absolute;
+    bottom: 16px;
+    top: auto;
+    margin-left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+} 

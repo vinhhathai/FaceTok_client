@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
+import { showError, showSuccess } from "../../utils/toast";
 import { useDispatch } from "react-redux";
 import { setUserFromToken } from "../../redux/features/userSlice";
 // Material UI imports
@@ -48,7 +48,7 @@ function LoginPage() {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error("Vui lòng nhập email và mật khẩu");
+      showError("Vui lòng nhập email và mật khẩu");
       return;
     }
     
@@ -73,14 +73,7 @@ function LoginPage() {
       dispatch(setUserFromToken());
 
       // Hiển thị thông báo thành công
-      toast.success("Đăng nhập thành công!", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
-      });
+      showSuccess("Đăng nhập thành công!");
       
       // Cải thiện logic chuyển hướng: navigate ngay lập tức thay vì setTimeout
       console.log("Attempting to navigate to:", from || "/");
@@ -99,7 +92,7 @@ function LoginPage() {
       console.error("Login failed:", error);
       
       // Hiển thị thông báo lỗi
-      toast.error(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.");
+      showError(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.");
       setLoading(false);
     }
   };

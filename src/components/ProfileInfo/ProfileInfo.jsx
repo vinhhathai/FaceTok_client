@@ -13,7 +13,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import WcIcon from '@mui/icons-material/Wc';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import EditIcon from '@mui/icons-material/Edit';
-import { toast } from 'react-toastify';
+import { showSuccess, showError } from '../../utils/toast';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
@@ -88,13 +88,13 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
 
     // Validate file type
     if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-      toast.error('Only JPEG and PNG images are allowed');
+      showError('Only JPEG and PNG images are allowed');
       return;
     }
 
     // Validate file size
     if (file.size > MAX_AVATAR_SIZE) {
-      toast.error(`File size must be less than ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`);
+      showError(`File size must be less than ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`);
       return;
     }
 
@@ -117,7 +117,7 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
       // Update with the URL from Firebase
       setAvatarUrl(response.avatarUrl);
       
-      toast.success('Avatar updated successfully');
+      showSuccess('Avatar updated successfully');
       
       // Refresh profile data to get updated info from server
       if (refreshProfile) {
@@ -129,7 +129,7 @@ function ProfileInfo({ profile, loading, error, refreshProfile }) {
       console.error('Avatar upload failed:', error);
       // Reset to original avatar if upload fails
       setAvatarUrl(profile?.profilePicture || DEFAULT_AVATAR);
-      toast.error(error.message || 'Failed to update avatar');
+      showError(error.message || 'Failed to update avatar');
     } finally {
       setUploading(false);
       setUploadProgress(0);

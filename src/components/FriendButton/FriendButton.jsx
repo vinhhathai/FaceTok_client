@@ -8,6 +8,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import { toast } from 'react-toastify';
 import { 
   sendFriendRequest, 
   acceptFriendRequest, 
@@ -65,38 +66,79 @@ const FriendButton = ({ userId, size = 'small', variant = 'contained', showText 
   
   const handleSendRequest = async () => {
     setLoading(true);
-    await dispatch(sendFriendRequest(userId));
-    setLoading(false);
+    try {
+      await dispatch(sendFriendRequest(userId)).unwrap();
+      toast.success('Friend request sent successfully');
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+      // Display error using toast
+      const errorMsg = typeof error === 'object' ? error.message || 'Failed to send friend request' : error;
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleAcceptRequest = async () => {
     if (!requestId) return;
     setLoading(true);
-    await dispatch(acceptFriendRequest(requestId));
-    setLoading(false);
-    handleCloseMenu();
+    try {
+      await dispatch(acceptFriendRequest(requestId)).unwrap();
+      toast.success('Friend request accepted');
+      handleCloseMenu();
+    } catch (error) {
+      console.error("Error accepting friend request:", error);
+      const errorMsg = typeof error === 'object' ? error.message || 'Failed to accept request' : error;
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleRejectRequest = async () => {
     if (!requestId) return;
     setLoading(true);
-    await dispatch(rejectFriendRequest(requestId));
-    setLoading(false);
-    handleCloseMenu();
+    try {
+      await dispatch(rejectFriendRequest(requestId)).unwrap();
+      toast.success('Friend request rejected');
+      handleCloseMenu();
+    } catch (error) {
+      console.error("Error rejecting friend request:", error);
+      const errorMsg = typeof error === 'object' ? error.message || 'Failed to reject request' : error;
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleCancelRequest = async () => {
     if (!requestId) return;
     setLoading(true);
-    await dispatch(cancelFriendRequest(requestId));
-    setLoading(false);
+    try {
+      await dispatch(cancelFriendRequest(requestId)).unwrap();
+      toast.success('Friend request cancelled');
+    } catch (error) {
+      console.error("Error cancelling friend request:", error);
+      const errorMsg = typeof error === 'object' ? error.message || 'Failed to cancel request' : error;
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleRemoveFriend = async () => {
     setLoading(true);
-    await dispatch(removeFriend(userId));
-    setLoading(false);
-    handleCloseMenu();
+    try {
+      await dispatch(removeFriend(userId)).unwrap();
+      toast.success('Friend removed successfully');
+      handleCloseMenu();
+    } catch (error) {
+      console.error("Error removing friend:", error);
+      const errorMsg = typeof error === 'object' ? error.message || 'Failed to remove friend' : error;
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
   
   // Don't render if currentUser isn't loaded yet or if viewing own profile

@@ -1,0 +1,44 @@
+.empty-requests {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+  padding: 32px 0;
+}
+
+.request-item {
+  position: relative;
+  padding-right: 160px; /* Space for action buttons */
+}
+
+.sender-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.sender-link:hover {
+  text-decoration: underline;
+}
+
+.request-text {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.request-actions {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.accept-button {
+  background-color: #4caf50;
+}
+
+.accept-button:hover {
+  background-color: #43a047;
+}
+
+.reject-button {
+  border-color: #f44336;
+  color: #f44336;
+} 

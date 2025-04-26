@@ -17,9 +17,9 @@ import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
 import MessagePage from './pages/MessagePage/MessagePage';
 import FriendsPage from './pages/FriendsPage/FriendsPage';
 
-// Toast notifications
-import 'react-toastify/dist/ReactToastify.css';
+// Toast notifications - used with the standardized toast utils in src/utils/toast.js
 import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Redux
 import { useDispatch, useSelector } from 'react-redux';
@@ -151,16 +151,21 @@ function App() {
         {/* Redirect any unknown routes to login */}
         <Route path="*" element={<RedirectToLogin />} />
       </Routes>
+      {/* 
+        Toast Container for displaying notifications
+        Configuration here should match the default settings in utils/toast.js
+      */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}
-        newestOnTop
+        newestOnTop={false}
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="dark"
       />
     </div>
   );

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { CircularProgress, IconButton } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import { toast } from 'react-toastify';
+import { showSuccess, showError } from '../../utils/toast';
 import { createNewPost, resetCreatePostStatus, fetchUserPosts } from '../../redux/features/postSlice';
 import { useParams } from 'react-router-dom';
 
@@ -38,7 +38,7 @@ function CreatePost() {
       handleRemoveMedia();
       
       // Show a success message
-      toast.success('Đăng bài thành công!');
+      showSuccess('Đăng bài thành công!');
       
       // Reset trạng thái createPostStatus sau 1 giây
       const timer = setTimeout(() => {
@@ -47,7 +47,7 @@ function CreatePost() {
       
       return () => clearTimeout(timer);
     } else if (createPostStatus === 'failed' && createPostError) {
-      toast.error(createPostError || 'Đăng bài thất bại, vui lòng thử lại sau.');
+      showError(createPostError || 'Đăng bài thất bại, vui lòng thử lại sau.');
       
       // Reset trạng thái lỗi
       dispatch(resetCreatePostStatus());
@@ -67,13 +67,13 @@ function CreatePost() {
     // Kiểm tra file có phải là ảnh không
     const file = files[0];
     if (!file.type.match('image.*')) {
-      toast.error('Chỉ hỗ trợ file ảnh');
+      showError('Chỉ hỗ trợ file ảnh');
       return;
     }
     
     // Kiểm tra kích thước file (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước file không được vượt quá 5MB');
+      showError('Kích thước file không được vượt quá 5MB');
       return;
     }
     

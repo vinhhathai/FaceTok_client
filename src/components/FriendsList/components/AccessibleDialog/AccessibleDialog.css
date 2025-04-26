@@ -1,0 +1,7 @@
+.accessible-dialog .dialog-title.error {
+  color: #f44336; /* error.main */
+}
+
+.accessible-dialog .MuiDialogContent-root {
+  padding: 16px 24px;
+} 
