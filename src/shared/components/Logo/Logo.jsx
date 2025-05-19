@@ -19,8 +19,8 @@ const Logo = ({ size = 'medium', showText = true, ...props }) => {
   return (
     <div className={styles.logoContainer} {...props}>
       <img
-        src="/assets/images/FaceTokIcon.jpeg"
-        alt="FaceTok Logo"
+        src="/assets/logo.png"
+        alt="Chaotok Logo"
         className={`${styles.logoImage} ${sizeClassMap[size]}`}
       />
       {showText && (
@@ -29,7 +29,7 @@ const Logo = ({ size = 'medium', showText = true, ...props }) => {
           component="h1"
           className={`${styles.logoText} ${textSizeClassMap[size]}`}
         >
-          FaceTok
+          Chaotok
         </Typography>
       )}
     </div>

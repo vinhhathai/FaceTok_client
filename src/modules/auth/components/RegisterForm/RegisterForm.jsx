@@ -40,7 +40,7 @@ const RegisterForm = () => {
       await dispatch(register(formData));
       navigate('/login', { replace: true });
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.error('Đăng ký thất bại:', error);
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ const RegisterForm = () => {
         required
         fullWidth
         id="username"
-        label="Username"
+        label="Tên người dùng"
         name="username"
         autoComplete="username"
         autoFocus
@@ -67,7 +67,7 @@ const RegisterForm = () => {
         required
         fullWidth
         id="email"
-        label="Email Address"
+        label="Địa chỉ Email"
         name="email"
         autoComplete="email"
         value={formData.email}
@@ -80,7 +80,7 @@ const RegisterForm = () => {
         required
         fullWidth
         name="password"
-        label="Password"
+        label="Mật khẩu"
         type="password"
         id="password"
         autoComplete="new-password"
@@ -94,7 +94,7 @@ const RegisterForm = () => {
         required
         fullWidth
         name="confirmPassword"
-        label="Confirm Password"
+        label="Xác nhận mật khẩu"
         type="password"
         id="confirmPassword"
         autoComplete="new-password"
@@ -115,15 +115,15 @@ const RegisterForm = () => {
         {loading ? (
           <CircularProgress size={24} color="inherit" />
         ) : (
-          'Register'
+          'Đăng ký'
         )}
       </Button>
       
       <Box className={styles.loginContainer}>
         <Typography variant="body2">
-          Already have an account?{' '}
+          Bạn đã có tài khoản?{' '}
           <Link component={RouterLink} to="/login" className={styles.loginLink}>
-            Sign in
+            Đăng nhập
           </Link>
         </Typography>
       </Box>

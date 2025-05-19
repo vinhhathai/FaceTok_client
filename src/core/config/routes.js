@@ -18,6 +18,7 @@ const Loading = () => (
 const LoginPage = lazy(() => import('../../modules/auth/pages/LoginPage/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/pages/RegisterPage/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/pages/ForgotPasswordPage/ForgotPasswordPage'));
+const HomePage = lazy(() => import('../../modules/home/pages/HomePage/HomePage'));
 
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>
@@ -39,7 +40,11 @@ export const routes = [
     element: withSuspense(ForgotPasswordPage),
   },
   {
+    path: '/home',
+    element: withSuspense(HomePage),
+  },
+  {
     path: '/',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/home" replace />,
   },
 ]; 

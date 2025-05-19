@@ -45,7 +45,7 @@ const LoginForm = () => {
       await dispatch(login(formData));
       navigate(from || "/", { replace: true });
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Đăng nhập thất bại:', error);
       // showError(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.");
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ const LoginForm = () => {
         required
         fullWidth
         id="email"
-        label="Email Address"
+        label="Địa chỉ Email"
         name="email"
         autoComplete="email"
         autoFocus
@@ -71,7 +71,7 @@ const LoginForm = () => {
       
       <Box sx={passwordLabelBoxStyles}>
         <Typography variant="body2" component="label" htmlFor="password">
-          Password
+          Mật khẩu
         </Typography>
         <Link 
           component={RouterLink} 
@@ -79,7 +79,7 @@ const LoginForm = () => {
           variant="body2" 
           className={styles.forgotPassword}
         >
-          Forgot password?
+          Quên mật khẩu?
         </Link>
       </Box>
       
@@ -88,7 +88,7 @@ const LoginForm = () => {
         required
         fullWidth
         name="password"
-        label="Password"
+        label="Mật khẩu"
         type="password"
         id="password"
         autoComplete="current-password"
@@ -111,15 +111,15 @@ const LoginForm = () => {
         {loading ? (
           <CircularProgress size={24} color="inherit" />
         ) : (
-          'Login'
+          'Đăng nhập'
         )}
       </Button>
       
       <Box sx={signupContainerBoxStyles}>
         <Typography variant="body2">
-          Not yet a member?{' '}
+          Chưa có tài khoản?{' '}
           <Link component={RouterLink} to="/register" className={styles.signupLink}>
-            Sign up now
+            Đăng ký ngay
           </Link>
         </Typography>
       </Box>

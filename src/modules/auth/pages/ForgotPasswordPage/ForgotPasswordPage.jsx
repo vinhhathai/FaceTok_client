@@ -20,10 +20,10 @@ const ForgotPasswordPage = () => {
             <Box className={styles.backgroundSection}>
               <Box sx={backgroundBoxStyles}>
                 <Typography variant="h1" component="h1">
-                  Reset Your Password
+                  Đặt lại mật khẩu
                 </Typography>
                 <Typography variant="body1">
-                  Enter your email to receive password reset instructions
+                  Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu
                 </Typography>
               </Box>
             </Box>
@@ -38,7 +38,7 @@ const ForgotPasswordPage = () => {
                   <Grid item xs={12}>
                     <Logo size="large" />
                     <Typography variant="body2" color="text.secondary" sx={subtitleTypographyStyles}>
-                      Reset your password
+                      Đặt lại mật khẩu
                     </Typography>
                   </Grid>
                 </Grid>

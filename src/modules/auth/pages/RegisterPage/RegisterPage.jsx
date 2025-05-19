@@ -20,10 +20,10 @@ const RegisterPage = () => {
             <Box className={styles.backgroundSection}>
               <Box sx={backgroundBoxStyles}>
                 <Typography variant="h1" component="h1">
-                  Join FaceTok Today
+                  Tham gia Chaotok ngay hôm nay
                 </Typography>
                 <Typography variant="body1">
-                  Create your account and start sharing your moments
+                  Tạo tài khoản và bắt đầu chia sẻ khoảnh khắc của bạn
                 </Typography>
               </Box>
             </Box>
@@ -38,7 +38,7 @@ const RegisterPage = () => {
                   <Grid item xs={12}>
                     <Logo size="large" />
                     <Typography variant="body2" color="text.secondary" sx={subtitleTypographyStyles}>
-                      Create your account
+                      Tạo tài khoản của bạn
                     </Typography>
                   </Grid>
                 </Grid>

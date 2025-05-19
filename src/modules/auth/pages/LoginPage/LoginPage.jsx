@@ -20,10 +20,10 @@ const LoginPage = () => {
             <Box className={styles.backgroundSection}>
               <Box sx={backgroundBoxStyles}>
                 <Typography variant="h1" component="h1">
-                  Welcome to FaceTok
+                  Chào mừng đến với Chaotok
                 </Typography>
                 <Typography variant="body1">
-                  Connect with friends and share your moments
+                  Kết nối với bạn bè và chia sẻ khoảnh khắc của bạn
                 </Typography>
               </Box>
             </Box>
@@ -38,7 +38,7 @@ const LoginPage = () => {
                   <Grid item xs={12}>
                     <Logo size="large" />
                     <Typography variant="body2" color="text.secondary" sx={subtitleTypographyStyles}>
-                      Let's discover interesting things
+                      Hãy khám phá những điều thú vị
                     </Typography>
                   </Grid>
                 </Grid>

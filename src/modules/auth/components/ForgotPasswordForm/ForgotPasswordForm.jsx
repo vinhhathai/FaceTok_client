@@ -33,7 +33,7 @@ const ForgotPasswordForm = () => {
       await dispatch(forgotPassword(formData.email));
       navigate('/login', { replace: true });
     } catch (error) {
-      console.error('Password reset failed:', error);
+      console.error('Đặt lại mật khẩu thất bại:', error);
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ const ForgotPasswordForm = () => {
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate className={styles.formContainer}>
       <Typography variant="body1" className={styles.description}>
-        Enter your email address and we'll send you instructions to reset your password.
+        Nhập địa chỉ email của bạn và chúng tôi sẽ gửi hướng dẫn để đặt lại mật khẩu.
       </Typography>
       
       <TextField
@@ -50,7 +50,7 @@ const ForgotPasswordForm = () => {
         required
         fullWidth
         id="email"
-        label="Email Address"
+        label="Địa chỉ Email"
         name="email"
         autoComplete="email"
         autoFocus
@@ -71,15 +71,15 @@ const ForgotPasswordForm = () => {
         {loading ? (
           <CircularProgress size={24} color="inherit" />
         ) : (
-          'Send Reset Instructions'
+          'Gửi'
         )}
       </Button>
       
       <Box className={styles.loginContainer}>
         <Typography variant="body2">
-          Remember your password?{' '}
+          Bạn đã nhớ mật khẩu?{' '}
           <Link component={RouterLink} to="/login" className={styles.loginLink}>
-            Sign in
+            Đăng nhập
           </Link>
         </Typography>
       </Box>

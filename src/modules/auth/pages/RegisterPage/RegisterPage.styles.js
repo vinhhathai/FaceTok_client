@@ -1,5 +1,4 @@
-import { Box } from '@mui/material';
-
+// Các style cho RegisterPage
 export const backgroundBoxStyles = {
   p: 4,
   maxWidth: '450px',
