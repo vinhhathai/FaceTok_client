@@ -1,19 +1,17 @@
 import React from 'react';
-import { Box, Container, Grid, Typography, Paper } from '@mui/material';
+import { Box, Container, Grid, Typography, useTheme, useMediaQuery } from '@mui/material';
 import ForgotPasswordForm from '../../components/ForgotPasswordForm/ForgotPasswordForm';
 import Logo from '../../../../shared/components/Logo/Logo';
 import styles from './ForgotPasswordPage.module.css';
-import { backgroundBoxStyles, desktopLogoBoxStyles, subtitleTypographyStyles } from './ForgotPasswordPage.styles';
+import { backgroundBoxStyles } from './ForgotPasswordPage.styles';
 
 const ForgotPasswordPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   return (
     <Box className={styles.forgotPasswordContainer}>
       <Container maxWidth="xl" disableGutters>
-        {/* Mobile Logo */}
-        <Box className={styles.mobileLogo}>
-          <Logo size="medium" />
-        </Box>
-
         <Grid container className={styles.gridContainer}>
           {/* Left Side - Background */}
           <Grid item md={6} className={styles.leftSide}>
@@ -23,7 +21,7 @@ const ForgotPasswordPage = () => {
                   Đặt lại mật khẩu
                 </Typography>
                 <Typography variant="body1">
-                  Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu
+                  Nhập email của bạn để đặt lại mật khẩu qua các bước đơn giản
                 </Typography>
               </Box>
             </Box>
@@ -31,21 +29,7 @@ const ForgotPasswordPage = () => {
 
           {/* Right Side - Forgot Password Form */}
           <Grid item xs={12} md={6} className={styles.rightSide}>
-            <Paper elevation={3} className={styles.formPaper}>
-              {/* Logo and Title (Desktop) */}
-              <Box sx={desktopLogoBoxStyles}>
-                <Grid container alignItems="center" spacing={2}>
-                  <Grid item xs={12}>
-                    <Logo size="large" />
-                    <Typography variant="body2" color="text.secondary" sx={subtitleTypographyStyles}>
-                      Đặt lại mật khẩu
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-              
-              <ForgotPasswordForm />
-            </Paper>
+            <ForgotPasswordForm />
           </Grid>
         </Grid>
       </Container>

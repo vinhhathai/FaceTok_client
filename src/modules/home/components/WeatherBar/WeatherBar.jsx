@@ -4,11 +4,11 @@ import Box from '@mui/material/Box';
 import OpacityIcon from '@mui/icons-material/Opacity';
 import FlagIcon from '@mui/icons-material/Flag';
 import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import IconButton from '@mui/material/IconButton';
 import Grid from '@mui/material/Grid';
+import { useError } from '../../../../shared/hooks';
 
 import {
   WeatherBarContainer,
@@ -31,11 +31,10 @@ function WeatherBar() {
   const [weather, setWeather] = useState(null);
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { showWarning, showError } = useError();
 
   const getLocation = useCallback(() => {
     setLoading(true);
-    setError(null); // Reset error on refresh
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         position => {
@@ -45,7 +44,7 @@ function WeatherBar() {
         },
         error => {
           console.error("Error getting location:", error);
-          setError("Không thể lấy vị trí. Vui lòng cho phép truy cập vị trí.");
+          showWarning("Không thể lấy vị trí. Vui lòng cho phép truy cập vị trí.");
           // Fallback for demo if location access denied
           setWeather({
             temp: 28,
@@ -59,7 +58,7 @@ function WeatherBar() {
         { timeout: 10000 } // Add timeout
       );
     } else {
-      setError("Trình duyệt của bạn không hỗ trợ định vị.");
+      showWarning("Trình duyệt của bạn không hỗ trợ định vị.");
       // Fallback for demo if geolocation not supported
       setWeather({
         temp: 28,
@@ -70,7 +69,7 @@ function WeatherBar() {
       setLocation("CẦN THƠ, VN");
       setLoading(false);
     }
-  }, []);
+  }, [showWarning]);
 
   const fetchWeatherData = async (lat, lon) => {
     try {
@@ -102,7 +101,7 @@ function WeatherBar() {
       }
     } catch (err) {
       console.error("Error fetching weather data:", err);
-      setError("Không thể tải dữ liệu thời tiết.");
+      showError("Không thể tải dữ liệu thời tiết.");
       // Demo fallback on error
       setWeather({
         temp: 28,
@@ -150,18 +149,6 @@ function WeatherBar() {
     getLocation();
   };
 
-  if (error && !weather) { // Show error only if weather data couldn't be loaded
-    return (
-      <WeatherBarContainer elevation={1} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-        <Alert severity="warning" sx={{ mb: 1, width: '100%' }}>{error}</Alert>
-        <IconButton color="primary" onClick={handleRefresh} size="small">
-          <RefreshIcon />
-          <Typography variant="caption" sx={{ ml: 0.5 }}>Thử lại</Typography>
-        </IconButton>
-      </WeatherBarContainer>
-    );
-  }
-  
   // Always render the container, show loading or content inside
   return (
     <WeatherBarContainer elevation={1} sx={{ p: 2, height: '100%' }}>
@@ -199,30 +186,25 @@ function WeatherBar() {
                   </WeatherDetailItem>
                   <WeatherDetailItem>
                     <FlagIcon fontSize="small" />
-                    <Typography variant="body2">{weather?.windSpeed}km/h</Typography>
+                    <Typography variant="body2">{weather?.windSpeed} km/h</Typography>
                   </WeatherDetailItem>
                 </WeatherDetails>
               </Grid>
             </Grid>
           </WeatherContent>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto' }}>
-            <IconButton 
-              size="small" 
-              onClick={handleRefresh} 
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+            <IconButton
               color="primary"
-              title="Refresh weather"
-              sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
+              onClick={handleRefresh}
+              size="small"
+              sx={{ fontSize: '0.75rem' }}
             >
-              <RefreshIcon fontSize="small"/>
+              <RefreshIcon fontSize="small" />
+              <Typography variant="caption" sx={{ ml: 0.5 }}>Làm mới</Typography>
             </IconButton>
           </Box>
         </Box>
-      )}
-      {error && weather && ( // Show small error message at bottom if refresh fails but old data exists
-        <Alert severity="warning" variant="outlined" sx={{ fontSize: '0.75rem', p: '0 4px', mt: 1 }}>
-          {error}
-        </Alert>
       )}
     </WeatherBarContainer>
   );

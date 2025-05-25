@@ -1,59 +1,122 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
-import { TextField, Button, Box, Typography, Link, CircularProgress } from '@mui/material';
-import { login } from '../../redux/actions';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { 
+  TextField, 
+  Button, 
+  Box, 
+  Typography, 
+  Link, 
+  CircularProgress 
+} from '@mui/material';
+import { login } from '../../redux';
+import { handleError, showSuccess, showError } from '../../../../shared/utils';
 import styles from './LoginForm.module.css';
-import {
-  passwordLabelBoxStyles,
-  signupContainerBoxStyles,
-  formControlStyles,
-  passwordFieldStyles,
-  loginButtonStyles,
-} from './LoginForm.styles';
 
+/**
+ * Simplified login form component
+ */
 const LoginForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
+  
+  // Form state
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  
+  // UI state
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const from = location.state?.from || "/";
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  // Form validation
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Email là bắt buộc';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Mật khẩu là bắt buộc';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // True nếu không có lỗi
   };
 
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Cập nhật form data
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+    
+    // Xóa lỗi khi người dùng nhập lại
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password) {
-      // showError("Vui lòng nhập email và mật khẩu");
-      return;
+    // 1. Validate form
+    if (!validateForm()) { 
+      return; // Dừng nếu form không hợp lệ
     }
     
+    // 2. Set loading state
     setLoading(true);
     
     try {
-      await dispatch(login(formData));
-      navigate(from || "/", { replace: true });
+      // 3. Call API
+      const resultAction = await dispatch(login(formData));
+      
+      // 4. Handle result
+      if (login.fulfilled.match(resultAction)) {
+        // Success: Show message and redirect
+        showSuccess('Đăng nhập thành công!');
+        navigate("/home", { replace: true });
+      } else if (login.rejected.match(resultAction)) {
+        // Debug: Log payload để xem cấu trúc lỗi
+        console.log('Login error payload:', resultAction.payload);
+        
+        // Error: Map API errors to form fields
+        const fieldErrors = handleError(resultAction.payload);
+        
+        // Nếu không có lỗi field nào được trả về, hiển thị lỗi chung
+        if (Object.keys(fieldErrors).length === 0) {
+          showError('Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.');
+        } else {
+          setErrors(fieldErrors);
+        }
+      }
     } catch (error) {
-      console.error('Đăng nhập thất bại:', error);
-      // showError(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.");
+      // Unexpected error
+      console.error('Unexpected login error:', error);
+      handleError(error);
     } finally {
+      // Reset loading state
       setLoading(false);
     }
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate className={styles.formContainer}>
+      <Typography variant="h5" component="h1" align="center" sx={{ marginBottom: 3, fontWeight: 600 }}>
+        Đăng nhập
+      </Typography>
+      
+      {/* Email field */}
       <TextField
         margin="normal"
         required
@@ -65,24 +128,12 @@ const LoginForm = () => {
         autoFocus
         value={formData.email}
         onChange={handleChange}
-        sx={formControlStyles}
-        className={styles.formControl}
+        error={!!errors.email}
+        helperText={errors.email}
+        placeholder="Nhập email của bạn"
       />
       
-      <Box sx={passwordLabelBoxStyles}>
-        <Typography variant="body2" component="label" htmlFor="password">
-          Mật khẩu
-        </Typography>
-        <Link 
-          component={RouterLink} 
-          to="/forgot-password" 
-          variant="body2" 
-          className={styles.forgotPassword}
-        >
-          Quên mật khẩu?
-        </Link>
-      </Box>
-      
+      {/* Password field */}
       <TextField
         margin="normal"
         required
@@ -94,31 +145,27 @@ const LoginForm = () => {
         autoComplete="current-password"
         value={formData.password}
         onChange={handleChange}
-        sx={passwordFieldStyles}
-        className={styles.formControl}
+        error={!!errors.password}
+        helperText={errors.password}
+        placeholder="Nhập mật khẩu của bạn"
       />
       
+      {/* Login button */}
       <Button
         type="submit"
         fullWidth
         variant="contained"
-        color="primary"
-        size="large"
+        sx={{ mt: 3, mb: 2 }}
         disabled={loading}
-        sx={loginButtonStyles}
-        className={styles.loginButton}
       >
-        {loading ? (
-          <CircularProgress size={24} color="inherit" />
-        ) : (
-          'Đăng nhập'
-        )}
+        {loading ? <CircularProgress size={24} /> : 'Đăng nhập'}
       </Button>
       
-      <Box sx={signupContainerBoxStyles}>
+      {/* Links */}
+      <Box sx={{ textAlign: 'center', mt: 2 }}>
         <Typography variant="body2">
           Chưa có tài khoản?{' '}
-          <Link component={RouterLink} to="/register" className={styles.signupLink}>
+          <Link component={RouterLink} to="/register" variant="body2">
             Đăng ký ngay
           </Link>
         </Typography>

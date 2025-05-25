@@ -5,7 +5,7 @@ import Sidebar from "../../components/Sidebar/Sidebar";
 import WeatherBar from "../../components/WeatherBar/WeatherBar";
 import MainLayout from "../../../../shared/components/MainLayout/MainLayout";
 import CreateGroupModal from "../../../../shared/components/Create/CreateGroupModal/CreateGroupModal";
-import { HomeContainer } from './styles';
+import { HomeContainer } from './HomePage.styles';
 
 function HomePage() {
   return (

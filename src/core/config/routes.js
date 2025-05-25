@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 
@@ -15,9 +15,12 @@ const Loading = () => (
   </Box>
 );
 
+// Auth pages
 const LoginPage = lazy(() => import('../../modules/auth/pages/LoginPage/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/pages/RegisterPage/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/pages/ForgotPasswordPage/ForgotPasswordPage'));
+
+// Public pages
 const HomePage = lazy(() => import('../../modules/home/pages/HomePage/HomePage'));
 
 const withSuspense = (Component) => (
@@ -27,6 +30,7 @@ const withSuspense = (Component) => (
 );
 
 export const routes = [
+  // Auth Routes
   {
     path: '/login',
     element: withSuspense(LoginPage),
@@ -39,12 +43,22 @@ export const routes = [
     path: '/forgot-password',
     element: withSuspense(ForgotPasswordPage),
   },
+  
+  // Public Routes
   {
     path: '/home',
     element: withSuspense(HomePage),
   },
+  
+  // Default redirect
   {
     path: '/',
-    element: <Navigate to="/home" replace />,
+    element: <Navigate to="/login" replace />,
+  },
+  
+  // Catch all other routes and redirect to login
+  {
+    path: '*',
+    element: <Navigate to="/login" replace />,
   },
 ]; 

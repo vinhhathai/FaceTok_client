@@ -5,6 +5,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { store } from './core/config/store';
 import { routes } from './core/config/routes';
 import theme from './core/config/theme';
+import ToastContainer from './shared/components/ToastMessage/ToastContainer';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             ))}
           </Routes>
         </BrowserRouter>
+        <ToastContainer />
       </ThemeProvider>
     </Provider>
   );

@@ -1,53 +1,164 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { TextField, Button, Box, Typography, Link, CircularProgress } from '@mui/material';
-import { register } from '../../redux/actions';
+import { 
+  TextField, 
+  Button, 
+  Box, 
+  Typography, 
+  Link, 
+  CircularProgress,
+  useTheme,
+  useMediaQuery,
+  Alert
+} from '@mui/material';
+import { register } from '../../redux';
+import { handleError, showSuccess } from '../../../../shared/utils';
+import Logo from '../../../../shared/components/Logo/Logo';
 import styles from './RegisterForm.module.css';
 
 const RegisterForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Form state
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [generalError, setGeneralError] = useState('');
+
+  // Form validation
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.username) {
+      newErrors.username = 'Tên người dùng là bắt buộc';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Tên người dùng phải có ít nhất 3 ký tự';
+    }
+    
+    if (!formData.email) {
+      newErrors.email = 'Email là bắt buộc';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email không hợp lệ';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Mật khẩu là bắt buộc';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+    
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Xác nhận mật khẩu là bắt buộc';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // True nếu không có lỗi
   };
 
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Cập nhật form data
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+    
+    // Xóa lỗi khi người dùng nhập lại
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+    
+    // Xóa lỗi chung nếu có
+    if (generalError) {
+      setGeneralError('');
+    }
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
-      return;
+    // 1. Validate form
+    if (!validateForm()) {
+      return; // Dừng nếu form không hợp lệ
     }
     
-    if (formData.password !== formData.confirmPassword) {
-      return;
-    }
-    
+    // 2. Set loading state
     setLoading(true);
+    setGeneralError('');
     
     try {
-      await dispatch(register(formData));
-      navigate('/login', { replace: true });
+      // 3. Call API
+      const resultAction = await dispatch(register(formData));
+      
+      // 4. Handle result
+      if (register.fulfilled.match(resultAction)) {
+        // Success: Show message and redirect
+        showSuccess('Đăng ký thành công! Vui lòng đăng nhập.');
+        
+        // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
+        navigate("/login", { replace: true });
+      } else if (register.rejected.match(resultAction)) {
+        // Error: Map API errors to form fields
+        const fieldErrors = handleError(resultAction.payload);
+        
+        // Nếu có lỗi chung (không phải lỗi field)
+        if (resultAction.payload?.error?.message && Object.keys(fieldErrors).length === 0) {
+          setGeneralError(resultAction.payload.error.message);
+        } else {
+          setErrors(fieldErrors);
+        }
+      }
     } catch (error) {
-      console.error('Đăng ký thất bại:', error);
+      // Unexpected error
+      console.error('Unexpected error:', error);
+      setGeneralError('Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.');
     } finally {
+      // Reset loading state
       setLoading(false);
     }
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate className={styles.formContainer}>
+      {/* Only show logo on mobile/tablet devices */}
+      {isTabletOrMobile && (
+        <Box className={styles.logoWrapper}>
+          <Logo size={isMobile ? "small" : "medium"} showText={true} />
+        </Box>
+      )}
+      
+      <Typography variant="h5" component="h1" align="center" sx={{ marginBottom: 3, fontWeight: 600 }}>
+        Đăng ký tài khoản
+      </Typography>
+      
+      {/* General error alert */}
+      {generalError && (
+        <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
+          {generalError}
+        </Alert>
+      )}
+      
+      {/* Username field */}
       <TextField
         margin="normal"
         required
@@ -59,9 +170,12 @@ const RegisterForm = () => {
         autoFocus
         value={formData.username}
         onChange={handleChange}
-        className={styles.formControl}
+        error={!!errors.username}
+        helperText={errors.username}
+        placeholder="Nhập tên người dùng"
       />
       
+      {/* Email field */}
       <TextField
         margin="normal"
         required
@@ -72,9 +186,12 @@ const RegisterForm = () => {
         autoComplete="email"
         value={formData.email}
         onChange={handleChange}
-        className={styles.formControl}
+        error={!!errors.email}
+        helperText={errors.email}
+        placeholder="Nhập email của bạn"
       />
       
+      {/* Password field */}
       <TextField
         margin="normal"
         required
@@ -86,9 +203,12 @@ const RegisterForm = () => {
         autoComplete="new-password"
         value={formData.password}
         onChange={handleChange}
-        className={styles.formControl}
+        error={!!errors.password}
+        helperText={errors.password}
+        placeholder="Nhập mật khẩu"
       />
       
+      {/* Confirm Password field */}
       <TextField
         margin="normal"
         required
@@ -100,29 +220,27 @@ const RegisterForm = () => {
         autoComplete="new-password"
         value={formData.confirmPassword}
         onChange={handleChange}
-        className={styles.formControl}
+        error={!!errors.confirmPassword}
+        helperText={errors.confirmPassword}
+        placeholder="Nhập lại mật khẩu"
       />
       
+      {/* Register button */}
       <Button
         type="submit"
         fullWidth
         variant="contained"
-        color="primary"
-        size="large"
+        sx={{ mt: 3, mb: 2 }}
         disabled={loading}
-        className={styles.registerButton}
       >
-        {loading ? (
-          <CircularProgress size={24} color="inherit" />
-        ) : (
-          'Đăng ký'
-        )}
+        {loading ? <CircularProgress size={24} /> : 'Đăng ký'}
       </Button>
       
-      <Box className={styles.loginContainer}>
+      {/* Links */}
+      <Box sx={{ textAlign: 'center', mt: 2 }}>
         <Typography variant="body2">
-          Bạn đã có tài khoản?{' '}
-          <Link component={RouterLink} to="/login" className={styles.loginLink}>
+          Đã có tài khoản?{' '}
+          <Link component={RouterLink} to="/login" variant="body2">
             Đăng nhập
           </Link>
         </Typography>
