@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { ERROR_CODES } from '../../common/constants';
-import { logError, createError, handleApiError } from '../utils/errorUtils';
 import { getCookie, removeCookie } from '../utils/cookieUtils';
 
 // Cookie name constant
@@ -28,10 +27,8 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     // Xử lý lỗi request đơn giản hơn
-    logError(error, 'API Request');
-    return Promise.reject(
-      createError(ERROR_CODES.API.BAD_REQUEST, 'Lỗi khi gửi yêu cầu')
-    );
+    console.error('[API Request]', error);
+    return Promise.reject(error);
   }
 );
 
@@ -50,9 +47,10 @@ apiClient.interceptors.response.use(
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
     
-    // Xử lý lỗi API một cách đơn giản
-    const appError = handleApiError(error);
-    return Promise.reject(appError);
+    // Ghi log lỗi
+    console.error('[API Response]', error);
+    
+    return Promise.reject(error);
   }
 );
 

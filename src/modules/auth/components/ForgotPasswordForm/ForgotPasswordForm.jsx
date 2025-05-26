@@ -16,7 +16,7 @@ import {
   Alert
 } from '@mui/material';
 import { forgotPassword, verifyOTP, resetPassword } from '../../redux';
-import { handleError, showSuccess } from '../../../../shared/utils';
+import { createError, showSuccess, formatErrorMessage } from '../../../../shared/utils';
 
 // Form steps
 const steps = ['Yêu cầu đặt lại', 'Xác nhận mã OTP', 'Đặt mật khẩu mới'];
@@ -42,7 +42,7 @@ const ForgotPasswordForm = () => {
   const [generalError, setGeneralError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [userId, setUserId] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
   // Handle input changes
   const handleChange = (e) => {
@@ -167,55 +167,51 @@ const ForgotPasswordForm = () => {
       // Success
       showSuccess('Mã OTP đã được gửi đến email của bạn!');
       
-      // Lưu userId cho bước tiếp theo nếu có
-      if (resultAction.payload?.userId) {
-        setUserId(resultAction.payload.userId);
-      }
-      
+      // Lưu email cho bước tiếp theo
       // Chuyển sang bước tiếp theo
       setActiveStep(1);
     } else if (forgotPassword.rejected.match(resultAction)) {
-      // Error
-      const fieldErrors = handleError(resultAction.payload);
-      
-      if (Object.keys(fieldErrors).length === 0 && resultAction.payload?.error?.message) {
-        setGeneralError(resultAction.payload.error.message);
-      } else {
-        setErrors(fieldErrors);
-      }
+      const errorMessage = formatErrorMessage(resultAction.payload);
+      setGeneralError(errorMessage);
     }
   };
 
   // Xử lý xác nhận OTP
   const handleVerifyOTP = async () => {
     const resultAction = await dispatch(verifyOTP({ 
-      userId,
+      email: formData.email,
       otp: formData.otp 
     }));
     
     if (verifyOTP.fulfilled.match(resultAction)) {
       // Success
+      console.log('Verify OTP response:', resultAction.payload);
       showSuccess('Mã OTP đã được xác nhận!');
       
-      // Chuyển sang bước tiếp theo
-      setActiveStep(2);
-    } else if (verifyOTP.rejected.match(resultAction)) {
-      // Error
-      const fieldErrors = handleError(resultAction.payload);
+      // Lưu token từ response - kiểm tra nhiều vị trí có thể chứa token
+      const responseData = resultAction.payload;
       
-      if (Object.keys(fieldErrors).length === 0 && resultAction.payload?.error?.message) {
-        setGeneralError(resultAction.payload.error.message);
+      // Lấy resetToken theo đúng cấu trúc từ server
+      if (responseData?.data?.resetToken) {
+        setResetToken(responseData.data.resetToken);
+        // Chuyển sang bước tiếp theo
+        setActiveStep(2);
       } else {
-        setErrors(fieldErrors);
+        console.error('resetToken không tìm thấy trong response:', responseData);
+        setGeneralError('Không nhận được token xác thực. Vui lòng thử lại.');
       }
+    } else if (verifyOTP.rejected.match(resultAction)) {
+      const errorMessage = formatErrorMessage(resultAction.payload);
+      setGeneralError(errorMessage);
     }
   };
 
   // Xử lý đặt lại mật khẩu
   const handleResetPassword = async () => {
     const resultAction = await dispatch(resetPassword({
-      userId,
-      password: formData.password
+      resetToken: resetToken,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword
     }));
     
     if (resetPassword.fulfilled.match(resultAction)) {
@@ -225,14 +221,8 @@ const ForgotPasswordForm = () => {
       // Chuyển hướng đến trang đăng nhập
       navigate("/login", { replace: true });
     } else if (resetPassword.rejected.match(resultAction)) {
-      // Error
-      const fieldErrors = handleError(resultAction.payload);
-      
-      if (Object.keys(fieldErrors).length === 0 && resultAction.payload?.error?.message) {
-        setGeneralError(resultAction.payload.error.message);
-      } else {
-        setErrors(fieldErrors);
-      }
+      const errorMessage = formatErrorMessage(resultAction.payload);
+      setGeneralError(errorMessage);
     }
   };
 

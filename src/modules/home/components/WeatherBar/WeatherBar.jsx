@@ -8,7 +8,7 @@ import MyLocationIcon from '@mui/icons-material/MyLocation';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import IconButton from '@mui/material/IconButton';
 import Grid from '@mui/material/Grid';
-import { useError } from '../../../../shared/hooks';
+import { showWarning, showError } from '../../../../shared/utils';
 
 import {
   WeatherBarContainer,
@@ -31,7 +31,6 @@ function WeatherBar() {
   const [weather, setWeather] = useState(null);
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { showWarning, showError } = useError();
 
   const getLocation = useCallback(() => {
     setLoading(true);
@@ -69,7 +68,7 @@ function WeatherBar() {
       setLocation("CẦN THƠ, VN");
       setLoading(false);
     }
-  }, [showWarning]);
+  }, []);
 
   const fetchWeatherData = async (lat, lon) => {
     try {

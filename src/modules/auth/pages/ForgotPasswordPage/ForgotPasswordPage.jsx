@@ -1,9 +1,9 @@
 import React from 'react';
-import { Box, Container, Grid, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Container, Grid, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
 import ForgotPasswordForm from '../../components/ForgotPasswordForm/ForgotPasswordForm';
 import Logo from '../../../../shared/components/Logo/Logo';
 import styles from './ForgotPasswordPage.module.css';
-import { backgroundBoxStyles } from './ForgotPasswordPage.styles';
+import { backgroundBoxStyles, desktopLogoBoxStyles, subtitleTypographyStyles } from './ForgotPasswordPage.styles';
 
 const ForgotPasswordPage = () => {
   const theme = useTheme();
@@ -29,7 +29,17 @@ const ForgotPasswordPage = () => {
 
           {/* Right Side - Forgot Password Form */}
           <Grid item xs={12} md={6} className={styles.rightSide}>
+            <Paper elevation={isMobile ? 0 : 3} className={styles.formPaper}>
+              {/* Logo and Title (Always visible) */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+                <Logo size="medium" />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Đặt lại mật khẩu của bạn
+                </Typography>
+              </Box>
+              
             <ForgotPasswordForm />
+            </Paper>
           </Grid>
         </Grid>
       </Container>

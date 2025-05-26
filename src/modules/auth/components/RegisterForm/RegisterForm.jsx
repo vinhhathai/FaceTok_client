@@ -13,8 +13,7 @@ import {
   Alert
 } from '@mui/material';
 import { register } from '../../redux';
-import { handleError, showSuccess } from '../../../../shared/utils';
-import Logo from '../../../../shared/components/Logo/Logo';
+import { createError, showSuccess, formatErrorMessage } from '../../../../shared/utils';
 import styles from './RegisterForm.module.css';
 
 const RegisterForm = () => {
@@ -108,7 +107,10 @@ const RegisterForm = () => {
     
     try {
       // 3. Call API
+      
+      
       const resultAction = await dispatch(register(formData));
+      console.log('Register result:', resultAction);
       
       // 4. Handle result
       if (register.fulfilled.match(resultAction)) {
@@ -118,19 +120,11 @@ const RegisterForm = () => {
         // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
         navigate("/login", { replace: true });
       } else if (register.rejected.match(resultAction)) {
-        // Error: Map API errors to form fields
-        const fieldErrors = handleError(resultAction.payload);
-        
-        // Nếu có lỗi chung (không phải lỗi field)
-        if (resultAction.payload?.error?.message && Object.keys(fieldErrors).length === 0) {
-          setGeneralError(resultAction.payload.error.message);
-        } else {
-          setErrors(fieldErrors);
-        }
+        const errorMessage = formatErrorMessage(resultAction.payload);
+        setGeneralError(errorMessage);
       }
     } catch (error) {
       // Unexpected error
-      console.error('Unexpected error:', error);
       setGeneralError('Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.');
     } finally {
       // Reset loading state
@@ -140,13 +134,6 @@ const RegisterForm = () => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate className={styles.formContainer}>
-      {/* Only show logo on mobile/tablet devices */}
-      {isTabletOrMobile && (
-        <Box className={styles.logoWrapper}>
-          <Logo size={isMobile ? "small" : "medium"} showText={true} />
-        </Box>
-      )}
-      
       <Typography variant="h5" component="h1" align="center" sx={{ marginBottom: 3, fontWeight: 600 }}>
         Đăng ký tài khoản
       </Typography>

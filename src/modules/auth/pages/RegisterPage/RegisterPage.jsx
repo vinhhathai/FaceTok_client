@@ -30,19 +30,13 @@ const RegisterPage = () => {
           {/* Right Side - Register Form */}
           <Grid item xs={12} md={6} className={styles.rightSide}>
             <Paper elevation={isMobile ? 0 : 3} className={styles.formPaper}>
-              {/* Logo and Title (Desktop only) */}
-              {!isMobile && (
-                <Box sx={desktopLogoBoxStyles}>
-                  <Grid container alignItems="center" spacing={2}>
-                    <Grid item xs={12}>
-                      <Logo size="large" />
-                      <Typography variant="body2" color="text.secondary" sx={subtitleTypographyStyles}>
+              {/* Logo and Title (Always visible) */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+                <Logo size="medium" />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                         Tạo tài khoản của bạn
                       </Typography>
-                    </Grid>
-                  </Grid>
                 </Box>
-              )}
               
               <RegisterForm />
             </Paper>

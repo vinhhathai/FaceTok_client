@@ -26,6 +26,67 @@ export const login = createAsyncThunk(
 );
 
 /**
+ * Tạo action đăng ký
+ */
+export const register = createAsyncThunk(
+  'auth/register',
+  async (userData, { rejectWithValue }) => {
+    try {
+      const data = await authAPI.registerUser(userData);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Tạo action quên mật khẩu
+ */
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (data, { rejectWithValue }) => {
+    try {
+      const result = await authAPI.requestPasswordReset(data);
+      return result;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Tạo action xác thực OTP
+ */
+export const verifyOTP = createAsyncThunk(
+  'auth/verifyOTP',
+  async (data, { rejectWithValue }) => {
+    try {
+      const result = await authAPI.verifyOTP(data);
+      return result;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Tạo action đặt lại mật khẩu
+ */
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async (data, { rejectWithValue }) => {
+    try {
+      const result = await authAPI.resetPassword(data);
+      console.log(data)
+      return result;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
  * Trạng thái ban đầu của slice auth
  */
 const initialState = {
@@ -85,6 +146,59 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
+      })
+      
+      // ===== Các trường hợp đăng ký =====
+      .addCase(register.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(register.fulfilled, (state) => {
+        state.loading = false;
+        // Không set authenticated vì cần đăng nhập sau khi đăng ký
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // ===== Các trường hợp quên mật khẩu =====
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // ===== Các trường hợp xác thực OTP =====
+      .addCase(verifyOTP.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOTP.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(verifyOTP.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // ===== Các trường hợp đặt lại mật khẩu =====
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
