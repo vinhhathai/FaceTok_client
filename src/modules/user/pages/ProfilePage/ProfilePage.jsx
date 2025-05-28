@@ -116,7 +116,7 @@ const ProfilePage = () => {
           >
             <Tab label="Bài viết" {...a11yProps(0)} />
             <Tab label="Giới thiệu" {...a11yProps(1)} />
-            <Tab label="Hình ảnh" {...a11yProps(2)} />
+            <Tab label="File đa phương tiện" {...a11yProps(2)} />
             <Tab label="Bạn bè" {...a11yProps(3)} />
           </Tabs>
         </Box>

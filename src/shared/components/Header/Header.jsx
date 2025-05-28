@@ -99,7 +99,7 @@ function Header() {
           <LeftSectionContainer>
             {/* Logo */}
             <LogoContainer>
-              <Box component={Link} to="/" sx={logoStyles}>
+              <Box component={Link} to="/home" sx={logoStyles}>
                 <Logo size={isMobile ? "small" : "small"} showText={true} />
               </Box>
             </LogoContainer>
