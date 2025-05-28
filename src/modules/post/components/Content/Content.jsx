@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { 
   Box, 
   CircularProgress, 
@@ -8,28 +8,30 @@ import {
 } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { ContentContainer, PostsContainer } from './styles';
+import { fetchTimelinePosts } from "../../redux";
 
 function Content() {
   const dispatch = useDispatch();
-  // Temporarily use empty values since we haven't migrated the Redux store
-  const timelinePosts = [];
-  const currentPage = 1;
-  const totalPages = 1;
-  const isLoading = false;
-  const error = null;
-  const createPostStatus = 'idle';
+  const { 
+    timelinePosts, 
+    currentPage, 
+    totalPages, 
+    isLoading, 
+    error, 
+    createPostStatus 
+  } = useSelector(state => state.posts);
 
   const [loadingMore, setLoadingMore] = useState(false);
 
   // Fetch initial posts when component mounts
   useEffect(() => {
-    // To be implemented: dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
+    dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
   }, [dispatch]);
 
   // Refresh timeline when a new post is created
   useEffect(() => {
     if (createPostStatus === 'succeeded') {
-      // To be implemented: dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
+      dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
     }
   }, [createPostStatus, dispatch]);
 
@@ -37,14 +39,14 @@ function Content() {
   const handleLoadMore = async () => {
     if (currentPage < totalPages && !isLoading && !loadingMore) {
       setLoadingMore(true);
-      // To be implemented: await dispatch(fetchTimelinePosts({ page: currentPage + 1, limit: 10 }));
+      await dispatch(fetchTimelinePosts({ page: currentPage + 1, limit: 10 }));
       setLoadingMore(false);
     }
   };
 
   // Handle refresh
   const handleRefresh = () => {
-    // To be implemented: dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
+    dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
   };
 
   return (
@@ -107,6 +109,11 @@ function Content() {
       {/* Posts list - to be populated */}
       <PostsContainer>
         {/* Posts will be inserted here */}
+        {timelinePosts.map(post => (
+          <div key={post.id}>
+            {/* Post component will go here */}
+          </div>
+        ))}
       </PostsContainer>
       
       {/* Load more button */}

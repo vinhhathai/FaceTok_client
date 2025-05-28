@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-// import * as postAPI from '../api/postAPI';
+// import * as postAPI from '../../api/postAPI';
 
 // Example async thunk
-// export const getPosts = createAsyncThunk(
-//   'post/getPosts',
-//   async (_, { rejectWithValue }) => {
+// export const getPostDetail = createAsyncThunk(
+//   'post/getPostDetail',
+//   async (postId, { rejectWithValue }) => {
 //     try {
-//       const data = await postAPI.getPosts();
+//       const data = await postAPI.getPostDetail(postId);
 //       return data;
 //     } catch (error) {
 //       return rejectWithValue(error);
@@ -33,7 +33,7 @@ const initialState = {
   error: null
 };
 
-const postSlice = createSlice({
+const postDetailSlice = createSlice({
   name: 'post',
   initialState,
   reducers: {
@@ -53,15 +53,15 @@ const postSlice = createSlice({
   extraReducers: (builder) => {
     // Handle async actions here
     // builder
-    //   .addCase(getPosts.pending, (state) => {
+    //   .addCase(getPostDetail.pending, (state) => {
     //     state.loading = true;
     //     state.error = null;
     //   })
-    //   .addCase(getPosts.fulfilled, (state, action) => {
+    //   .addCase(getPostDetail.fulfilled, (state, action) => {
     //     state.loading = false;
-    //     state.posts = action.payload;
+    //     state.singlePost = action.payload;
     //   })
-    //   .addCase(getPosts.rejected, (state, action) => {
+    //   .addCase(getPostDetail.rejected, (state, action) => {
     //     state.loading = false;
     //     state.error = action.payload;
     //   })
@@ -80,5 +80,5 @@ const postSlice = createSlice({
   }
 });
 
-export const { clearError, likePost } = postSlice.actions;
-export default postSlice.reducer; 
+export const { clearError, likePost } = postDetailSlice.actions;
+export default postDetailSlice.reducer; 

@@ -21,7 +21,7 @@ const RegisterPage = lazy(() => import('../../modules/auth/pages/RegisterPage/Re
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/pages/ForgotPasswordPage/ForgotPasswordPage'));
 
 // Public pages
-const HomePage = lazy(() => import('../../modules/home/pages/HomePage/HomePage'));
+const HomePage = lazy(() => import('../../modules/post/pages/HomePage/HomePage'));
 
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>

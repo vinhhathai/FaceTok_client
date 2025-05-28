@@ -199,8 +199,8 @@ function WeatherBar() {
               size="small"
               sx={{ fontSize: '0.75rem' }}
             >
-              <RefreshIcon fontSize="small" />
-              <Typography variant="caption" sx={{ ml: 0.5 }}>Làm mới</Typography>
+              <RefreshIcon fontSize="small" sx={{ mr: 0.5 }} />
+              <Typography variant="caption">Cập nhật</Typography>
             </IconButton>
           </Box>
         </Box>

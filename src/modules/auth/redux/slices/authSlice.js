@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as authAPI from '../api/authAPI';
-import { setCookie, getCookie, removeCookie } from '../../../shared/utils/cookieUtils';
+import * as authAPI from '../../api/authAPI';
+import { setCookie, getCookie, removeCookie } from '../../../../shared/utils/cookieUtils';
 
 // Cookie configuration
 const TOKEN_COOKIE_NAME = 'auth_token';
@@ -15,8 +15,8 @@ export const login = createAsyncThunk(
     try {
       const data = await authAPI.loginUser(credentials);
       // Lưu token vào cookie khi đăng nhập thành công
-      if (data.accessToken) {
-        setCookie(TOKEN_COOKIE_NAME, data.accessToken, { expires: TOKEN_COOKIE_EXPIRY });
+      if (data.data.accessToken) {
+        setCookie(TOKEN_COOKIE_NAME, data.data.accessToken, { expires: TOKEN_COOKIE_EXPIRY });
       }
       return data;
     } catch (error) {
@@ -199,10 +199,12 @@ const authSlice = createSlice({
       .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
-  },
+      })
+  }
 });
 
-// Export các actions và reducer
+// Export actions
 export const { logout, clearError } = authSlice.actions;
+
+// Export reducer
 export default authSlice.reducer; 

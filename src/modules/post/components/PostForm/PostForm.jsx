@@ -198,58 +198,65 @@ const PostForm = () => {
           <MobileActionsContainer>
             <input
               type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
               id="media-upload"
-              onChange={handleMediaSelect}
-              disabled={isSubmitting}
-            />
-            <label htmlFor="media-upload" style={{ width: '100%' }}>
-              <ImageButton
-                component="span"
-                startIcon={<ImageIcon />}
-                disabled={isSubmitting}
-                fullWidth
-              >
-                Thêm ảnh
-              </ImageButton>
-            </label>
-            
-            <PostButton
-              type="submit"
-              variant="contained"
-              disabled={(!content.trim() && !mediaFile) || isSubmitting}
-              fullWidth
-            >
-              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Đăng'}
-            </PostButton>
-          </MobileActionsContainer>
-        ) : (
-          <ActionsContainer>
-            <input
-              type="file"
               accept="image/*"
-              style={{ display: 'none' }}
-              id="media-upload"
               onChange={handleMediaSelect}
+              style={{ display: 'none' }}
               disabled={isSubmitting}
             />
             <label htmlFor="media-upload">
               <ImageButton
+                fullWidth
                 component="span"
                 startIcon={<ImageIcon />}
                 disabled={isSubmitting}
               >
-                Thêm ảnh
+                Thêm hình ảnh
               </ImageButton>
             </label>
-            
             <PostButton
               type="submit"
-              variant="contained"
-              disabled={(!content.trim() && !mediaFile) || isSubmitting}
+              fullWidth
+              disabled={isSubmitting || (!content.trim() && !mediaFile)}
             >
-              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Đăng'}
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Đăng bài'
+              )}
+            </PostButton>
+          </MobileActionsContainer>
+        ) : (
+          <ActionsContainer>
+            <Box>
+              <input
+                type="file"
+                id="media-upload"
+                accept="image/*"
+                onChange={handleMediaSelect}
+                style={{ display: 'none' }}
+                disabled={isSubmitting}
+              />
+              <label htmlFor="media-upload">
+                <ImageButton
+                  component="span"
+                  startIcon={<ImageIcon />}
+                  disabled={isSubmitting}
+                >
+                  Thêm hình ảnh
+                </ImageButton>
+              </label>
+            </Box>
+            <PostButton
+              type="submit"
+              disabled={isSubmitting || (!content.trim() && !mediaFile)}
+              variant="contained"
+            >
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Đăng bài'
+              )}
             </PostButton>
           </ActionsContainer>
         )}

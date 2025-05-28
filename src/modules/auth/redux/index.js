@@ -6,7 +6,7 @@ import authReducer, {
   forgotPassword,
   verifyOTP,
   resetPassword
-} from './authSlice';
+} from './slices/authSlice';
 
 const resetPasswordState = () => ({ type: 'auth/resetPasswordState' });
 

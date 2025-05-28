@@ -3,3 +3,9 @@
 
 // Example export:
 // export { default as PostList } from './components/PostList/PostList'; 
+
+export { default as HomePage } from './pages/HomePage/HomePage';
+export { default as Content } from './components/Content/Content';
+export { default as PostForm } from './components/PostForm/PostForm';
+export { default as Sidebar } from './components/Sidebar/Sidebar';
+export { default as WeatherBar } from './components/WeatherBar/WeatherBar'; 

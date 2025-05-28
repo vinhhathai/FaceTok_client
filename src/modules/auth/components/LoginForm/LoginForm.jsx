@@ -80,7 +80,6 @@ const LoginForm = () => {
     try {
       // 3. Call API
       const resultAction = await dispatch(login(formData));
-      console.log('Login result:', resultAction);
 
       // 4. Handle result
       if (login.fulfilled.match(resultAction)) {

@@ -1,7 +1,12 @@
-import postReducer from './postSlice';
+import postDetailReducer from './slices/postDetailSlice';
+import postsReducer from './slices/postSlice';
 
 // Export actions
-// export { someAction, anotherAction } from './postSlice';
+export { fetchTimelinePosts } from './slices/postSlice';
+export { clearError, likePost } from './slices/postDetailSlice';
 
-// Export reducer as default
-export default postReducer; 
+// Export reducers
+export { default as postsReducer } from './slices/postSlice';
+
+// Export post detail reducer as default
+export default postDetailReducer; 
