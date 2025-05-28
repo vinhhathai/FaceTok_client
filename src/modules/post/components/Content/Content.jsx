@@ -7,7 +7,7 @@ import {
   Button 
 } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { ContentContainer, PostsContainer } from './styles';
+import { ContentContainer, PostsContainer } from './Content.styles';
 import { fetchTimelinePosts } from "../../redux";
 
 function Content() {

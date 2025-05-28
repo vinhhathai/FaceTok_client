@@ -14,7 +14,7 @@ import {
   ItemListItemButton,
   ItemListItemIcon,
   StyledBadge
-} from './styles';
+} from './Sidebar.styles';
 
 // Main navigation items with Material-UI icons
 const mainItems = [

@@ -5,12 +5,14 @@ import styles from './Logo.module.css';
 
 const Logo = ({ size = 'medium', showText = true, ...props }) => {
   const sizeClassMap = {
+    extraSmall: styles.logoImageExtraSmall,
     small: styles.logoImageSmall,
     medium: styles.logoImageMedium,
     large: styles.logoImageLarge,
   };
 
   const textSizeClassMap = {
+    extraSmall: styles.logoTextExtraSmall,
     small: styles.logoTextSmall,
     medium: styles.logoTextMedium,
     large: styles.logoTextLarge,
@@ -37,7 +39,7 @@ const Logo = ({ size = 'medium', showText = true, ...props }) => {
 };
 
 Logo.propTypes = {
-  size: PropTypes.oneOf(['small', 'medium', 'large']),
+  size: PropTypes.oneOf(['extraSmall', 'small', 'medium', 'large']),
   showText: PropTypes.bool,
   sx: PropTypes.object,
 };

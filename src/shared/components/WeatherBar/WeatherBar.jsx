@@ -8,7 +8,7 @@ import MyLocationIcon from '@mui/icons-material/MyLocation';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import IconButton from '@mui/material/IconButton';
 import Grid from '@mui/material/Grid';
-import { showWarning, showError } from '../../../../shared/utils';
+import { showWarning, showError } from '../../utils/toastMessageUtils';
 
 import {
   WeatherBarContainer,

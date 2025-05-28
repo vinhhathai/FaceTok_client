@@ -23,6 +23,9 @@ const ForgotPasswordPage = lazy(() => import('../../modules/auth/pages/ForgotPas
 // Public pages
 const HomePage = lazy(() => import('../../modules/post/pages/HomePage/HomePage'));
 
+// User pages
+const ProfilePage = lazy(() => import('../../modules/user/pages/ProfilePage/ProfilePage'));
+
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>
     <Component />
@@ -48,6 +51,16 @@ export const routes = [
   {
     path: '/home',
     element: withSuspense(HomePage),
+  },
+  
+  // User Routes
+  {
+    path: '/profile',
+    element: withSuspense(ProfilePage),
+  },
+  {
+    path: '/profile/:userId',
+    element: withSuspense(ProfilePage),
   },
   
   // Default redirect

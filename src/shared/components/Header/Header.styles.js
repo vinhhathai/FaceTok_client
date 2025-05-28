@@ -1,5 +1,5 @@
-import { styled } from '@mui/material/styles';
-import { AppBar, Toolbar, Box } from '@mui/material';
+import { styled, alpha } from '@mui/material/styles';
+import { AppBar, Toolbar, Box, InputBase } from '@mui/material';
 
 // Styled components
 export const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -12,62 +12,133 @@ export const StyledAppBar = styled(AppBar)(({ theme }) => ({
 export const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
-  padding: theme.spacing(0, 1),
+  padding: theme.spacing(0.5),
+  minHeight: '56px',
   [theme.breakpoints.up('sm')]: {
     padding: theme.spacing(0, 2),
+    minHeight: '64px',
+    flexDirection: 'row',
+  },
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: theme.spacing(1, 0.5),
+    gap: theme.spacing(1),
+  }
+}));
+
+export const LeftSectionContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  flex: '0 1 auto',
+  [theme.breakpoints.up('sm')]: {
+    minWidth: '300px',
+    maxWidth: '600px',
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
   }
 }));
 
 export const LogoContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
+  flexShrink: 0,
+  marginRight: theme.spacing(1),
   [theme.breakpoints.down('sm')]: {
-    flex: 1,
+    marginRight: 0,
+    justifyContent: 'center',
   }
+}));
+
+export const SearchContainer = styled('div')(({ theme }) => ({
+  position: 'relative',
+  display: 'flex',
+  alignItems: 'center',
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.common.black, 0.05),
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.common.black, 0.08),
+  },
+  width: '100%',
+  flexGrow: 1,
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: '100%',
+    width: '90%',
+  }
+}));
+
+export const SearchIconWrapper = styled('div')(({ theme }) => ({
+  padding: theme.spacing(0, 1),
+  height: '100%',
+  position: 'absolute',
+  pointerEvents: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: theme.palette.text.secondary,
+}));
+
+export const StyledInputBase = styled(InputBase)(({ theme }) => ({
+  color: 'inherit',
+  width: '100%',
+  '& .MuiInputBase-input': {
+    padding: theme.spacing(0.75, 0.75, 0.75, 0),
+    paddingLeft: `calc(1em + ${theme.spacing(3)})`,
+    transition: theme.transitions.create('width'),
+    width: '100%',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '0.875rem',
+    }
+  },
 }));
 
 export const ActionsContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
-  alignItems: 'center'
-}));
-
-export const SearchContainer = styled(Box)(({ theme }) => ({
-  margin: theme.spacing(0, 2),
-  [theme.breakpoints.down('md')]: {
-    margin: theme.spacing(0, 1),
+  alignItems: 'center',
+  justifyContent: 'flex-end',
+  marginLeft: 'auto',
+  [theme.breakpoints.down('sm')]: {
+    marginLeft: 0,
+    width: '100%',
+    justifyContent: 'center',
   }
 }));
 
 export const ActionButtonsContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
-  alignItems: 'center'
+  alignItems: 'center',
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    justifyContent: 'space-around',
+  }
 }));
 
 export const logoStyles = { 
   color: 'primary.main', 
   fontWeight: 'bold', 
   typography: 'h6',
-  textDecoration: 'none'
+  textDecoration: 'none',
+  display: 'flex',
+  alignItems: 'center'
 };
 
-export const searchBoxStyles = { 
-  bgcolor: '#f5f5f5', 
-  borderRadius: 1, 
-  p: '4px 12px' 
-};
+export const iconButtonStyles = theme => ({ 
+  mr: { xs: 0, sm: 1 },
+  p: { xs: 0.5, sm: 1 }
+});
 
-export const iconButtonStyles = { 
-  mr: 1 
-};
-
-export const iconStyles = { 
-  fontSize: 28, 
+export const iconStyles = theme => ({ 
+  fontSize: { xs: 20, sm: 24, md: 28 }, 
   color: '#616161' 
-};
+});
 
 export const avatarStyles = { 
-  width: 40, 
-  height: 40, 
+  width: { xs: 30, sm: 36, md: 40 }, 
+  height: { xs: 30, sm: 36, md: 40 }, 
   borderRadius: '50%', 
   bgcolor: 'primary.main',
   display: 'flex',
@@ -75,5 +146,7 @@ export const avatarStyles = {
   justifyContent: 'center',
   color: 'white',
   fontWeight: 'bold',
-  cursor: 'pointer'
+  cursor: 'pointer',
+  flexShrink: 0,
+  ml: { xs: 0, sm: 1 }
 }; 
