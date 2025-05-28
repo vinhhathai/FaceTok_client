@@ -40,7 +40,13 @@ import {
 } from './Header.styles';
 import Logo from '../Logo/Logo';
 
+import { useSelector } from 'react-redux';
+
 function Header() {
+
+  const user = useSelector(state => state.auth);
+  console.log(user);
+
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

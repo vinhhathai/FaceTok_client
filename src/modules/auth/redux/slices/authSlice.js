@@ -78,7 +78,6 @@ export const resetPassword = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const result = await authAPI.resetPassword(data);
-      console.log(data)
       return result;
     } catch (error) {
       return rejectWithValue(error);
@@ -138,8 +137,8 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.accessToken;
+        state.user = action.payload.data.user;
+        state.token = action.payload.data.accessToken;
         state.isAuthenticated = true;
       })
       .addCase(login.rejected, (state, action) => {
