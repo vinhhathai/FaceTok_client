@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userApi from "../../api/userApi";
 
-
+// Default images
+const DEFAULT_AVATAR = "/assets/images/avatar_default.jpg";
+const DEFAULT_COVER = "/assets/images/cover_default.jpg";
 
 // Async thunks
 export const fetchUserProfile = createAsyncThunk(

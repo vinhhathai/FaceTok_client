@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
+  Box,
   Typography,
   Button,
   Modal,
   TextField,
   CircularProgress,
 } from "@mui/material";
+import { useMediaQuery, useTheme } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import {
   showSuccess,
   showError,
@@ -16,8 +19,8 @@ import {
 import {
   updateUserFullname,
   fetchUserProfile,
+  selectUserError,
 } from "../../../../redux/slices/userSlice";
-import { useDispatch } from "react-redux";
 
 // CSS Module
 import styles from "./NameEditModal.module.css";
@@ -30,27 +33,30 @@ let errorToastShown = false;
 const NAME_COOLDOWN_KEY = "fullname_cooldown_time";
 
 const NameEditModal = ({ isOpen, onClose, user }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
-  
+  const globalError = useSelector(selectUserError);
+
   const [newName, setNewName] = useState("");
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [localError, setLocalError] = useState(null);
   const [timeRemainingError, setTimeRemainingError] = useState(null);
   const [authError, setAuthError] = useState(false);
   const [cooldownActive, setCooldownActive] = useState(false);
-  
+
   // Check for cooldown when modal opens
   useEffect(() => {
     if (isOpen) {
       // Only reset the toast flag when modal is first opened
       errorToastShown = false;
-      
+
       // Check if cooldown is still active from localStorage
       const cooldownTime = localStorage.getItem(NAME_COOLDOWN_KEY);
       if (cooldownTime) {
         const cooldownExpiry = parseInt(cooldownTime, 10);
         const now = Date.now();
-        
+
         if (now < cooldownExpiry) {
           // Cooldown still active
           const minutesRemaining = Math.ceil(
@@ -68,7 +74,7 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
         }
       }
     }
-    
+
     // Cleanup when modal closes
     return () => {
       if (!isOpen) {
@@ -78,7 +84,7 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
       }
     };
   }, [isOpen]);
-  
+
   // Safely show error toast only once
   const safeShowError = (message) => {
     if (!errorToastShown) {
@@ -86,7 +92,7 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
       errorToastShown = true;
     }
   };
-  
+
   // Load saved error from localStorage when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -94,16 +100,16 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
       if (savedError) {
         try {
           const errorData = JSON.parse(savedError);
-          
+
           if (errorData.timeRemaining) {
             const errorMsg = `Bạn cần đợi thêm ${errorData.timeRemaining} phút nữa để đổi tên`;
             setTimeRemainingError(errorMsg);
             setCooldownActive(true);
-            
+
             // Set cooldown expiry time in localStorage
             const expiryTime = Date.now() + errorData.timeRemaining * 60 * 1000;
             localStorage.setItem(NAME_COOLDOWN_KEY, expiryTime.toString());
-            
+
             safeShowError(errorMsg);
           } else if (errorData.authError) {
             setAuthError(true);
@@ -112,7 +118,7 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
             setLocalError(errorData.message);
             safeShowError(errorData.message);
           }
-          
+
           // Clear localStorage after retrieving the error
           localStorage.removeItem(ERROR_STORAGE_KEY);
         } catch (e) {
@@ -122,59 +128,59 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
       }
     }
   }, [isOpen]);
-  
+
   // Set initial name when modal opens
   useEffect(() => {
     if (isOpen && user?.fullName) {
       setNewName(user.fullName);
     }
   }, [isOpen, user?.fullName]);
-  
+
   const handleNameChange = (event) => {
     setNewName(event.target.value);
   };
-  
+
   const handleUpdateName = async () => {
     // Reset error toast flag on new submission
     errorToastShown = false;
-    
+
     if (!newName || newName.trim().length === 0) {
       const errorMsg = "Tên không được để trống!";
       setLocalError(errorMsg);
       safeShowError(errorMsg);
       return;
     }
-    
+
     if (newName.trim().length < 3) {
       const errorMsg = "Tên phải có ít nhất 3 ký tự";
       setLocalError(errorMsg);
       safeShowError(errorMsg);
       return;
     }
-    
+
     try {
       setIsUpdatingName(true);
       setLocalError(null);
       setTimeRemainingError(null);
       setAuthError(false);
       setCooldownActive(false);
-      
+
       // Dispatch action to update user name
       await dispatch(updateUserFullname(newName.trim())).unwrap();
-      
+
       // Hiển thị thông báo thành công
       showSuccess("Cập nhật tên thành công!");
-      
+
       // Chỉ đóng modal khi cập nhật thành công
       onClose();
-      
+
       // Refresh user profile after update
       if (user?.id) {
         dispatch(fetchUserProfile(user.id));
       }
     } catch (error) {
       console.error("Fullname update error:", error);
-      
+
       // Save error to localStorage in case of page reload
       const errorToSave = {
         message: error.message,
@@ -182,17 +188,17 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
         authError: error.status === 401,
       };
       localStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(errorToSave));
-      
+
       if (error.timeRemaining) {
         // Hiển thị lỗi thời gian chờ bằng tiếng Việt
         const errorMsg = `Bạn cần đợi thêm ${error.timeRemaining} phút nữa để đổi tên`;
         setTimeRemainingError(errorMsg);
         setCooldownActive(true);
-        
+
         // Set cooldown expiry time in localStorage
         const expiryTime = Date.now() + error.timeRemaining * 60 * 1000;
         localStorage.setItem(NAME_COOLDOWN_KEY, expiryTime.toString());
-        
+
         safeShowError(errorMsg);
       } else if (error.status === 401) {
         // Lỗi xác thực
@@ -262,16 +268,16 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
         </div>
 
         <div className={styles.actionButtons}>
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
             onClick={onClose}
             disabled={isUpdatingName}
             className={styles.cancelButton}
           >
             Hủy
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateName}
             disabled={
               isUpdatingName ||
