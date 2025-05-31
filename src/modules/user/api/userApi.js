@@ -4,7 +4,8 @@ import { apiClient } from '../../../shared/httpClient';
 const API_ENDPOINTS = {
   PROFILE: '/user/profile',
   UPLOAD_THUMBNAIL: '/user/upload-thumbnail',
-  UPLOAD_AVATAR: '/user/upload-avatar'
+  UPLOAD_AVATAR: '/user/upload-avatar',
+  UPDATE_FULLNAME: '/user/update-fullname'
 };
 
 const userApi = {
@@ -179,6 +180,54 @@ const userApi = {
       return response.data;
     } catch (error) {
       throw error;
+    }
+  },
+
+  /**
+   * Update user's fullname
+   * @param {string} fullName - New fullname for the user
+   * @returns {Promise} - Promise containing the result of the update
+   */
+  updateFullname: async (fullName) => {
+    try {
+      // Send the fullName in the correct format expected by the API
+      const response = await apiClient.put(API_ENDPOINTS.UPDATE_FULLNAME, { fullName });
+      
+      console.log('Fullname update response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Fullname update error:', error);
+      
+      // Nếu có response từ server
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        
+        // Trường hợp lỗi thời gian chờ
+        if (errorData.error && errorData.error.code === 'USER_NAME_UPDATE_TIME_LIMIT') {
+          // Lấy thời gian còn lại từ detail (không phải details)
+          const timeRemaining = errorData.error.detail?.timeRemaining;
+          
+          throw {
+            message: errorData.error.message || 'You need to wait more minutes to update your name',
+            status: error.response.status || 400,
+            code: errorData.error.code,
+            timeRemaining: timeRemaining
+          };
+        }
+        
+        // Các lỗi khác từ server
+        throw {
+          message: errorData.error?.message || errorData.message || 'Failed to update fullname',
+          status: error.response.status || 500,
+          code: errorData.error?.code
+        };
+      }
+      
+      // Lỗi không có response từ server
+      throw {
+        message: error.message || 'Failed to update fullname',
+        status: 500
+      };
     }
   }
 };

@@ -1,0 +1,96 @@
+.modalContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modalTitle {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.closeButton {
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.infoText {
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+}
+
+.errorText {
+  color: #d32f2f;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: block;
+}
+
+.inputField {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cancelButton {
+  border-radius: 8px;
+  text-transform: none;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.saveButton {
+  border-radius: 8px;
+  background-color: #4cc2ad;
+  text-transform: none;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.saveButton:hover {
+  background-color: #40b59f;
+}
+
+@media (min-width: 600px) {
+  .modalContainer {
+    width: 400px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 599px) {
+  .modalContainer {
+    width: 90%;
+    padding: 16px;
+  }
+} 

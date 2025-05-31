@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import { useMediaQuery } from "@mui/material";
@@ -16,14 +16,34 @@ import { ProfileInfoContainer } from "./UserInfo.styles";
 // Redux
 import { fetchUserProfile } from '../../redux/slices/userSlice';
 
+// Local storage keys
+const NAME_MODAL_STORAGE_KEY = 'name_modal_open';
+const PROFILE_MODAL_STORAGE_KEY = 'profile_modal_open';
+
 const UserInfo = ({ user }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
   
-  // Modals state
-  const [nameModalOpen, setNameModalOpen] = useState(false);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  // Modals state - initialize from localStorage to persist across page reloads
+  const [nameModalOpen, setNameModalOpen] = useState(() => {
+    const savedState = localStorage.getItem(NAME_MODAL_STORAGE_KEY);
+    return savedState === 'true';
+  });
+  
+  const [profileModalOpen, setProfileModalOpen] = useState(() => {
+    const savedState = localStorage.getItem(PROFILE_MODAL_STORAGE_KEY);
+    return savedState === 'true';
+  });
+  
+  // Save modal state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(NAME_MODAL_STORAGE_KEY, nameModalOpen);
+  }, [nameModalOpen]);
+  
+  useEffect(() => {
+    localStorage.setItem(PROFILE_MODAL_STORAGE_KEY, profileModalOpen);
+  }, [profileModalOpen]);
   
   // Create a local state for relationship to show after update
   const [updatedRelationship, setUpdatedRelationship] = useState(null);

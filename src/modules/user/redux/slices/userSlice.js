@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userApi from "../../api/userApi";
 
-// Default images
-const DEFAULT_AVATAR = "/assets/images/avatar_default.jpg";
-const DEFAULT_COVER = "/assets/images/cover_default.jpg";
+
 
 // Async thunks
 export const fetchUserProfile = createAsyncThunk(
@@ -102,6 +100,52 @@ export const uploadAvatar = createAsyncThunk(
       return rejectWithValue({
         message: errorMessage,
         error
+      });
+    }
+  }
+);
+
+export const updateUserFullname = createAsyncThunk(
+  "user/updateUserFullname",
+  async (fullName, { rejectWithValue, dispatch, getState }) => {
+    try {
+      console.log("Updating fullname to:", fullName);
+      
+      // Call the API to update fullname
+      const response = await userApi.updateFullname(fullName);
+      
+      console.log("Fullname update response:", response);
+      
+      // If successful, get current user ID from state and refresh the profile
+      if (response.success) {
+        const currentUserId = getState().user.currentProfile?.id;
+        
+        // Refresh profile data if ID is available
+        if (currentUserId) {
+          setTimeout(() => {
+            dispatch(fetchUserProfile(currentUserId));
+          }, 300);
+        }
+        
+        return {
+          fullName,
+          nextNameUpdateAvailable: response.data.nextNameUpdateAvailable
+        };
+      }
+      
+      return rejectWithValue({
+        message: "Fullname update failed",
+        status: 500
+      });
+    } catch (error) {
+      console.error("Error updating fullname:", error);
+      
+      // Đảm bảo error trả về đúng định dạng và không gây chuyển hướng
+      return rejectWithValue({
+        message: error.message || "Fullname update failed",
+        status: error.status || 500,
+        details: error.details || null,
+        timeRemaining: error.timeRemaining
       });
     }
   }
@@ -238,6 +282,48 @@ const userSlice = createSlice({
       .addCase(uploadAvatar.rejected, (state, action) => {
         state.uploadStatus = "failed";
         state.uploadError = action.payload || "Có lỗi xảy ra khi tải lên ảnh đại diện";
+      })
+
+      // Handle updateUserFullname
+      .addCase(updateUserFullname.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(updateUserFullname.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        
+        console.log('Fullname update fulfilled with payload:', action.payload);
+        
+        // Update fullname in the current profile
+        if (state.currentProfile && action.payload.fullName) {
+          state.currentProfile.fullName = action.payload.fullName;
+        }
+        
+        // Store next available update time if provided
+        if (action.payload.nextNameUpdateAvailable) {
+          state.currentProfile.nextNameUpdateAvailable = action.payload.nextNameUpdateAvailable;
+        }
+      })
+      .addCase(updateUserFullname.rejected, (state, action) => {
+        // Không đặt state.status = "failed" khi có lỗi cập nhật fullname
+        // Điều này sẽ ngăn ProfilePage hiển thị lỗi toàn màn hình
+        state.status = "succeeded";
+        
+        // Enhanced error handling
+        const errorData = action.payload;
+        state.error = errorData 
+          ? {
+              message: errorData.message || "Fullname update failed",
+              status: errorData.status || 500,
+              details: errorData.details || null,
+              timeRemaining: errorData.timeRemaining,
+              // Thêm flag để đánh dấu đây là lỗi cập nhật fullname
+              isFullnameError: true
+            }
+          : {
+              message: "Unknown error occurred during fullname update", 
+              isFullnameError: true
+            };
       });
   },
 });

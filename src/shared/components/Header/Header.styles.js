@@ -32,8 +32,8 @@ export const LeftSectionContainer = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   flex: '0 1 auto',
   [theme.breakpoints.up('sm')]: {
-    minWidth: '300px',
-    maxWidth: '600px',
+    minWidth: '350px',
+    maxWidth: '650px',
   },
   [theme.breakpoints.down('sm')]: {
     width: '100%',
@@ -65,9 +65,17 @@ export const SearchContainer = styled('div')(({ theme }) => ({
   },
   width: '100%',
   flexGrow: 1,
+  [theme.breakpoints.up('sm')]: {
+    minWidth: '220px',
+    maxWidth: '450px',
+  },
+  [theme.breakpoints.up('md')]: {
+    minWidth: '300px',
+    maxWidth: '500px',
+  },
   [theme.breakpoints.down('sm')]: {
     maxWidth: '100%',
-    width: '90%',
+    width: '95%',
   }
 }));
 
@@ -86,7 +94,7 @@ export const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: 'inherit',
   width: '100%',
   '& .MuiInputBase-input': {
-    padding: theme.spacing(0.75, 0.75, 0.75, 0),
+    padding: theme.spacing(0.85, 0.85, 0.85, 0),
     paddingLeft: `calc(1em + ${theme.spacing(3)})`,
     transition: theme.transitions.create('width'),
     width: '100%',

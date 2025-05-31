@@ -43,68 +43,58 @@ import Logo from '../Logo/Logo';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../../modules/auth/redux/slices/authSlice';
 
-function Header() {
-  const dispatch = useDispatch();
-  const { user, loading } = useSelector(state => state.auth);
-
-  const navigate = useNavigate();
+const Header = () => {
+  // Theme and responsive hooks
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isExtraSmall = useMediaQuery('(max-width:360px)');
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  
+  // Redux
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  
+  // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+  const navigate = useNavigate();
   
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-  
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      console.log('Searching for:', searchQuery);
-      // Implement search functionality
-      // navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const handleGroupsClick = () => {
-    console.log('Navigate to groups');
-    // Implement navigation to groups page
-    // navigate('/groups');
-  };
-
-  const handleAvatarClick = (event) => {
+  // Handle menu
+  const handleOpenMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
-
-  const handleMenuClose = () => {
+  
+  const handleCloseMenu = () => {
     setAnchorEl(null);
   };
-
-  const handleProfileClick = () => {
-    if (user && user.id) {
-      navigate(`/profile/${user.id}`);
-    } else {
-      navigate(`/profile`);
-    }
-    handleMenuClose();
-  };
-
-  const handleLogoutClick = () => {
-    dispatch(logout());
-    navigate('/login');
-    handleMenuClose();
+  
+  // Handle search
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
   };
   
-  // Function to get first letter of name safely
-  const getInitial = () => {
-    if (user && user.fullName) {
-      return user.fullName.charAt(0).toUpperCase();
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
     }
-    return 'U'; // Default: User
   };
-
+  
+  // Handle logout
+  const handleLogout = () => {
+    dispatch(logout());
+    handleCloseMenu();
+    navigate('/login');
+  };
+  
+  const handleNavigate = (path) => {
+    navigate(path);
+    handleCloseMenu();
+  };
+  
+  // Determine if menu is open
+  const isMenuOpen = Boolean(anchorEl);
+  
   return (
     <StyledAppBar position="sticky">
       <Container maxWidth="xl" disableGutters={isMobile}>
@@ -135,160 +125,118 @@ function Header() {
 
           {/* Actions and user profile */}
           <ActionsContainer>
-            {/* Action buttons */}
             <ActionButtonsContainer>
+              {/* Navigation icons */}
               <Tooltip title="Trang chủ">
-                <IconButton
-                  onClick={() => navigate('/')}
-                  sx={iconButtonStyles(theme)}
-                  aria-label="Trang chủ"
+                <IconButton 
+                  component={Link} 
+                  to="/home"
+                  sx={iconButtonStyles}
                 >
-                  <HomeOutlinedIcon sx={iconStyles(theme)} />
+                  <HomeOutlinedIcon sx={iconStyles} />
                 </IconButton>
               </Tooltip>
               
               <Tooltip title="Bạn bè">
-                <IconButton
-                  onClick={() => navigate('/friends')}
-                  sx={iconButtonStyles(theme)}
-                  aria-label="Bạn bè"
+                <IconButton 
+                  component={Link} 
+                  to="/friends"
+                  sx={iconButtonStyles}
                 >
-                  <Badge badgeContent={3} color="error" sx={{ '& .MuiBadge-badge': { fontSize: isMobile ? 8 : 11, padding: isMobile ? '0 3px' : undefined } }}>
-                    <PeopleAltOutlinedIcon sx={iconStyles(theme)} />
+                  <Badge badgeContent={3} color="error">
+                    <PeopleAltOutlinedIcon sx={iconStyles} />
                   </Badge>
                 </IconButton>
               </Tooltip>
               
-              <Tooltip title="Nhóm">
-                <IconButton
-                  onClick={handleGroupsClick}
-                  sx={iconButtonStyles(theme)}
-                  aria-label="Nhóm"
-                >
-                  <Badge badgeContent={2} color="error" sx={{ '& .MuiBadge-badge': { fontSize: isMobile ? 8 : 11, padding: isMobile ? '0 3px' : undefined } }}>
-                    <GroupsOutlinedIcon sx={iconStyles(theme)} />
-                  </Badge>
-                </IconButton>
-              </Tooltip>
+              {isDesktop && (
+                <Tooltip title="Nhóm">
+                  <IconButton 
+                    component={Link} 
+                    to="/groups"
+                    sx={iconButtonStyles}
+                  >
+                    <GroupsOutlinedIcon sx={iconStyles} />
+                  </IconButton>
+                </Tooltip>
+              )}
               
               <Tooltip title="Tin nhắn">
                 <IconButton 
-                  sx={iconButtonStyles(theme)}
-                  aria-label="Tin nhắn"
+                  component={Link} 
+                  to="/messages"
+                  sx={iconButtonStyles}
                 >
-                  <Badge badgeContent={5} color="error" sx={{ '& .MuiBadge-badge': { fontSize: isMobile ? 8 : 11, padding: isMobile ? '0 3px' : undefined } }}>
-                    <ChatOutlinedIcon sx={iconStyles(theme)} />
+                  <Badge badgeContent={5} color="error">
+                    <ChatOutlinedIcon sx={iconStyles} />
                   </Badge>
                 </IconButton>
               </Tooltip>
               
               <Tooltip title="Thông báo">
                 <IconButton 
-                  sx={iconButtonStyles(theme)}
-                  aria-label="Thông báo"
+                  sx={iconButtonStyles}
                 >
-                  <Badge badgeContent={2} color="error" sx={{ '& .MuiBadge-badge': { fontSize: isMobile ? 8 : 11, padding: isMobile ? '0 3px' : undefined } }}>
-                    <NotificationsOutlinedIcon sx={iconStyles(theme)} />
+                  <Badge badgeContent={2} color="error">
+                    <NotificationsOutlinedIcon sx={iconStyles} />
                   </Badge>
                 </IconButton>
               </Tooltip>
-
-              {/* User avatar */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  ml: { xs: 0.5, sm: 1 },
-                  cursor: 'pointer',
-                  borderRadius: '50%',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    boxShadow: '0px 0px 8px rgba(0, 0, 0, 0.2)',
-                  }
-                }}
-                onClick={handleAvatarClick}
-                aria-controls={open ? 'profile-menu' : undefined}
+              
+              {/* User profile menu */}
+              <IconButton
+                onClick={handleOpenMenu}
+                size="small"
+                aria-controls={isMenuOpen ? 'account-menu' : undefined}
                 aria-haspopup="true"
-                aria-expanded={open ? 'true' : undefined}
+                aria-expanded={isMenuOpen ? 'true' : undefined}
               >
                 <Avatar 
-                  src={user?.profilePicture || null}
                   alt={user?.fullName || "User"} 
-                  sx={{ width: { xs: 30, sm: 36, md: 40 }, height: { xs: 30, sm: 36, md: 40 }, bgcolor: 'primary.main' }}
-                >
-                  {getInitial()}
-                </Avatar>
-              </Box>
-
-              {/* User Menu */}
-              <Menu
-                id="profile-menu"
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleMenuClose}
-                MenuListProps={{
-                  'aria-labelledby': 'avatar-button',
-                }}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                PaperProps={{
-                  elevation: 3,
-                  sx: {
-                    minWidth: 200,
-                    mt: 1,
-                    '& .MuiMenuItem-root': {
-                      py: 1,
-                    }
-                  }
-                }}
-              >
-                <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center' }}>
-                  <Avatar 
-                    src={user?.profilePicture || null}
-                    alt={user?.fullName || "User"}
-                    sx={{ width: { xs: 30, sm: 36, md: 40 }, height: { xs: 30, sm: 36, md: 40 }, mr: 1.5, bgcolor: 'primary.main' }}
-                  >
-                    {getInitial()}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                      {user?.fullName || "User"}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {user?.email || ""}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Divider />
-
-                <MenuItem onClick={handleProfileClick}>
-                  <ListItemIcon>
-                    <PersonOutlineIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText primary="Trang cá nhân" />
-                </MenuItem>
-                
-                <MenuItem onClick={handleLogoutClick}>
-                  <ListItemIcon>
-                    <LogoutIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText primary="Đăng xuất" />
-                </MenuItem>
-              </Menu>
+                  src={user?.profilePicture || "/images/avatars/default.jpg"}
+                  sx={{ width: 32, height: 32 }}
+                />
+              </IconButton>
             </ActionButtonsContainer>
+            
+            {/* Profile dropdown menu */}
+            <Menu
+              anchorEl={anchorEl}
+              id="account-menu"
+              open={isMenuOpen}
+              onClose={handleCloseMenu}
+              PaperProps={{
+                elevation: 3,
+                sx: {
+                  minWidth: 200,
+                  borderRadius: '8px',
+                  mt: 1.5,
+                },
+              }}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+              <MenuItem onClick={() => handleNavigate(`/profile/${user?._id}`)}>
+                <ListItemIcon>
+                  <PersonOutlineIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Trang cá nhân" />
+              </MenuItem>
+              
+              <Divider />
+              
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Đăng xuất" />
+              </MenuItem>
+            </Menu>
           </ActionsContainer>
         </StyledToolbar>
       </Container>
     </StyledAppBar>
   );
-}
+};
 
 export default Header; 

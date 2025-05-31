@@ -158,16 +158,23 @@ const ProfilePage = () => {
 
   // Error state
   if (status === 'failed') {
-    return (
-      <>
-        <Header />
-        <LoadingContainer>
-          <Typography color="error">
-            {typeof error === 'object' ? (error.message || 'Có lỗi xảy ra khi tải thông tin người dùng') : error || 'Có lỗi xảy ra khi tải thông tin người dùng'}
-          </Typography>
-        </LoadingContainer>
-      </>
-    );
+    // Kiểm tra xem có phải lỗi cập nhật fullname không
+    // Nếu là lỗi fullname thì vẫn hiển thị trang bình thường
+    const isFullnameError = error && error.isFullnameError;
+    
+    if (!isFullnameError) {
+      return (
+        <>
+          <Header />
+          <LoadingContainer>
+            <Typography color="error">
+              {typeof error === 'object' ? (error.message || 'Có lỗi xảy ra khi tải thông tin người dùng') : error || 'Có lỗi xảy ra khi tải thông tin người dùng'}
+            </Typography>
+          </LoadingContainer>
+        </>
+      );
+    }
+    // Nếu là lỗi fullname, tiếp tục hiển thị trang bình thường
   }
 
   // Profile not found or no data
