@@ -1,6 +1,10 @@
-import axios from 'axios';
+import { apiClient } from '../../../shared/httpClient';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+// API endpoints
+const API_ENDPOINTS = {
+  PROFILE: '/user/profile',
+  UPLOAD_THUMBNAIL: '/user/upload-thumbnail'
+};
 
 const userApi = {
   /**
@@ -10,9 +14,44 @@ const userApi = {
    */
   getUserProfile: async (userId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/users/${userId}`);
+      const response = await apiClient.get(`${API_ENDPOINTS.PROFILE}/${userId}`);
       return response.data;
     } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Upload ảnh bìa (thumbnail) cho người dùng
+   * @param {File} file - File ảnh cần upload
+   * @param {function} onProgress - Callback để theo dõi tiến trình upload
+   * @returns {Promise} - Promise chứa kết quả upload
+   */
+  uploadThumbnail: async (file, onProgress) => {
+    try {
+      const formData = new FormData();
+      formData.append('coverPhoto', file);
+      
+      const response = await apiClient.post(
+        API_ENDPOINTS.UPLOAD_THUMBNAIL,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            if (onProgress && progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              onProgress(percentCompleted);
+            }
+          }
+        }
+      );
+      
+      console.log('Thumbnail upload response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Thumbnail upload error:', error);
       throw error;
     }
   },
@@ -24,7 +63,7 @@ const userApi = {
    */
   updateUserProfile: async (userData) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/users/${userData.id}`, userData);
+      const response = await apiClient.put(`/users/${userData.id}`, userData);
       return response.data;
     } catch (error) {
       throw error;
@@ -39,7 +78,7 @@ const userApi = {
    */
   getUserPosts: async (userId, params = { page: 1, limit: 10 }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/users/${userId}/posts`, { params });
+      const response = await apiClient.get(`/users/${userId}/posts`, { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -54,7 +93,7 @@ const userApi = {
    */
   getUserFriends: async (userId, params = { page: 1, limit: 20 }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/users/${userId}/friends`, { params });
+      const response = await apiClient.get(`/users/${userId}/friends`, { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -68,7 +107,7 @@ const userApi = {
    */
   sendFriendRequest: async (userId) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/friends/requests`, { userId });
+      const response = await apiClient.post(`/friends/requests`, { userId });
       return response.data;
     } catch (error) {
       throw error;
@@ -83,7 +122,7 @@ const userApi = {
    */
   respondToFriendRequest: async (requestId, status) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/friends/requests/${requestId}`, { status });
+      const response = await apiClient.put(`/friends/requests/${requestId}`, { status });
       return response.data;
     } catch (error) {
       throw error;

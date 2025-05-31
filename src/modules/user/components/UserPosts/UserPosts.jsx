@@ -13,6 +13,9 @@ import {
   PostStats
 } from './UserPosts.styles';
 
+// Default image
+const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
+
 // Component này sẽ sử dụng PostCard từ module post
 // Tạm thời chỉ giữ chỗ cho component này
 
@@ -34,7 +37,7 @@ const UserPosts = ({ userId }) => {
           user: {
             id: userId,
             name: 'Nguyễn Văn A',
-            avatar: 'https://via.placeholder.com/150',
+            avatar: DEFAULT_AVATAR,
           }
         },
         {
@@ -46,7 +49,7 @@ const UserPosts = ({ userId }) => {
           user: {
             id: userId,
             name: 'Nguyễn Văn A',
-            avatar: 'https://via.placeholder.com/150',
+            avatar: DEFAULT_AVATAR,
           }
         },
       ]);

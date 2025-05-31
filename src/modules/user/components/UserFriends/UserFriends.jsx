@@ -26,6 +26,9 @@ import {
   FriendCardActions
 } from './UserFriends.styles';
 
+// Default image
+const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
+
 const UserFriends = ({ userId }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -39,28 +42,28 @@ const UserFriends = ({ userId }) => {
         {
           id: '1',
           name: 'Trần Văn B',
-          avatar: 'https://via.placeholder.com/150',
+          avatar: DEFAULT_AVATAR,
           mutualFriends: 5,
           isFriend: true
         },
         {
           id: '2',
           name: 'Lê Thị C',
-          avatar: 'https://via.placeholder.com/150',
+          avatar: DEFAULT_AVATAR,
           mutualFriends: 3,
           isFriend: true
         },
         {
           id: '3',
           name: 'Phạm Văn D',
-          avatar: 'https://via.placeholder.com/150',
+          avatar: DEFAULT_AVATAR,
           mutualFriends: 2,
           isFriend: true
         },
         {
           id: '4',
           name: 'Hoàng Thị E',
-          avatar: 'https://via.placeholder.com/150',
+          avatar: DEFAULT_AVATAR,
           mutualFriends: 1,
           isFriend: false
         },

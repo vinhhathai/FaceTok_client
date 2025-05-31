@@ -23,6 +23,12 @@ export const ProfileCover = styled(Box)(({ theme }) => ({
   '&:hover .cover-overlay': {
     opacity: 1,
   },
+  // Media query to ensure hover works correctly
+  [theme.breakpoints.up('sm')]: {
+    '&:hover .cover-overlay': {
+      opacity: 1,
+    },
+  },
 }));
 
 export const ProfileCoverImage = styled('img')(({ theme }) => ({
@@ -43,18 +49,30 @@ export const CoverOverlay = styled(Box)(({ theme }) => ({
   alignItems: 'flex-end',
   justifyContent: 'flex-end',
   padding: theme.spacing(2),
-  opacity: 0,
   transition: 'opacity 0.3s ease',
+  // Always visible on mobile, hover effect on desktop
+  opacity: 1,
+  [theme.breakpoints.up('sm')]: {
+    opacity: 0,
+  },
 }));
 
 export const UpdateCoverButton = styled(Button)(({ theme }) => ({
   color: theme.palette.common.white,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  backgroundColor: 'rgba(0, 0, 0, 0.6)',
   '&:hover': {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   '& .MuiSvgIcon-root': {
     marginRight: theme.spacing(1),
+  },
+  // More prominent on mobile
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.75rem',
+    padding: theme.spacing(0.75, 1.5),
+    position: 'absolute',
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
   },
 }));
 

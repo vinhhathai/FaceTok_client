@@ -18,6 +18,14 @@ import {
   ImageItemContainer 
 } from './UserGallery.styles';
 
+// Default images for gallery
+const DEFAULT_GALLERY_IMAGES = [
+  '/assets/images/gallery_1.jpg',
+  '/assets/images/gallery_2.jpg',
+  '/assets/images/gallery_3.jpg',
+  '/assets/images/gallery_4.jpg',
+];
+
 const UserGallery = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [images, setImages] = useState([]);
@@ -29,25 +37,25 @@ const UserGallery = ({ userId }) => {
       setImages([
         {
           id: '1',
-          img: 'https://via.placeholder.com/300x300',
+          img: DEFAULT_GALLERY_IMAGES[0] || '/assets/images/avatar_default.jpg',
           title: 'Hình ảnh 1',
           createdAt: new Date().toISOString(),
         },
         {
           id: '2',
-          img: 'https://via.placeholder.com/400x300',
+          img: DEFAULT_GALLERY_IMAGES[1] || '/assets/images/avatar_default.jpg',
           title: 'Hình ảnh 2',
           createdAt: new Date(Date.now() - 86400000).toISOString(),
         },
         {
           id: '3',
-          img: 'https://via.placeholder.com/300x400',
+          img: DEFAULT_GALLERY_IMAGES[2] || '/assets/images/avatar_default.jpg',
           title: 'Hình ảnh 3',
           createdAt: new Date(Date.now() - 172800000).toISOString(),
         },
         {
           id: '4',
-          img: 'https://via.placeholder.com/350x350',
+          img: DEFAULT_GALLERY_IMAGES[3] || '/assets/images/avatar_default.jpg',
           title: 'Hình ảnh 4',
           createdAt: new Date(Date.now() - 259200000).toISOString(),
         },

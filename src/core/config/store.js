@@ -5,6 +5,7 @@ import postDetailReducer from "../../modules/post/redux";
 import friendReducer from "../../modules/friend/redux";
 import messageReducer from "../../modules/message/redux";
 import notificationReducer from "../../modules/notification/redux";
+import { reducers as userReducers } from "../../modules/user/redux";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     message: messageReducer,
     notification: notificationReducer,
     post: postDetailReducer,
+    ...userReducers,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

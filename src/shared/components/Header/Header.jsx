@@ -40,12 +40,12 @@ import {
 } from './Header.styles';
 import Logo from '../Logo/Logo';
 
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../../modules/auth/redux/slices/authSlice';
 
 function Header() {
-
-  const user = useSelector(state => state.auth);
-  console.log(user);
+  const dispatch = useDispatch();
+  const { user, loading } = useSelector(state => state.auth);
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -83,18 +83,26 @@ function Header() {
   };
 
   const handleProfileClick = () => {
-    // Sử dụng ID người dùng hiện tại từ Redux store (giả định)
-    // Trong ứng dụng thực tế, ID sẽ được lấy từ Redux state
-    const currentUserId = '1'; // Tạm thời sử dụng ID cố định
-    navigate(`/profile/${currentUserId}`);
+    if (user && user.id) {
+      navigate(`/profile/${user.id}`);
+    } else {
+      navigate(`/profile`);
+    }
     handleMenuClose();
   };
 
   const handleLogoutClick = () => {
-    console.log('Logging out...');
-    // Implement logout functionality
-    // dispatch(logout());
+    dispatch(logout());
+    navigate('/login');
     handleMenuClose();
+  };
+  
+  // Function to get first letter of name safely
+  const getInitial = () => {
+    if (user && user.fullName) {
+      return user.fullName.charAt(0).toUpperCase();
+    }
+    return 'U'; // Default: User
   };
 
   return (
@@ -188,9 +196,14 @@ function Header() {
               {/* User avatar */}
               <Box
                 sx={{
-                  ...avatarStyles,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  ml: { xs: 0.5, sm: 1 },
+                  cursor: 'pointer',
+                  borderRadius: '50%',
+                  transition: 'all 0.2s',
                   '&:hover': {
-                    cursor: 'pointer',
                     boxShadow: '0px 0px 8px rgba(0, 0, 0, 0.2)',
                   }
                 }}
@@ -199,7 +212,13 @@ function Header() {
                 aria-haspopup="true"
                 aria-expanded={open ? 'true' : undefined}
               >
-                U
+                <Avatar 
+                  src={user?.profilePicture || null}
+                  alt={user?.fullName || "User"} 
+                  sx={{ width: { xs: 30, sm: 36, md: 40 }, height: { xs: 30, sm: 36, md: 40 }, bgcolor: 'primary.main' }}
+                >
+                  {getInitial()}
+                </Avatar>
               </Box>
 
               {/* User Menu */}
@@ -231,10 +250,20 @@ function Header() {
                 }}
               >
                 <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ width: 40, height: 40, mr: 1.5, bgcolor: 'primary.main' }}>U</Avatar>
+                  <Avatar 
+                    src={user?.profilePicture || null}
+                    alt={user?.fullName || "User"}
+                    sx={{ width: { xs: 30, sm: 36, md: 40 }, height: { xs: 30, sm: 36, md: 40 }, mr: 1.5, bgcolor: 'primary.main' }}
+                  >
+                    {getInitial()}
+                  </Avatar>
                   <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Nguyễn Văn A</Typography>
-                    <Typography variant="body2" color="text.secondary">nguyenvana@gmail.com</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                      {user?.fullName || "User"}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {user?.email || ""}
+                    </Typography>
                   </Box>
                 </Box>
 

@@ -1,6 +1,88 @@
 import { apiClient } from '../../../shared/httpClient';
 import { ERROR_CODES } from '../../../common/constants';
 import { createError } from '../../../shared/utils/errorUtils';
+import { jwtDecode } from 'jwt-decode'; // Using named export instead of default import
+import { getCookie } from '../../../shared/utils/cookieUtils';
+
+/**
+ * Fetch current user profile from token
+ */
+export const getCurrentUser = async () => {
+  try {
+    // Extract user ID from token in cookie
+    const TOKEN_COOKIE_NAME = 'auth_token';
+    const token = getCookie(TOKEN_COOKIE_NAME);
+    
+    if (!token) {
+      throw createError(
+        ERROR_CODES.AUTH.NOT_AUTHENTICATED,
+        'Không tìm thấy token xác thực'
+      );
+    }
+
+    // Decode the token to get the user ID
+    const decodedToken = jwtDecode(token);
+    const userId = decodedToken.userId || decodedToken._id;
+    
+    if (!userId) {
+      throw createError(
+        ERROR_CODES.AUTH.INVALID_TOKEN,
+        'Token không hợp lệ hoặc thiếu thông tin người dùng'
+      );
+    }
+
+    // Call the profile endpoint with the extracted user ID
+    const response = await apiClient.get(`user/profile/${userId}`);
+    
+    // Add isOwner flag since we're requesting our own profile
+    if (response.data && response.data.data) {
+      response.data.data.isOwner = true;
+    }
+    
+    return response.data;
+  } catch (error) {
+    // Nếu server trả về response có lỗi cụ thể
+    if (error.response) {
+      console.log('Get current user API error:', error.response);
+      const status = error.response.status;
+      let errorCode = error.response.data?.error?.code;
+      const errorData = error.response.data;
+      const message = errorData?.message || errorData?.error?.message || 'Lỗi không xác định từ máy chủ';
+      
+      // Xử lý lỗi 404 nếu không có mã lỗi cụ thể
+      if (status === 404 && !errorCode) {
+        errorCode = ERROR_CODES.API.RESOURCE_NOT_FOUND;
+      }
+
+      // Các lỗi khác từ phía server
+      throw createError(
+        errorCode,
+        message,
+        errorData,
+        status
+      );
+    }
+
+    // Lỗi không có response (ví dụ mất mạng, server không phản hồi...)
+    if (error.request) {
+      throw createError(
+        ERROR_CODES.API.NETWORK_ERROR,
+        'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.'
+      );
+    }
+
+    // If it's our custom error, just rethrow it
+    if (error.code && error.message) {
+      throw error;
+    }
+
+    // Lỗi không xác định (do mã, bug, không liên quan đến API)
+    throw createError(
+      ERROR_CODES.UNKNOWN,
+      'Đã xảy ra lỗi không xác định. Vui lòng thử lại.'
+    );
+  }
+};
 
 /**
  * API function cho đăng nhập

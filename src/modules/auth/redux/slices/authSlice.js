@@ -7,11 +7,35 @@ const TOKEN_COOKIE_NAME = 'auth_token';
 const TOKEN_COOKIE_EXPIRY = 7; // 7 days
 
 /**
+ * Tạo action để lấy thông tin người dùng hiện tại
+ */
+export const fetchCurrentUser = createAsyncThunk(
+  'auth/fetchCurrentUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      // Chỉ gọi API nếu có token
+      const token = getCookie(TOKEN_COOKIE_NAME);
+      if (!token) {
+        return rejectWithValue('No token found');
+      }
+      const data = await authAPI.getCurrentUser();
+      return data;
+    } catch (error) {
+      // Nếu lỗi 401 (Unauthorized), xóa token
+      if (error.status === 401) {
+        removeCookie(TOKEN_COOKIE_NAME);
+      }
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
  * Tạo action đăng nhập
  */
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue, dispatch }) => {
     try {
       const data = await authAPI.loginUser(credentials);
       // Lưu token vào cookie khi đăng nhập thành công
@@ -130,6 +154,29 @@ const authSlice = createSlice({
   // Reducers cho các action bất đồng bộ
   extraReducers: (builder) => {
     builder
+      // ===== Các trường hợp lấy thông tin người dùng hiện tại =====
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.data;
+        state.isAuthenticated = true;
+      })
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
+        state.loading = false;
+        if (action.payload === 'No token found') {
+          state.isAuthenticated = false;
+        } else {
+          state.error = action.payload;
+          // Nếu lỗi 401, đặt isAuthenticated thành false
+          if (action.payload?.status === 401) {
+            state.isAuthenticated = false;
+          }
+        }
+      })
+      
       // ===== Các trường hợp đăng nhập =====
       .addCase(login.pending, (state) => {
         state.loading = true;

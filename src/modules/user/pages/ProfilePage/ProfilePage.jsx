@@ -23,6 +23,11 @@ import {
   TabContentContainer, 
   TabPanelStyles 
 } from './ProfilePage.styles';
+import { fetchUserProfile, selectUserProfile, selectUserStatus, selectUserError } from '../../redux/slices/userSlice';
+
+// Default images
+const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
+const DEFAULT_COVER = 'https://artmin96.github.io/argon-social/assets/images/users/cover/cover-1.gif';
 
 // Custom TabPanel
 function TabPanel(props) {
@@ -63,40 +68,17 @@ const ProfilePage = () => {
   const dispatch = useDispatch();
   const { userId } = useParams(); // Lấy userId từ URL
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
   
-  // Dữ liệu mẫu (sẽ được thay thế bằng dữ liệu từ Redux sau này)
-  const userProfile = {
-    id: userId || '1',
-    name: 'Nguyễn Văn A',
-    avatar: 'https://via.placeholder.com/150',
-    coverPhoto: 'https://via.placeholder.com/1200x300',
-    bio: 'Đây là thông tin giới thiệu của tôi',
-    location: 'Hà Nội, Việt Nam',
-    education: 'Đại học XYZ',
-    work: 'Công ty ABC',
-    email: 'nguyenvana@gmail.com',
-    birthday: '01/01/1990',
-    relationship: 'Độc thân',
-    website: 'https://nguyenvana.com',
-    interests: 'Đọc sách, xem phim, du lịch',
-    followerCount: 1250,
-    followingCount: 356,
-    postCount: 127,
-    isCurrentUser: true,
-    isFriend: false,
-  };
+  // Use Redux selectors to get profile data
+  const userProfile = useSelector(state => selectUserProfile(state));
+  const status = useSelector(state => selectUserStatus(state));
+  const error = useSelector(state => selectUserError(state));
 
   useEffect(() => {
-    // Sẽ dispatch action để lấy thông tin user từ API
-    // dispatch(getUserProfile(userId));
-    
-    // Giả lập loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
+    // Fetch user profile when component mounts or userId changes
+    if (userId) {
+      dispatch(fetchUserProfile(userId));
+    }
   }, [userId, dispatch]);
 
   const handleTabChange = (event, newValue) => {
@@ -123,7 +105,7 @@ const ProfilePage = () => {
         
         <TabContentContainer>
           <TabPanel value={tabValue} index={0}>
-            <UserPosts userId={userId || '1'} />
+            <UserPosts userId={userId} />
           </TabPanel>
           
           <TabPanel value={tabValue} index={1}>
@@ -131,23 +113,50 @@ const ProfilePage = () => {
           </TabPanel>
           
           <TabPanel value={tabValue} index={2}>
-            <UserGallery userId={userId || '1'} />
+            <UserGallery userId={userId} />
           </TabPanel>
           
           <TabPanel value={tabValue} index={3}>
-            <UserFriends userId={userId || '1'} />
+            <UserFriends userId={userId} />
           </TabPanel>
         </TabContentContainer>
       </TabsContainer>
     </Box>
   );
 
-  if (loading) {
+  // Loading state
+  if (status === 'loading') {
     return (
       <>
         <Header />
         <LoadingContainer>
           <Typography>Đang tải thông tin người dùng...</Typography>
+        </LoadingContainer>
+      </>
+    );
+  }
+
+  // Error state
+  if (status === 'failed') {
+    return (
+      <>
+        <Header />
+        <LoadingContainer>
+          <Typography color="error">
+            {error || 'Có lỗi xảy ra khi tải thông tin người dùng'}
+          </Typography>
+        </LoadingContainer>
+      </>
+    );
+  }
+
+  // Profile not found or no data
+  if (!userProfile) {
+    return (
+      <>
+        <Header />
+        <LoadingContainer>
+          <Typography>Không tìm thấy thông tin người dùng</Typography>
         </LoadingContainer>
       </>
     );

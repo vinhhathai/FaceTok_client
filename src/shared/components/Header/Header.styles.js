@@ -104,7 +104,8 @@ export const ActionsContainer = styled(Box)(({ theme }) => ({
   [theme.breakpoints.down('sm')]: {
     marginLeft: 0,
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing(0, 1),
   }
 }));
 
@@ -113,7 +114,7 @@ export const ActionButtonsContainer = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   [theme.breakpoints.down('sm')]: {
     width: '100%',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
   }
 }));
 
@@ -137,16 +138,15 @@ export const iconStyles = theme => ({
 });
 
 export const avatarStyles = { 
-  width: { xs: 30, sm: 36, md: 40 }, 
-  height: { xs: 30, sm: 36, md: 40 }, 
-  borderRadius: '50%', 
-  bgcolor: 'primary.main',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  borderRadius: '50%', 
+  bgcolor: 'primary.main',
   color: 'white',
   fontWeight: 'bold',
   cursor: 'pointer',
   flexShrink: 0,
-  ml: { xs: 0, sm: 1 }
+  transition: 'all 0.2s ease',
+  ml: { xs: 0.5, sm: 1 }
 }; 

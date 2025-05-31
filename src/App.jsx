@@ -6,6 +6,7 @@ import { store } from './core/config/store';
 import { routes } from './core/config/routes';
 import theme from './core/config/theme';
 import ToastContainer from './shared/components/ToastMessage/ToastContainer';
+import AuthProvider from './shared/components/AuthProvider/AuthProvider';
 
 function App() {
   return (
@@ -13,11 +14,13 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <Routes>
-            {routes.map((route, index) => (
-              <Route key={index} path={route.path} element={route.element} />
-            ))}
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              {routes.map((route, index) => (
+                <Route key={index} path={route.path} element={route.element} />
+              ))}
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
         <ToastContainer />
       </ThemeProvider>
