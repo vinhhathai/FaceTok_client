@@ -73,25 +73,15 @@ export const UserActionsContainer = styled(Box)(({ theme }) => ({
 
 export const ProfileInfoContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  margin: "0 auto",
-  maxWidth: "100%",
+  marginBottom: theme.spacing(2),
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  boxShadow: 'none',
   borderRadius: theme.shape.borderRadius,
-  [theme.breakpoints.down("sm")]: {
-    padding: theme.spacing(1, 2, 2, 2),
-    paddingTop: theme.spacing(6),
-    marginTop: theme.spacing(-8),
-    marginBottom: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    borderTopLeftRadius: theme.spacing(3),
-    borderTopRightRadius: theme.spacing(3),
-    boxShadow: 'none',
-    border: 'none',
-    borderTop: '1px solid rgba(0,0,0,0.1)',
-    position: 'relative',
-    zIndex: 15,
-    backgroundColor: 'white',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
   },
 }));
 

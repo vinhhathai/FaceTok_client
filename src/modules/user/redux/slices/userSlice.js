@@ -28,16 +28,47 @@ export const fetchUserProfile = createAsyncThunk(
 
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
-  async (userData, { rejectWithValue }) => {
+  async (userData, { rejectWithValue, dispatch, getState }) => {
     try {
-      // API call sẽ được thêm vào đây sau
-      // const response = await userApi.updateUserProfile(userData);
-      // return response.data;
-
-      // Giả lập dữ liệu
-      return userData;
+      console.log("Sending to API:", userData);
+      
+      // Call the API with updated profile data
+      const response = await userApi.updateUserProfile(userData);
+      
+      console.log("Full API response:", response);
+      
+      // If successful, refresh user profile to ensure we have the latest data
+      if (response.success) {
+        // Return data to be used in reducers - use both userData and response.data
+        // to ensure we update with both sent and returned values
+        const mergedData = {
+          ...userData,
+          ...(response.data || {})
+        };
+        
+        console.log("Merged data after update:", mergedData);
+        
+        // Get current user ID from state
+        const currentUserId = getState().user.currentProfile?.id;
+        
+        // Refresh profile data if ID is available
+        if (currentUserId) {
+          setTimeout(() => {
+            dispatch(fetchUserProfile(currentUserId));
+          }, 300);
+        }
+        
+        return mergedData;
+      }
+      
+      return userData; // Return original data in case API doesn't return profile data
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Có lỗi xảy ra");
+      console.error("Error updating profile:", error);
+      return rejectWithValue({
+        message: error.response?.data?.message || error.message || "Profile update failed",
+        status: error.status || 500,
+        details: error.details || null
+      });
     }
   }
 );
@@ -124,18 +155,47 @@ const userSlice = createSlice({
         state.error = action.payload || "Có lỗi xảy ra";
       })
 
-      // Xử lý updateUserProfile
+      // Handle updateUserProfile
       .addCase(updateUserProfile.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.currentProfile = { ...state.currentProfile, ...action.payload };
+        
+        console.log('Profile update fulfilled with payload:', action.payload);
+        
+        // Update local state with returned profile data
+        if (action.payload) {
+          // Merge the updated fields into the current profile
+          state.currentProfile = {
+            ...state.currentProfile,
+            ...action.payload
+          };
+          
+          // Đặc biệt xử lý riêng trường relationship để đảm bảo nó được cập nhật đúng
+          // Bao gồm cả giá trị rỗng ('' - Không xác định)
+          if ('relationship' in action.payload) {
+            state.currentProfile.relationship = action.payload.relationship;
+            console.log('Updated relationship to:', action.payload.relationship);
+          }
+          
+          // Debug the updated state
+          console.log('Updated profile state:', state.currentProfile);
+        }
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.status = "failed";
-        state.error = action.payload || "Có lỗi xảy ra";
+        
+        // Enhanced error handling
+        const errorData = action.payload;
+        state.error = errorData 
+          ? {
+              message: errorData.message || "Profile update failed",
+              status: errorData.status || 500,
+              details: errorData.details || null
+            }
+          : "Unknown error occurred during profile update";
       })
       
       // Xử lý uploadThumbnail

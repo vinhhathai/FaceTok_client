@@ -93,16 +93,33 @@ const userApi = {
   },
 
   /**
-   * Cập nhật thông tin profile người dùng
-   * @param {object} userData - Dữ liệu cần cập nhật
-   * @returns {Promise} - Promise chứa dữ liệu người dùng đã được cập nhật
+   * Update user profile information
+   * @param {object} userData - User data to be updated
+   * @returns {Promise} - Promise containing updated user data
    */
   updateUserProfile: async (userData) => {
     try {
-      const response = await apiClient.put(`/users/${userData.id}`, userData);
+      const response = await apiClient.put('/user/update-profile', userData);
+      
+      // Log successful response for debugging
+      console.log('Profile update response:', response.data);
+      
       return response.data;
     } catch (error) {
-      throw error;
+      console.error('Profile update error:', error);
+      
+      // Enhanced error handling with more details
+      const errorMessage = 
+        error.response?.data?.error?.message || 
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to update profile information';
+        
+      throw { 
+        message: errorMessage,
+        status: error.response?.status || 500,
+        details: error.response?.data?.error?.details || null
+      };
     }
   },
 

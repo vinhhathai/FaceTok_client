@@ -64,4 +64,35 @@ export const showToast = (message, options = {}) => {
  */
 export const clearAllToasts = () => {
   toast.dismiss();
+};
+
+/**
+ * Handle API error and show appropriate toast message
+ * @param {object} error - Error object from API call
+ * @param {string} fallbackMessage - Fallback message if error doesn't contain specific message
+ * @param {object} options - Toast configuration options
+ */
+export const handleApiError = (error, fallbackMessage = 'An error occurred', options = {}) => {
+  let message = fallbackMessage;
+  
+  if (error) {
+    // Try to get the most specific error message
+    if (typeof error === 'string') {
+      message = error;
+    } else if (error.message) {
+      message = error.message;
+    } else if (error.error?.message) {
+      message = error.error.message;
+    } else if (error.response?.data?.error?.message) {
+      message = error.response.data.error.message;
+    } else if (error.response?.data?.message) {
+      message = error.response.data.message;
+    }
+  }
+  
+  // Show the error toast
+  showError(message, options);
+  
+  // Log the error for debugging
+  console.error('API Error:', error);
 }; 
