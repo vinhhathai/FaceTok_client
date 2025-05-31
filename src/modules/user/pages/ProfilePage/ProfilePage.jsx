@@ -143,7 +143,7 @@ const ProfilePage = () => {
         <Header />
         <LoadingContainer>
           <Typography color="error">
-            {error || 'Có lỗi xảy ra khi tải thông tin người dùng'}
+            {typeof error === 'object' ? (error.message || 'Có lỗi xảy ra khi tải thông tin người dùng') : error || 'Có lỗi xảy ra khi tải thông tin người dùng'}
           </Typography>
         </LoadingContainer>
       </>

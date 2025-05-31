@@ -11,9 +11,17 @@ export const fetchUserProfile = createAsyncThunk(
   async (userId, { rejectWithValue }) => {
     try {
       const response = await userApi.getUserProfile(userId);
+      // Debug log
+      console.log('API response for user profile:', response);
       return response; // The API already returns the success wrapper
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Có lỗi xảy ra");
+      console.error('Error fetching user profile:', error);
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.response?.data?.error?.message || 
+        error.message || 
+        "Có lỗi xảy ra khi tải thông tin người dùng"
+      );
     }
   }
 );
@@ -43,6 +51,23 @@ export const uploadThumbnail = createAsyncThunk(
     } catch (error) {
       // Improved error handling for better UX feedback
       const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi tải lên ảnh bìa";
+      return rejectWithValue({
+        message: errorMessage,
+        error
+      });
+    }
+  }
+);
+
+export const uploadAvatar = createAsyncThunk(
+  "user/uploadAvatar",
+  async ({ file, onProgress }, { rejectWithValue, getState }) => {
+    try {
+      const response = await userApi.uploadAvatar(file, onProgress);
+      return response;
+    } catch (error) {
+      // Improve error handling for better UX feedback
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi tải lên ảnh đại diện";
       return rejectWithValue({
         message: errorMessage,
         error
@@ -132,6 +157,27 @@ const userSlice = createSlice({
       .addCase(uploadThumbnail.rejected, (state, action) => {
         state.uploadStatus = "failed";
         state.uploadError = action.payload || "Có lỗi xảy ra khi tải lên ảnh bìa";
+      })
+      
+      // Xử lý uploadAvatar
+      .addCase(uploadAvatar.pending, (state) => {
+        state.uploadStatus = "loading";
+        state.uploadError = null;
+      })
+      .addCase(uploadAvatar.fulfilled, (state, action) => {
+        state.uploadStatus = "succeeded";
+        // Cập nhật URL avatar mới nếu thành công
+        if (state.currentProfile && action.payload && action.payload.data) {
+          if (action.payload.data.profilePictureUrl) {
+            state.currentProfile.profilePicture = action.payload.data.profilePictureUrl;
+          } else if (action.payload.data.profilePicture) {
+            state.currentProfile.profilePicture = action.payload.data.profilePicture;
+          }
+        }
+      })
+      .addCase(uploadAvatar.rejected, (state, action) => {
+        state.uploadStatus = "failed";
+        state.uploadError = action.payload || "Có lỗi xảy ra khi tải lên ảnh đại diện";
       });
   },
 });

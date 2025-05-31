@@ -88,6 +88,37 @@ export const ProfileImage = styled('img')(({ theme }) => ({
   marginBottom: theme.spacing(1),
 }));
 
+// ProfileImageWrapper for avatar with update functionality
+export const ProfileImageWrapper = styled('div')(({ theme }) => ({
+  position: 'relative',
+  width: 120,
+  height: 120,
+  borderRadius: '50%',
+  marginBottom: theme.spacing(1),
+}));
+
+// ProfileImageOverlay for uploading state
+export const ProfileImageOverlay = styled('div')(({ theme }) => ({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  background: 'rgba(0, 0, 0, 0.5)',
+  borderRadius: '50%',
+  zIndex: 2,
+  animation: 'fadeIn 0.3s',
+}));
+
+// Hidden input for file upload
+export const UploadInput = styled('input')({
+  display: 'none',
+});
+
 export const ProfileFullName = styled(Typography)(({ theme }) => ({
   fontWeight: 'bold',
   color: theme.palette.text.primary,

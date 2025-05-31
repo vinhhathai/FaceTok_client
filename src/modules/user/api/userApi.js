@@ -3,7 +3,8 @@ import { apiClient } from '../../../shared/httpClient';
 // API endpoints
 const API_ENDPOINTS = {
   PROFILE: '/user/profile',
-  UPLOAD_THUMBNAIL: '/user/upload-thumbnail'
+  UPLOAD_THUMBNAIL: '/user/upload-thumbnail',
+  UPLOAD_AVATAR: '/user/upload-avatar'
 };
 
 const userApi = {
@@ -52,6 +53,41 @@ const userApi = {
       return response.data;
     } catch (error) {
       console.error('Thumbnail upload error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Upload ảnh đại diện (avatar) cho người dùng
+   * @param {File} file - File ảnh cần upload
+   * @param {function} onProgress - Callback để theo dõi tiến trình upload
+   * @returns {Promise} - Promise chứa kết quả upload
+   */
+  uploadAvatar: async (file, onProgress) => {
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      
+      const response = await apiClient.post(
+        API_ENDPOINTS.UPLOAD_AVATAR,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            if (onProgress && progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              onProgress(percentCompleted);
+            }
+          }
+        }
+      );
+      
+      console.log('Avatar upload response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Avatar upload error:', error);
       throw error;
     }
   },
