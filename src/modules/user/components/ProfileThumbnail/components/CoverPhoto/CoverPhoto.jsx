@@ -63,8 +63,8 @@ const CoverPhoto = ({
         </CoverOverlay>
       )}
 
-      {/* Mobile update button directly on the cover photo */}
-      {isOwner && !isUploading && isMobile && (
+      {/* Upload button for both mobile and desktop */}
+      {isOwner && !isUploading && (
         <UploadButton
           component="label"
           disabled={isUploading}

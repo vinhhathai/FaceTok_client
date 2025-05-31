@@ -36,6 +36,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { showSuccess, showError } from "../../../../shared/utils/toastMessageUtils";
 
+// Import danh sách tỉnh thành Việt Nam
+import vietnamProvinces from "../../../../shared/data/vietnamProvinces";
+
 // Styles
 import {
   ProfileInfoContainer,
@@ -63,17 +66,31 @@ const DEFAULT_AVATAR = "/assets/images/avatar_default.jpg";
 // Define constant toast ID to prevent duplicate toasts
 const AVATAR_UPDATE_TOAST_ID = 'avatar-update-toast';
 
-// Format date string to YYYY-MM-DD for input type="date"
+// Format date string to DD/MM/YYYY for input
 const formatDateForInput = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
-  return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
-// Format a date object to YYYY-MM-DD string
-const formatDateForApi = (date) => {
-  if (!date) return null;
-  return date.toISOString().split('T')[0];
+// Format input date (DD/MM/YYYY) to YYYY-MM-DD string for API
+const formatDateForApi = (dateString) => {
+  if (!dateString) return null;
+  
+  // Split the DD/MM/YYYY format into parts
+  const parts = dateString.split('/');
+  if (parts.length === 3) {
+    const day = parts[0];
+    const month = parts[1];
+    const year = parts[2];
+    return `${year}-${month}-${day}`;
+  }
+  
+  // If date is already in YYYY-MM-DD format or not properly formatted
+  return dateString;
 };
 
 const UserInfo = ({ user }) => {
@@ -342,9 +359,13 @@ const UserInfo = ({ user }) => {
 
   const handleOpenProfileModal = () => {
     // Initialize form with current user data
+    const currentLocation = user.location || '';
+    // Find the province object that matches the user's current location
+    const userProvince = vietnamProvinces.find(p => p.name === currentLocation);
+    
     setProfileForm({
       bio: user.bio || '',
-      location: user.location || '',
+      location: userProvince ? userProvince.name : '',
       gender: user.gender || '',
       birthday: user.birthday ? formatDateForInput(user.birthday) : '',
       relationship: user.relationship || '',
@@ -364,9 +385,40 @@ const UserInfo = ({ user }) => {
   };
 
   const handleDateChange = (event) => {
+    const inputValue = event.target.value;
+    
+    // Allow empty values
+    if (!inputValue) {
+      setProfileForm({
+        ...profileForm,
+        birthday: null
+      });
+      return;
+    }
+    
+    // Validate format DD/MM/YYYY
+    const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const isValidFormat = datePattern.test(inputValue);
+    
+    // Simple date validation
+    let isValidDate = false;
+    if (isValidFormat) {
+      const parts = inputValue.split('/');
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      
+      // Check if date is valid
+      const date = new Date(year, month - 1, day);
+      isValidDate = date.getDate() === day && 
+                    date.getMonth() === month - 1 && 
+                    date.getFullYear() === year &&
+                    year >= 1900 && year <= new Date().getFullYear();
+    }
+    
     setProfileForm({
       ...profileForm,
-      birthday: event.target.value || null
+      birthday: inputValue
     });
   };
 
@@ -376,6 +428,11 @@ const UserInfo = ({ user }) => {
       
       // Clone form data for API submission
       let formattedData = { ...profileForm };
+      
+      // Convert date format to API format if it exists
+      if (formattedData.birthday) {
+        formattedData.birthday = formatDateForApi(formattedData.birthday);
+      }
       
       // Dispatch action to update user profile
       await dispatch(updateUserProfile({
@@ -808,14 +865,19 @@ const UserInfo = ({ user }) => {
             </Grid>
             
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Đang sống tại"
-                value={profileForm.location}
-                onChange={handleProfileFormChange('location')}
-                variant="outlined"
-                sx={{ mb: 2 }}
-              />
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Đang sống tại</InputLabel>
+                <Select
+                  value={profileForm.location}
+                  label="Đang sống tại"
+                  onChange={handleProfileFormChange('location')}
+                >
+                  <MenuItem value="">Chọn tỉnh thành</MenuItem>
+                  {vietnamProvinces.map((province) => (
+                    <MenuItem key={province.code} value={province.name}>{province.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             
             <Grid item xs={12} sm={6}>
@@ -829,7 +891,6 @@ const UserInfo = ({ user }) => {
                   <MenuItem value="">Không xác định</MenuItem>
                   <MenuItem value="male">Nam</MenuItem>
                   <MenuItem value="female">Nữ</MenuItem>
-                  <MenuItem value="other">Khác</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -838,13 +899,15 @@ const UserInfo = ({ user }) => {
               <TextField
                 fullWidth
                 label="Sinh nhật"
-                type="date"
+                type="text"
                 value={profileForm.birthday || ''}
                 onChange={handleDateChange}
                 variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
+                placeholder="DD/MM/YYYY"
+                inputProps={{
+                  pattern: "\\d{2}/\\d{2}/\\d{4}"
                 }}
+                helperText="Định dạng: Ngày/Tháng/Năm (VD: 31/12/2000)"
                 sx={{ mb: 2 }}
               />
             </Grid>
