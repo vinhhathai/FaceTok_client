@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, Avatar } from '@mui/material';
 
 // Container cho toàn bộ profile
 export const ProfileContainer = styled(Box)(({ theme }) => ({
@@ -73,32 +73,59 @@ export const UserActionsContainer = styled(Box)(({ theme }) => ({
 
 export const ProfileInfoContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius * 2,
-  boxShadow: theme.shadows[1],
-  marginBottom: theme.spacing(2),
+  margin: "0 auto",
+  maxWidth: "100%",
+  borderRadius: theme.shape.borderRadius,
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(1, 2, 2, 2),
+    paddingTop: theme.spacing(6),
+    marginTop: theme.spacing(-8),
+    marginBottom: theme.spacing(2),
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    borderTopLeftRadius: theme.spacing(3),
+    borderTopRightRadius: theme.spacing(3),
+    boxShadow: 'none',
+    border: 'none',
+    borderTop: '1px solid rgba(0,0,0,0.1)',
+    position: 'relative',
+    zIndex: 15,
+    backgroundColor: 'white',
+  },
 }));
 
-export const ProfileImage = styled('img')(({ theme }) => ({
-  width: 120,
-  height: 120,
-  borderRadius: '50%',
-  objectFit: 'cover',
-  border: `4px solid ${theme.palette.primary.main}`,
+export const ProfileImageWrapper = styled(Box)(({ theme }) => ({
+  position: "relative",
+  width: 150,
+  height: 150,
+  margin: "0 auto",
+  borderRadius: "50%",
+  overflow: "hidden",
+  border: `4px solid ${theme.palette.background.paper}`,
   boxShadow: theme.shadows[3],
-  marginBottom: theme.spacing(1),
+  [theme.breakpoints.down("sm")]: {
+    width: 130,
+    height: 130,
+    margin: "0 auto",
+    marginTop: theme.spacing(3),
+    marginBottom: theme.spacing(2),
+    display: "block",
+    left: "auto",
+    right: "auto",
+    border: `4px solid white`,
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+  },
 }));
 
-// ProfileImageWrapper for avatar with update functionality
-export const ProfileImageWrapper = styled('div')(({ theme }) => ({
-  position: 'relative',
-  width: 120,
-  height: 120,
-  borderRadius: '50%',
-  marginBottom: theme.spacing(1),
+export const ProfileImage = styled(Avatar)(({ theme }) => ({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
 }));
 
 // ProfileImageOverlay for uploading state
-export const ProfileImageOverlay = styled('div')(({ theme }) => ({
+export const ProfileImageOverlay = styled(Box)(({ theme }) => ({
   position: 'absolute',
   top: 0,
   left: 0,
@@ -106,12 +133,11 @@ export const ProfileImageOverlay = styled('div')(({ theme }) => ({
   bottom: 0,
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: 'center',
   alignItems: 'center',
-  background: 'rgba(0, 0, 0, 0.5)',
+  justifyContent: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
   borderRadius: '50%',
   zIndex: 2,
-  animation: 'fadeIn 0.3s',
 }));
 
 // Hidden input for file upload
@@ -120,50 +146,74 @@ export const UploadInput = styled('input')({
 });
 
 export const ProfileFullName = styled(Typography)(({ theme }) => ({
-  fontWeight: 'bold',
-  color: theme.palette.text.primary,
-  textAlign: 'center',
+  fontWeight: 600,
+  marginTop: theme.spacing(1),
+  textAlign: "center",
+  [theme.breakpoints.down("sm")]: {
+    fontSize: "1.4rem",
+    fontWeight: 700,
+    margin: theme.spacing(0.5, 0),
+  },
 }));
 
 export const IntroContainer = styled(Box)(({ theme }) => ({
-  width: '100%',
+  marginTop: theme.spacing(2),
+  width: "100%",
+  position: "relative",
+  [theme.breakpoints.down("sm")]: {
+    marginTop: theme.spacing(1),
+    padding: theme.spacing(0, 1),
+  },
 }));
 
 export const IntroHeader = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: theme.spacing(1),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: theme.spacing(2),
 }));
 
 export const IntroTitle = styled(Typography)(({ theme }) => ({
-  fontWeight: 'bold',
-  fontSize: '1rem',
+  fontWeight: 600,
+  fontSize: "1.1rem",
+  [theme.breakpoints.down("sm")]: {
+    fontSize: "1rem",
+  },
 }));
 
 export const IntroItem = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  marginBottom: theme.spacing(1),
-  '& svg': {
-    marginRight: theme.spacing(1),
-    color: theme.palette.text.secondary,
+  display: "flex",
+  alignItems: "center",
+  marginBottom: theme.spacing(1.5),
+  [theme.breakpoints.down("sm")]: {
+    marginBottom: theme.spacing(1.2),
+    '& .MuiSvgIcon-root': {
+      fontSize: '1.1rem',
+    },
   },
 }));
 
 export const IntroItemText = styled(Typography)(({ theme }) => ({
-  fontSize: '0.9rem',
-  color: theme.palette.text.secondary,
+  marginLeft: theme.spacing(1),
+  fontSize: "0.9rem",
+  [theme.breakpoints.down("sm")]: {
+    fontSize: "0.85rem",
+    lineHeight: 1.4,
+  },
 }));
 
 export const ButtonsContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(2),
+  width: "100%",
+  [theme.breakpoints.down("sm")]: {
+    marginTop: theme.spacing(1.5),
+  },
 }));
 
 export const AddFriendButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   color: theme.palette.common.white,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.primary.dark,
   },
 }));
@@ -171,9 +221,7 @@ export const AddFriendButton = styled(Button)(({ theme }) => ({
 export const MessageButton = styled(Button)(({ theme }) => ({
   borderColor: theme.palette.primary.main,
   color: theme.palette.primary.main,
-  '&:hover': {
-    borderColor: theme.palette.primary.dark,
-    color: theme.palette.primary.dark,
-    backgroundColor: 'rgba(0, 149, 246, 0.1)',
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
   },
 })); 

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Tab, Tabs, Typography, useMediaQuery } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import PropTypes from 'prop-types';
 
 // Components
@@ -65,6 +66,8 @@ function a11yProps(index) {
 }
 
 const ProfilePage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
   const { userId } = useParams(); // Lấy userId từ URL
   const [tabValue, setTabValue] = useState(0);
@@ -85,6 +88,21 @@ const ProfilePage = () => {
     setTabValue(newValue);
   };
 
+  // Adjust tab value when switching between mobile and desktop
+  useEffect(() => {
+    // If on mobile and current tab is "Giới thiệu" (index 1), switch to "Bài viết" (index 0)
+    if (isMobile && tabValue === 1) {
+      setTabValue(0);
+    }
+  }, [isMobile, tabValue]);
+
+  // Get the correct tab index based on mobile/desktop view
+  const getTabIndex = (desktopIndex) => {
+    if (!isMobile) return desktopIndex;
+    // On mobile, skip the "Giới thiệu" tab (index 1)
+    return desktopIndex < 1 ? desktopIndex : desktopIndex - 1;
+  };
+
   // Profile Content component
   const ProfileContent = () => (
     <Box>
@@ -97,9 +115,9 @@ const ProfilePage = () => {
             variant="fullWidth"
           >
             <Tab label="Bài viết" {...a11yProps(0)} />
-            <Tab label="Giới thiệu" {...a11yProps(1)} />
-            <Tab label="File đa phương tiện" {...a11yProps(2)} />
-            <Tab label="Bạn bè" {...a11yProps(3)} />
+            {!isMobile && <Tab label="Giới thiệu" {...a11yProps(1)} />}
+            <Tab label="File đa phương tiện" {...a11yProps(isMobile ? 1 : 2)} />
+            <Tab label="Bạn bè" {...a11yProps(isMobile ? 2 : 3)} />
           </Tabs>
         </Box>
         
@@ -108,15 +126,17 @@ const ProfilePage = () => {
             <UserPosts userId={userId} />
           </TabPanel>
           
-          <TabPanel value={tabValue} index={1}>
-            <UserAbout user={userProfile} />
-          </TabPanel>
+          {!isMobile && (
+            <TabPanel value={tabValue} index={1}>
+              <UserAbout user={userProfile} />
+            </TabPanel>
+          )}
           
-          <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={isMobile ? 1 : 2}>
             <UserGallery userId={userId} />
           </TabPanel>
           
-          <TabPanel value={tabValue} index={3}>
+          <TabPanel value={tabValue} index={isMobile ? 2 : 3}>
             <UserFriends userId={userId} />
           </TabPanel>
         </TabContentContainer>

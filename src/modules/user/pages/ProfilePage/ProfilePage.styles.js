@@ -20,10 +20,18 @@ export const TabsContainer = styled(Paper)(({ theme }) => ({
   marginTop: theme.spacing(1),
   borderRadius: theme.shape.borderRadius * 2,
   boxShadow: theme.shadows[1],
+  [theme.breakpoints.down('sm')]: {
+    marginTop: 0,
+    borderRadius: 0,
+    boxShadow: 'none',
+  }
 }));
 
 export const TabContentContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  }
 }));
 
 export const TabPanelStyles = {

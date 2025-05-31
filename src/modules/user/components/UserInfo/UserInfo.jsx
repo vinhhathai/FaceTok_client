@@ -17,7 +17,11 @@ import {
   Select,
   MenuItem,
   Grid,
+  useMediaQuery,
+  Fab,
+  Tooltip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SchoolIcon from "@mui/icons-material/School";
@@ -73,6 +77,9 @@ const formatDateForApi = (date) => {
 };
 
 const UserInfo = ({ user }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [isFriend, setIsFriend] = useState(false); // Assume no friendship status from API for now
   const [isRequestSent, setIsRequestSent] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false); // Thêm state để kiểm soát việc mở rộng bio
@@ -215,6 +222,12 @@ const UserInfo = ({ user }) => {
       }
     };
   }, [optimisticAvatar]);
+
+  // Thêm debug log cho chế độ mobile
+  React.useEffect(() => {
+    console.log('Mobile view detected:', isMobile);
+    console.log('ProfileImageWrapper styles updated for mobile view');
+  }, [isMobile]);
 
   const handleEditProfile = () => {
     // Open modal instead of navigating to edit page
@@ -402,9 +415,21 @@ const UserInfo = ({ user }) => {
           alignItems: "center",
           mb: 2,
           position: "relative",
+          width: "100%",
+          ...(isMobile && {
+            marginTop: -7, // Điều chỉnh vị trí avatar so với ảnh bìa
+            zIndex: 20,
+          }),
         }}
       >
-        <ProfileImageWrapper>
+        <ProfileImageWrapper
+          sx={{
+            ...(isMobile && {
+              margin: '0 auto',
+              marginBottom: 1,
+            }),
+          }}
+        >
           <ProfileImage 
             src={avatarSrc} 
             alt={user.fullName}
@@ -449,21 +474,37 @@ const UserInfo = ({ user }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: 0,
-                transition: 'opacity 0.2s',
+                opacity: 0, // Hide by default
+                transition: 'opacity 0.3s',
                 backgroundColor: 'rgba(0, 0, 0, 0.5)',
                 color: '#fff',
                 cursor: 'pointer',
                 '&:hover': {
-                  opacity: 1,
+                  opacity: 0.7, // Show on hover for both mobile and desktop
                 },
                 zIndex: 1,
               }}
             >
-              <label htmlFor="upload-avatar" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CameraAltIcon />
-                <Typography variant="caption" sx={{ mt: 0.5 }}>
+              <label 
+                htmlFor="upload-avatar" 
+                style={{ 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%'
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                   Cập nhật
+                </Typography>
+                <Typography variant="caption" sx={{ mt: 0.5 }}>
+                  ảnh đại diện
                 </Typography>
               </label>
               <UploadInput
@@ -476,12 +517,38 @@ const UserInfo = ({ user }) => {
             </Box>
           )}
         </ProfileImageWrapper>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ProfileFullName variant="h5">{user.fullName}</ProfileFullName>
+        
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '100%',
+          position: 'relative',
+          ...(isMobile && {
+            flexDirection: 'row', 
+            marginTop: 1,
+          }),
+        }}>
+          <ProfileFullName 
+            variant={isMobile ? "h4" : "h5"}
+            sx={{
+              ...(isMobile && {
+                fontWeight: 'bold',
+                marginBottom: 0,
+                textAlign: 'center',
+              }),
+            }}
+          >
+            {user.fullName}
+          </ProfileFullName>
           {isOwner && (
             <IconButton 
               size="small" 
-              sx={{ ml: 0.5, color: 'primary.main' }}
+              sx={{ 
+                ml: 0.5, 
+                color: 'primary.main',
+                padding: '4px',
+              }}
               onClick={handleOpenNameModal}
             >
               <EditIcon fontSize="small" />
@@ -492,11 +559,24 @@ const UserInfo = ({ user }) => {
 
       <IntroContainer>
         <IntroHeader>
-          <IntroTitle>Giới thiệu</IntroTitle>
+          <IntroTitle sx={{ 
+            ...(isMobile && {
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              marginBottom: 1
+            })
+          }}>
+            Giới thiệu
+          </IntroTitle>
         </IntroHeader>
 
         {user.bio && (
-          <Box sx={{ width: '100%' }}>
+          <Box sx={{ 
+            width: '100%',
+            ...(isMobile && {
+              px: 1
+            })
+          }}>
             <Typography 
               variant="body2" 
               sx={{ 
@@ -509,6 +589,10 @@ const UserInfo = ({ user }) => {
                 overflow: bioExpanded ? 'visible' : 'hidden',
                 wordBreak: 'break-word',
                 maxWidth: '100%',
+                ...(isMobile && {
+                  fontSize: '0.9rem',
+                  lineHeight: 1.5
+                })
               }}
             >
               {user.bio}
@@ -538,7 +622,7 @@ const UserInfo = ({ user }) => {
         <Divider sx={{ my: 1 }} />
 
         {/* Always display relationship status */}
-        <IntroItem>
+        <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
           <FavoriteIcon fontSize="small" color="error" />
           <IntroItemText>
             {formatRelationship(user.relationship)}
@@ -546,7 +630,7 @@ const UserInfo = ({ user }) => {
         </IntroItem>
 
         {user.gender && (
-          <IntroItem>
+          <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
             <Typography variant="body2" component="span">👤</Typography>
             <IntroItemText>
               {user.gender === 'male' ? 'Nam' : user.gender === 'female' ? 'Nữ' : 'Khác'}
@@ -555,7 +639,7 @@ const UserInfo = ({ user }) => {
         )}
 
         {user.location && (
-          <IntroItem>
+          <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
             <LocationOnIcon fontSize="small" />
             <IntroItemText>{user.location}</IntroItemText>
           </IntroItem>
@@ -563,7 +647,7 @@ const UserInfo = ({ user }) => {
 
         {/* Education field not yet in API */}
         {user.education && (
-          <IntroItem>
+          <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
             <SchoolIcon fontSize="small" />
             <IntroItemText>{user.education}</IntroItemText>
           </IntroItem>
@@ -571,14 +655,14 @@ const UserInfo = ({ user }) => {
 
         {/* Work field not yet in API */}
         {user.work && (
-          <IntroItem>
+          <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
             <WorkIcon fontSize="small" />
             <IntroItemText>{user.work}</IntroItemText>
           </IntroItem>
         )}
 
         {user.birthday && (
-          <IntroItem>
+          <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
             <Typography variant="body2" component="span">🎂</Typography>
             <IntroItemText>
               {new Date(user.birthday).toLocaleDateString('vi-VN')}
@@ -587,7 +671,7 @@ const UserInfo = ({ user }) => {
         )}
         
         {user.createdAt && (
-          <IntroItem>
+          <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
             <Typography variant="body2" component="span">📅</Typography>
             <IntroItemText>
               Tham gia ngày {new Date(user.createdAt).toLocaleDateString('vi-VN')}
@@ -598,7 +682,14 @@ const UserInfo = ({ user }) => {
         <Box sx={{ mt: 2 }}>
           <Typography
             variant="body2"
-            sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+            sx={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              mb: 1,
+              ...(isMobile && {
+                fontSize: '0.85rem'
+              })
+            }}
           >
             <span>Email</span>
             <strong>{user.email}</strong>
@@ -606,6 +697,35 @@ const UserInfo = ({ user }) => {
         </Box>
 
         <Divider sx={{ my: 2 }} />
+
+        {/* Mobile edit button - Always visible when owner */}
+        {isOwner && isMobile && (
+          <Box sx={{ 
+            position: 'fixed', 
+            bottom: 20, 
+            right: 20, 
+            zIndex: 1000,
+            backgroundColor: theme.palette.background.paper,
+            borderRadius: '50%',
+            padding: '3px',
+            boxShadow: theme.shadows[3],
+          }}>
+            <Tooltip title="Chỉnh sửa thông tin">
+              <Fab
+                color="primary"
+                onClick={handleEditProfile}
+                sx={{ 
+                  boxShadow: 3,
+                  width: 50,
+                  height: 50,
+                }}
+                aria-label="edit profile"
+              >
+                <EditIcon />
+              </Fab>
+            </Tooltip>
+          </Box>
+        )}
 
         <ButtonsContainer>
           {isOwner ? (
@@ -615,6 +735,7 @@ const UserInfo = ({ user }) => {
               startIcon={<EditIcon />}
               onClick={handleEditProfile}
               size="medium"
+              sx={{ display: isMobile ? 'none' : 'flex' }}
             >
               Chỉnh sửa
             </Button>
@@ -660,19 +781,19 @@ const UserInfo = ({ user }) => {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: { xs: '90%', sm: 600 },
-          maxHeight: '90vh',
+          width: { xs: '95%', sm: 600 },
+          maxHeight: { xs: '80vh', sm: '90vh' },
           overflow: 'auto',
           bgcolor: 'background.paper',
           boxShadow: 24,
           borderRadius: 2,
-          p: 3,
+          p: { xs: 2, sm: 3 },
         }}>
-          <Typography variant="h6" component="h2" sx={{ mb: 3 }}>
+          <Typography variant="h6" component="h2" sx={{ mb: { xs: 2, sm: 3 } }}>
             Chỉnh sửa thông tin
           </Typography>
           
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -681,7 +802,7 @@ const UserInfo = ({ user }) => {
                 onChange={handleProfileFormChange('bio')}
                 variant="outlined"
                 multiline
-                rows={4}
+                rows={isMobile ? 3 : 4}
                 sx={{ mb: 2 }}
               />
             </Grid>
@@ -745,11 +866,19 @@ const UserInfo = ({ user }) => {
             </Grid>
           </Grid>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: 1, 
+            mt: 3,
+            flexDirection: isMobile ? 'column' : 'row' 
+          }}>
             <Button 
               variant="outlined" 
               onClick={handleCloseProfileModal}
               disabled={isUpdatingProfile}
+              fullWidth={isMobile}
+              sx={{ mb: isMobile ? 1 : 0 }}
             >
               Huỷ
             </Button>
@@ -758,6 +887,7 @@ const UserInfo = ({ user }) => {
               onClick={handleUpdateProfile}
               disabled={isUpdatingProfile}
               startIcon={isUpdatingProfile ? <CircularProgress size={16} color="inherit" /> : null}
+              fullWidth={isMobile}
             >
               {isUpdatingProfile ? 'Đang lưu...' : 'Lưu thay đổi'}
             </Button>
@@ -781,7 +911,7 @@ const UserInfo = ({ user }) => {
           bgcolor: 'background.paper',
           boxShadow: 24,
           borderRadius: 2,
-          p: 3,
+          p: { xs: 2, sm: 3 },
         }}>
           <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
             Chỉnh sửa tên hiển thị
@@ -797,11 +927,18 @@ const UserInfo = ({ user }) => {
             sx={{ mb: 3 }}
           />
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            gap: 1,
+            flexDirection: isMobile ? 'column' : 'row'
+          }}>
             <Button 
               variant="outlined" 
               onClick={handleCloseNameModal}
               disabled={isUpdatingName}
+              fullWidth={isMobile}
+              sx={{ mb: isMobile ? 1 : 0 }}
             >
               Huỷ
             </Button>
@@ -810,6 +947,7 @@ const UserInfo = ({ user }) => {
               onClick={handleUpdateName}
               disabled={isUpdatingName || !newName.trim()}
               startIcon={isUpdatingName ? <CircularProgress size={16} color="inherit" /> : null}
+              fullWidth={isMobile}
             >
               {isUpdatingName ? 'Đang lưu...' : 'Lưu thay đổi'}
             </Button>

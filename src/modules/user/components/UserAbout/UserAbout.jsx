@@ -1,207 +1,153 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Grid,
+  Fab,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import SchoolIcon from "@mui/icons-material/School";
-import WorkIcon from "@mui/icons-material/Work";
-import EmailIcon from "@mui/icons-material/Email";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import LanguageIcon from "@mui/icons-material/Language";
-import InterestsIcon from "@mui/icons-material/Interests";
-import PersonIcon from "@mui/icons-material/Person";
-import EventIcon from "@mui/icons-material/Event";
+import EditIcon from "@mui/icons-material/Edit";
+import { useDispatch } from "react-redux";
+import { updateUserProfile, fetchUserProfile } from "../../redux/slices/userSlice";
+import { showSuccess, showError } from "../../../../shared/utils/toastMessageUtils";
+
+// Import components
+import AboutHeader from "./components/AboutHeader";
+import ProfileInfo from "./components/ProfileInfo";
+import EditProfileModal from "./components/EditProfileModal";
 
 // Import styled components
 import {
   AboutContainer,
   AboutPaper,
-  AboutTitle,
-  AboutBio,
-  InfoSection,
-  InfoItem,
-  InfoIcon,
-  InfoContent,
-  InfoLabel,
-  InfoValue
 } from "./UserAbout.styles";
 
+// Format date string to YYYY-MM-DD for input type="date"
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+};
+
 const UserAbout = ({ user }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const dispatch = useDispatch();
+  const isOwner = user?.isOwner || false;
+
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    bio: '',
+    location: '',
+    gender: '',
+    birthday: null,
+    relationship: '',
+  });
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
   // Debug user data
   console.log('User data in UserAbout:', user);
-  console.log('Relationship status:', user?.relationship);
 
-  // Format dates if available
-  const formattedBirthday = user?.birthday 
-    ? new Date(user.birthday).toLocaleDateString('vi-VN')
-    : null;
-
-  const formattedCreatedAt = user?.createdAt 
-    ? new Date(user.createdAt).toLocaleDateString('vi-VN')
-    : null;
-
-  // Format gender
-  const formatGender = (gender) => {
-    if (!gender) return null;
-    return gender === 'male' ? 'Nam' : gender === 'female' ? 'Nữ' : 'Khác';
+  // Hàm xử lý khi click vào nút chỉnh sửa
+  const handleEditProfile = () => {
+    // Mở modal chỉnh sửa thông tin
+    handleOpenProfileModal();
   };
 
-  // Format relationship status
-  const formatRelationship = (relationship) => {
-    switch(relationship) {
-      case 'single': return 'Độc thân';
-      case 'relationship': return 'Đang trong mối quan hệ';
-      case 'married': return 'Đã kết hôn';
-      default: return 'Chưa cập nhật';
+  const handleOpenProfileModal = () => {
+    // Initialize form with current user data
+    setProfileForm({
+      bio: user.bio || '',
+      location: user.location || '',
+      gender: user.gender || '',
+      birthday: user.birthday ? formatDateForInput(user.birthday) : '',
+      relationship: user.relationship || '',
+    });
+    setProfileModalOpen(true);
+  };
+
+  const handleCloseProfileModal = () => {
+    setProfileModalOpen(false);
+  };
+
+  const handleProfileFormChange = (field, value) => {
+    setProfileForm({
+      ...profileForm,
+      [field]: value
+    });
+  };
+
+  const handleDateChange = (event) => {
+    setProfileForm({
+      ...profileForm,
+      birthday: event.target.value || null
+    });
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      setIsUpdatingProfile(true);
+      
+      // Clone form data for API submission
+      let formattedData = { ...profileForm };
+      
+      // Dispatch action to update user profile
+      await dispatch(updateUserProfile({
+        id: user.id,
+        ...formattedData
+      })).unwrap();
+      
+      showSuccess('Cập nhật thông tin thành công!');
+      handleCloseProfileModal();
+      
+      // Refresh user profile after update
+      if (user?.id) {
+        dispatch(fetchUserProfile(user.id));
+      }
+    } catch (error) {
+      showError('Không thể cập nhật thông tin. Vui lòng thử lại sau.');
+      console.error('Profile update error:', error);
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
   return (
     <AboutContainer>
       <AboutPaper elevation={1}>
-        <AboutTitle variant="h6">
-          Giới thiệu
-        </AboutTitle>
+        <AboutHeader bio={user?.bio} />
+        <ProfileInfo user={user} />
 
-        {user?.bio ? (
-          <AboutBio variant="body1">
-            {user.bio}
-          </AboutBio>
-        ) : (
-          <AboutBio variant="body1">
-            Người dùng chưa cập nhật thông tin giới thiệu.
-          </AboutBio>
+        {/* Mobile Edit Button - Only show for owner in mobile view */}
+        {isOwner && isMobile && (
+          <Tooltip title="Chỉnh sửa thông tin">
+            <Fab
+              color="primary"
+              sx={{
+                position: 'fixed',
+                bottom: 20,
+                right: 20,
+                zIndex: 1000,
+                boxShadow: 3,
+              }}
+              onClick={handleEditProfile}
+            >
+              <EditIcon />
+            </Fab>
+          </Tooltip>
         )}
 
-        <InfoSection>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              {user?.location && (
-                <InfoItem>
-                  <InfoIcon>
-                    <LocationOnIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Đang sống tại</InfoLabel>
-                    <InfoValue>{user.location}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-
-              {user?.work && (
-                <InfoItem>
-                  <InfoIcon>
-                    <WorkIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Làm việc tại</InfoLabel>
-                    <InfoValue>{user.work}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-
-              {user?.education && (
-                <InfoItem>
-                  <InfoIcon>
-                    <SchoolIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Học tại</InfoLabel>
-                    <InfoValue>{user.education}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-
-              {user?.email && (
-                <InfoItem>
-                  <InfoIcon>
-                    <EmailIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Email</InfoLabel>
-                    <InfoValue>{user.email}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-              
-              {formatGender(user?.gender) && (
-                <InfoItem>
-                  <InfoIcon>
-                    <PersonIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Giới tính</InfoLabel>
-                    <InfoValue>{formatGender(user.gender)}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              {formattedBirthday && (
-                <InfoItem>
-                  <InfoIcon>
-                    <CalendarMonthIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Sinh nhật</InfoLabel>
-                    <InfoValue>{formattedBirthday}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-
-              {formattedCreatedAt && (
-                <InfoItem>
-                  <InfoIcon>
-                    <EventIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Tham gia ngày</InfoLabel>
-                    <InfoValue>{formattedCreatedAt}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-
-              <InfoItem>
-                <InfoIcon>
-                  <FavoriteIcon color="error" />
-                </InfoIcon>
-                <InfoContent>
-                  <InfoLabel>Tình trạng mối quan hệ</InfoLabel>
-                  <InfoValue>
-                    {formatRelationship(user?.relationship)}
-                  </InfoValue>
-                </InfoContent>
-              </InfoItem>
-
-              {user?.website && (
-                <InfoItem>
-                  <InfoIcon>
-                    <LanguageIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Website</InfoLabel>
-                    <InfoValue>{user.website}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-
-              {user?.interests && (
-                <InfoItem>
-                  <InfoIcon>
-                    <InterestsIcon color="primary" />
-                  </InfoIcon>
-                  <InfoContent>
-                    <InfoLabel>Sở thích</InfoLabel>
-                    <InfoValue>{user.interests}</InfoValue>
-                  </InfoContent>
-                </InfoItem>
-              )}
-            </Grid>
-          </Grid>
-        </InfoSection>
+        {/* Modal for editing profile */}
+        <EditProfileModal
+          open={profileModalOpen}
+          onClose={handleCloseProfileModal}
+          isMobile={isMobile}
+          profileForm={profileForm}
+          isUpdatingProfile={isUpdatingProfile}
+          onFormChange={handleProfileFormChange}
+          onDateChange={handleDateChange}
+          onSave={handleUpdateProfile}
+        />
       </AboutPaper>
     </AboutContainer>
   );
@@ -209,6 +155,7 @@ const UserAbout = ({ user }) => {
 
 UserAbout.propTypes = {
   user: PropTypes.shape({
+    id: PropTypes.string,
     bio: PropTypes.string,
     location: PropTypes.string,
     work: PropTypes.string,
@@ -220,6 +167,7 @@ UserAbout.propTypes = {
     interests: PropTypes.string,
     gender: PropTypes.string,
     createdAt: PropTypes.string,
+    isOwner: PropTypes.bool,
   }),
 };
 

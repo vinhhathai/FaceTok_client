@@ -1,10 +1,13 @@
 import React from 'react';
-import { Grid, Container, Box } from '@mui/material';
+import { Grid, Container, Box, useMediaQuery, useTheme } from '@mui/material';
 
 function MainLayout({ thumbnail, leftSidebar, content, rightSidebar }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   return (
-    <Container maxWidth="xl" sx={{ mt: 3 }}>
-      <Grid container spacing={3}>
+    <Container maxWidth="xl" sx={{ mt: isMobile ? 0 : 3 }}>
+      <Grid container spacing={isMobile ? 0 : 3}>
         {/* Thumbnail Row (Optional) */}
         {thumbnail && (
           <Grid item xs={12}>
@@ -12,12 +15,19 @@ function MainLayout({ thumbnail, leftSidebar, content, rightSidebar }) {
           </Grid>
         )}
 
+        {/* Mobile Profile Info */}
+        {isMobile && leftSidebar && (
+          <Grid item xs={12} sx={{ mb: 2 }}>
+            {leftSidebar}
+          </Grid>
+        )}
+
         {/* Main Content Row */}
-        {/* Left Sidebar */}
+        {/* Left Sidebar - Desktop only */}
         <Grid item xs={12} md={3} lg={3} sx={{ 
           display: { xs: 'none', md: 'block' }
         }}>
-          {leftSidebar}
+          {!isMobile && leftSidebar}
         </Grid>
 
         {/* Main Content */}
@@ -25,7 +35,7 @@ function MainLayout({ thumbnail, leftSidebar, content, rightSidebar }) {
           {content}
         </Grid>
 
-        {/* Right Sidebar */}
+        {/* Right Sidebar - Desktop only */}
         <Grid item xs={12} md={3} lg={3} sx={{ 
           display: { xs: 'none', md: 'block' }
         }}>
