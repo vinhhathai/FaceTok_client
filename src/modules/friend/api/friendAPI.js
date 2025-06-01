@@ -6,7 +6,7 @@ import { apiClient } from '../../../shared/httpClient';
  */
 export const getFriends = async () => {
   try {
-    const response = await apiClient.get('/api/friends');
+    const response = await apiClient.get('/friend/my-friends');
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -14,12 +14,71 @@ export const getFriends = async () => {
 };
 
 /**
- * Get pending friend requests
+ * Get received friend requests
  * @returns {Promise} Promise with friend requests data
  */
-export const getFriendRequests = async () => {
+export const getReceivedFriendRequests = async () => {
   try {
-    const response = await apiClient.get('/api/friends/requests');
+    const response = await apiClient.get('/friend/received-requests');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Get sent/pending friend requests
+ * @returns {Promise} Promise with sent friend requests data
+ */
+export const getSentFriendRequests = async () => {
+  try {
+    const response = await apiClient.get('/friend/pending-requests');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Search for friends
+ * @param {string} query - Search query
+ * @param {number} page - Page number (optional, default: 1)
+ * @param {number} limit - Items per page (optional, default: 10)
+ * @returns {Promise} Promise with search results
+ */
+export const searchFriends = async (query, page = 1, limit = 10) => {
+  try {
+    const response = await apiClient.get(`/friend/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Search for users (system-wide)
+ * @param {string} query - Search query
+ * @param {number} page - Page number (optional, default: 1)
+ * @param {number} limit - Items per page (optional, default: 10)
+ * @returns {Promise} Promise with search results
+ */
+export const searchUsers = async (query, page = 1, limit = 10) => {
+  try {
+    const response = await apiClient.get(`/user/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Check relationship status with another user
+ * @param {string} userId - ID of the user to check relationship with
+ * @returns {Promise} Promise with relationship status
+ */
+export const checkRelationship = async (userId) => {
+  try {
+    const response = await apiClient.get(`/friend/relationship/${userId}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -28,12 +87,12 @@ export const getFriendRequests = async () => {
 
 /**
  * Send a friend request to another user
- * @param {string} userId - The ID of the user to send request to
+ * @param {string} recipientId - The ID of the user to send request to
  * @returns {Promise} Promise with request result
  */
-export const sendFriendRequest = async (userId) => {
+export const sendFriendRequest = async (recipientId) => {
   try {
-    const response = await apiClient.post('/api/friends/requests', { userId });
+    const response = await apiClient.post('/friend/send-request', { recipientId });
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -47,7 +106,7 @@ export const sendFriendRequest = async (userId) => {
  */
 export const acceptFriendRequest = async (requestId) => {
   try {
-    const response = await apiClient.put(`/api/friends/requests/${requestId}/accept`);
+    const response = await apiClient.post('/friend/accept-request', { requestId });
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -61,7 +120,7 @@ export const acceptFriendRequest = async (requestId) => {
  */
 export const rejectFriendRequest = async (requestId) => {
   try {
-    const response = await apiClient.put(`/api/friends/requests/${requestId}/reject`);
+    const response = await apiClient.post('/friend/reject-request', { requestId });
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -75,7 +134,7 @@ export const rejectFriendRequest = async (requestId) => {
  */
 export const removeFriend = async (friendId) => {
   try {
-    const response = await apiClient.delete(`/api/friends/${friendId}`);
+    const response = await apiClient.post('/friend/unfriend', { friendId });
     return response.data;
   } catch (error) {
     throw error.response?.data || error;

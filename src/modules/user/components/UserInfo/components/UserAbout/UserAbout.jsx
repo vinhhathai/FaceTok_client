@@ -157,7 +157,7 @@ const UserAbout = ({ user, displayRelationship, onEditProfile }) => {
         </IntroItem>
       )}
       
-      {user.createdAt && (
+      {(user.createdAt) && (
         <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
           <Typography variant="body2" component="span">📅</Typography>
           <IntroItemText>

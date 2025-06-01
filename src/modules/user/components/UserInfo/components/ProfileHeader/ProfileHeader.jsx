@@ -24,13 +24,7 @@ const ProfileHeader = ({ user, onEditName }) => {
   const isOwner = user?.isOwner || false;
   
   return (
-    <ProfileContainer
-      sx={{
-        ...(isMobile && {
-          marginTop: -7,
-        }),
-      }}
-    >
+    <ProfileContainer>
       <ProfileAvatar
         avatarSrc={avatarSrc}
         userName={user.fullName}

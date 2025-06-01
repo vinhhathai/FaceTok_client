@@ -1,13 +1,17 @@
 import React from 'react';
 import { Grid, Container, Box, useMediaQuery, useTheme } from '@mui/material';
 
-function MainLayout({ thumbnail, leftSidebar, content, rightSidebar }) {
+function MainLayout({ thumbnail, leftSidebar, content, rightSidebar, isMobile, isFriendsTab }) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Determine if the left sidebar should be hidden
+  // Hide it when: on mobile AND on the friends tab
+  const hideLeftSidebar = isMobile && isFriendsTab;
 
   return (
-    <Container maxWidth="xl" sx={{ mt: isMobile ? 0 : 3 }}>
-      <Grid container spacing={isMobile ? 0 : 3}>
+    <Container maxWidth="xl" sx={{ mt: isTabletOrMobile ? 0 : 3 }}>
+      <Grid container spacing={isTabletOrMobile ? 0 : 3}>
         {/* Thumbnail Row (Optional) */}
         {thumbnail && (
           <Grid item xs={12}>
@@ -15,19 +19,12 @@ function MainLayout({ thumbnail, leftSidebar, content, rightSidebar }) {
           </Grid>
         )}
 
-        {/* Mobile Profile Info */}
-        {isMobile && leftSidebar && (
-          <Grid item xs={12} sx={{ mb: 2 }}>
-            {leftSidebar}
-          </Grid>
-        )}
-
         {/* Main Content Row */}
-        {/* Left Sidebar - Desktop only */}
+        {/* Left Sidebar - Show on all devices except mobile friends page */}
         <Grid item xs={12} md={3} lg={3} sx={{ 
-          display: { xs: 'none', md: 'block' }
+          display: hideLeftSidebar ? 'none' : 'block'
         }}>
-          {!isMobile && leftSidebar}
+          {leftSidebar}
         </Grid>
 
         {/* Main Content */}

@@ -26,6 +26,9 @@ const HomePage = lazy(() => import('../../modules/post/pages/HomePage/HomePage')
 // User pages
 const ProfilePage = lazy(() => import('../../modules/user/pages/ProfilePage/ProfilePage'));
 
+// Friend pages
+const FriendPage = lazy(() => import('../../modules/friend/pages/FriendPage/FriendPage'));
+
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>
     <Component />
@@ -61,6 +64,12 @@ export const routes = [
   {
     path: '/profile/:userId',
     element: withSuspense(ProfilePage),
+  },
+  
+  // Friend Routes
+  {
+    path: '/friends',
+    element: withSuspense(FriendPage),
   },
   
   // Default redirect

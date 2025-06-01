@@ -9,7 +9,7 @@ export const ProfileContainer = styled(Box)(({ theme }) => ({
   position: "relative",
   width: "100%",
   [theme.breakpoints.down('sm')]: {
-    marginTop: -56,
+    marginTop: theme.spacing(2),
     zIndex: 20,
   }
 }));
@@ -22,8 +22,12 @@ export const ProfileImageWrapper = styled(Box)(({ theme }) => ({
   overflow: 'hidden',
   marginBottom: theme.spacing(2),
   [theme.breakpoints.down('sm')]: {
+    width: 100,
+    height: 100,
     margin: '0 auto',
-    marginBottom: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+    display: 'flex',
+    justifyContent: 'center',
   }
 }));
 

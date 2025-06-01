@@ -82,6 +82,12 @@ export const ProfileInfoContainer = styled(Paper)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(2),
+    marginTop: -50,
+    background: theme.palette.background.paper,
+    width: '100%',
+    overflow: 'visible',
+    zIndex: 5,
+    boxShadow: theme.shadows[1],
   },
 }));
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
-import { useMediaQuery } from "@mui/material";
+import { useMediaQuery, Box } from "@mui/material";
 import { useDispatch } from "react-redux";
 
 // Components
@@ -103,18 +103,28 @@ const UserInfo = ({ user }) => {
 
   return (
     <ProfileInfoContainer>
-      <ProfileHeader user={user} onEditName={handleOpenNameModal} />
-      
-      <UserAbout 
-        user={user} 
-        displayRelationship={displayRelationship} 
-        onEditProfile={handleOpenProfileModal}
-      />
-      
-      <UserActions 
-        user={user} 
-        onEditProfile={handleOpenProfileModal} 
-      />
+      <Box sx={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        ...(isMobile && {
+          padding: theme.spacing(2, 1),
+        })
+      }}>
+        <ProfileHeader user={user} onEditName={handleOpenNameModal} />
+        
+        <UserAbout 
+          user={user} 
+          displayRelationship={displayRelationship} 
+          onEditProfile={handleOpenProfileModal}
+        />
+        
+        <UserActions 
+          user={user} 
+          onEditProfile={handleOpenProfileModal} 
+        />
+      </Box>
       
       {/* Modals */}
       <NameEditModal 

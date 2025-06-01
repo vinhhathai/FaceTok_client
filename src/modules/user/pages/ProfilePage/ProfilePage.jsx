@@ -77,6 +77,9 @@ const ProfilePage = () => {
   const status = useSelector(state => selectUserStatus(state));
   const error = useSelector(state => selectUserError(state));
 
+  // Check if the current tab is the friends tab
+  const isFriendsTab = isMobile ? tabValue === 2 : tabValue === 3;
+
   useEffect(() => {
     // Fetch user profile when component mounts or userId changes
     if (userId) {
@@ -197,6 +200,8 @@ const ProfilePage = () => {
         leftSidebar={<UserInfo user={userProfile} />}
         content={<ProfileContent />}
         rightSidebar={<WeatherBar />}
+        isMobile={isMobile}
+        isFriendsTab={isFriendsTab}
       />
     </ProfileContainer>
   );

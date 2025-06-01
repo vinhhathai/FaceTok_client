@@ -8,7 +8,7 @@ export const ProfileCover = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.default,
   [theme.breakpoints.down('sm')]: {
     height: 180,
-    marginBottom: theme.spacing(7),
+    marginBottom: theme.spacing(10),
   },
 }));
 
