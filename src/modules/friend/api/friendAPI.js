@@ -40,6 +40,20 @@ export const getSentFriendRequests = async () => {
 };
 
 /**
+ * Check relationship status with another user
+ * @param {string} targetUserId - ID of the user to check relationship with
+ * @returns {Promise} Promise with relationship status information
+ */
+export const checkRelationship = async (targetUserId) => {
+  try {
+    const response = await apiClient.get(`/friend/relationship/${targetUserId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+/**
  * Search for friends
  * @param {string} query - Search query
  * @param {number} page - Page number (optional, default: 1)
@@ -65,20 +79,6 @@ export const searchFriends = async (query, page = 1, limit = 10) => {
 export const searchUsers = async (query, page = 1, limit = 10) => {
   try {
     const response = await apiClient.get(`/user/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-/**
- * Check relationship status with another user
- * @param {string} userId - ID of the user to check relationship with
- * @returns {Promise} Promise with relationship status
- */
-export const checkRelationship = async (userId) => {
-  try {
-    const response = await apiClient.get(`/friend/relationship/${userId}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
