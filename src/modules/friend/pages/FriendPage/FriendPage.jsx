@@ -16,10 +16,12 @@ import MainLayout from '../../../../shared/components/MainLayout/MainLayout';
 import { fetchFriends, fetchReceivedFriendRequests, fetchSentFriendRequests } from '../../redux';
 import FriendList from '../../components/FriendList/FriendList';
 import FriendRequests from '../../components/FriendRequests/FriendRequests';
+import SentRequestsList from '../../components/SentRequestsList/SentRequestsList';
 import FriendSearch from '../../components/FriendSearch/FriendSearch';
 import Sidebar from '../../../post/components/Sidebar/Sidebar';
 import WeatherBar from '../../../../shared/components/WeatherBar';
 import { FriendPageContainer } from './FriendPage.styles';
+import { cancelFriendRequest } from '../../api/friendAPI';
 
 // Tab Panel component
 function TabPanel(props) {
@@ -65,6 +67,21 @@ function FriendPage() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleCancelRequest = async (requestId) => {
+    try {
+      const response = await cancelFriendRequest(requestId);
+      if (response.success) {
+        // Refresh the sent requests list
+        dispatch(fetchSentFriendRequests());
+      } else {
+        alert(response.error?.message || "Không thể hủy lời mời kết bạn");
+      }
+    } catch (error) {
+      alert("Đã xảy ra lỗi, vui lòng thử lại sau");
+      console.error("Error cancelling friend request:", error);
+    }
   };
 
   const contentSection = (
@@ -120,19 +137,12 @@ function FriendPage() {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
-          {sentRequests.isLoading ? (
-            <Typography align="center" sx={{ mt: 3 }}>Đang tải...</Typography>
-          ) : sentRequests.error ? (
-            <Typography color="error" align="center" sx={{ mt: 3 }}>
-              {sentRequests.error}
-            </Typography>
-          ) : (
-            <Typography align="center" sx={{ mt: 3 }}>
-              {sentRequests.data.length === 0 
-                ? "Bạn chưa gửi lời mời kết bạn nào." 
-                : `Bạn có ${sentRequests.data.length} lời mời kết bạn đang chờ phản hồi.`}
-            </Typography>
-          )}
+          <SentRequestsList
+            requests={sentRequests.data}
+            loading={sentRequests.isLoading}
+            error={sentRequests.error}
+            onCancelRequest={handleCancelRequest}
+          />
         </TabPanel>
       </CardContent>
     </Card>

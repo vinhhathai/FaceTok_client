@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Card, CardContent, CardMedia, Typography, Avatar, Button, IconButton, Stack, Tooltip, Chip } from '@mui/material';
+import { Card, CardContent, CardMedia, Typography, Avatar, Button, IconButton, Stack, Tooltip, Chip, Snackbar, Alert } from '@mui/material';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -8,7 +8,7 @@ import MessageIcon from '@mui/icons-material/Message';
 import { useNavigate } from 'react-router-dom';
 
 // API functions
-import { acceptFriendRequest, rejectFriendRequest, removeFriend } from '../../api/friendAPI';
+import { acceptFriendRequest, rejectFriendRequest, removeFriend, cancelFriendRequest } from '../../api/friendAPI';
 
 // Utils
 import { getInitials } from '../../../../shared/utils/stringUtils';
@@ -26,6 +26,7 @@ const FriendCard = ({
   onActionComplete
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
@@ -37,6 +38,14 @@ const FriendCard = ({
     navigate(`/messages/${friend.id}`);
   };
 
+  const showToast = (message, severity = 'success') => {
+    setToast({ open: true, message, severity });
+  };
+
+  const handleCloseToast = () => {
+    setToast({ ...toast, open: false });
+  };
+
   const handleAccept = async (e) => {
     e.stopPropagation();
     if (isLoading || !requestId) return;
@@ -45,11 +54,14 @@ const FriendCard = ({
     try {
       const response = await acceptFriendRequest(requestId);
       if (response.success) {
+        showToast(`Đã chấp nhận lời mời kết bạn từ ${friend.fullName}`);
         if (onActionComplete) onActionComplete('accepted', requestId);
       } else {
+        showToast(response.error?.message || "Không thể chấp nhận lời mời", "error");
         console.error("Failed to accept request:", response.error);
       }
     } catch (error) {
+      showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
       console.error("Error accepting friend request:", error);
     } finally {
       setIsLoading(false);
@@ -64,12 +76,39 @@ const FriendCard = ({
     try {
       const response = await rejectFriendRequest(requestId);
       if (response.success) {
+        showToast(`Đã từ chối lời mời kết bạn từ ${friend.fullName}`);
         if (onActionComplete) onActionComplete('rejected', requestId);
       } else {
+        showToast(response.error?.message || "Không thể từ chối lời mời", "error");
         console.error("Failed to reject request:", response.error);
       }
     } catch (error) {
+      showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
       console.error("Error rejecting friend request:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = async (e) => {
+    e.stopPropagation();
+    if (isLoading || !requestId) return;
+    
+    if (!window.confirm("Bạn có chắc muốn hủy lời mời kết bạn?")) return;
+
+    setIsLoading(true);
+    try {
+      const response = await cancelFriendRequest(requestId);
+      if (response.success) {
+        showToast(`Đã hủy lời mời kết bạn đến ${friend.fullName}`);
+        if (onActionComplete) onActionComplete('cancelled', requestId);
+      } else {
+        showToast(response.error?.message || "Không thể hủy lời mời", "error");
+        console.error("Failed to cancel request:", response.error);
+      }
+    } catch (error) {
+      showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
+      console.error("Error cancelling friend request:", error);
     } finally {
       setIsLoading(false);
     }
@@ -85,11 +124,14 @@ const FriendCard = ({
     try {
       const response = await removeFriend(friend.id);
       if (response.success) {
+        showToast(`Đã hủy kết bạn với ${friend.fullName}`);
         if (onActionComplete) onActionComplete('removed', friend.id);
       } else {
+        showToast(response.error?.message || "Không thể hủy kết bạn", "error");
         console.error("Failed to remove friend:", response.error);
       }
     } catch (error) {
+      showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
       console.error("Error removing friend:", error);
     } finally {
       setIsLoading(false);
@@ -148,12 +190,24 @@ const FriendCard = ({
 
       case 'REQUEST_SENT':
         return (
-          <Chip 
-            label="Đã gửi lời mời" 
-            color="primary" 
-            variant="outlined" 
-            size="small" 
-          />
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Chip 
+              label="Đã gửi lời mời" 
+              color="primary" 
+              variant="outlined" 
+              size="small" 
+            />
+            <Tooltip title="Hủy lời mời">
+              <IconButton
+                color="error"
+                size="small"
+                onClick={handleCancel}
+                disabled={isLoading}
+              >
+                <CancelIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         );
 
       default:
@@ -162,42 +216,55 @@ const FriendCard = ({
   };
 
   return (
-    <FriendCardStyled onClick={handleViewProfile}>
-      <FriendCardHeader>
-        <CardMediaContainer>
-          {friend.profilePicture ? (
-            <CardMedia
-              component="img"
-              image={friend.profilePicture}
-              alt={friend.fullName}
-            />
-          ) : (
-            <Avatar sx={{ width: 50, height: 50 }}>
-              {getInitials(friend.fullName)}
-            </Avatar>
-          )}
-        </CardMediaContainer>
-        
-        <CardContent sx={{ flexGrow: 1, paddingBottom: 1 }}>
-          <FriendNameWrapper>
-            <Typography variant="h6" component="div">
-              {friend.fullName}
-            </Typography>
-            {friend.email && (
-              <Typography variant="body2" color="text.secondary">
-                {friend.email}
-              </Typography>
+    <>
+      <FriendCardStyled onClick={handleViewProfile}>
+        <FriendCardHeader>
+          <CardMediaContainer>
+            {friend.profilePicture ? (
+              <CardMedia
+                component="img"
+                image={friend.profilePicture}
+                alt={friend.fullName}
+              />
+            ) : (
+              <Avatar sx={{ width: 50, height: 50 }}>
+                {getInitials(friend.fullName)}
+              </Avatar>
             )}
-          </FriendNameWrapper>
-        </CardContent>
-      </FriendCardHeader>
+          </CardMediaContainer>
+          
+          <CardContent sx={{ flexGrow: 1, paddingBottom: 1 }}>
+            <FriendNameWrapper>
+              <Typography variant="h6" component="div">
+                {friend.fullName}
+              </Typography>
+              {friend.email && (
+                <Typography variant="body2" color="text.secondary">
+                  {friend.email}
+                </Typography>
+              )}
+            </FriendNameWrapper>
+          </CardContent>
+        </FriendCardHeader>
 
-      <FriendCardActions>
-        <Stack direction="row" spacing={1} alignItems="center">
-          {renderActions()}
-        </Stack>
-      </FriendCardActions>
-    </FriendCardStyled>
+        <FriendCardActions>
+          <Stack direction="row" spacing={1} alignItems="center">
+            {renderActions()}
+          </Stack>
+        </FriendCardActions>
+      </FriendCardStyled>
+      
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseToast} severity={toast.severity} sx={{ width: '100%' }}>
+          {toast.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 

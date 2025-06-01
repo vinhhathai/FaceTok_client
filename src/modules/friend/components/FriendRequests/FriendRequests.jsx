@@ -73,8 +73,6 @@ function FriendRequests({ requests, loading, error }) {
                 primary={request.sender.fullName}
                 secondary={
                   <span>
-                    {request.sender.email}
-                    <br />
                     {`Đã gửi lời mời kết bạn ${new Date(request.createdAt).toLocaleDateString()}`}
                   </span>
                 }

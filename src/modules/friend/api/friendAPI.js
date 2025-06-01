@@ -100,6 +100,22 @@ export const sendFriendRequest = async (recipientId) => {
 };
 
 /**
+ * Cancel a sent friend request
+ * @param {string} requestId - The ID of the friend request to cancel
+ * @returns {Promise} Promise with cancel result
+ */
+export const cancelFriendRequest = async (requestId) => {
+  try {
+    const response = await apiClient.delete('/friend/cancel-request', { 
+      data: { requestId } 
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+/**
  * Accept a friend request
  * @param {string} requestId - The ID of the friend request
  * @returns {Promise} Promise with accept result
