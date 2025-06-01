@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import styles from './Avatar.module.css';
 
 const Avatar = ({ src, alt, size = 'medium', ...props }) => {
-  const defaultAvatar = '/assets/images/avatar_default.jpg';
+  const defaultAvatar = '/assets/images/avatar_default.webp';
   
   const sizeClassMap = {
     small: styles.avatarSmall,
@@ -16,7 +16,7 @@ const Avatar = ({ src, alt, size = 'medium', ...props }) => {
   return (
     <MuiAvatar
       src={src || defaultAvatar}
-      alt={alt || 'User Avatar'}
+      alt={alt || 'Ảnh đại diện'}
       className={`${styles.avatar} ${sizeClassMap[size]}`}
       {...props}
     />

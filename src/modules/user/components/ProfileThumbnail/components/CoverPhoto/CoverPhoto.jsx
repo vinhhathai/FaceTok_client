@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { CircularProgress, Fab } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
@@ -11,7 +11,8 @@ import {
   UploadInput
 } from './CoverPhoto.styles';
 
-const DEFAULT_COVER_IMAGE = '/assets/images/cover_default.jpg';
+// Default cover image path
+const DEFAULT_COVER_IMAGE = '/assets/images/cover_default.webp';
 
 const CoverPhoto = ({
   imageRef,
@@ -24,8 +25,23 @@ const CoverPhoto = ({
   isMobile,
   onFileChange
 }) => {
-  // Display image with priority: current image > default
-  const displayImage = currentImageSrc || DEFAULT_COVER_IMAGE;
+  const [imgError, setImgError] = useState(false);
+  
+  // Handle image load error
+  const handleImageError = (e) => {
+    console.log('Cover photo load error:', e);
+    setImgError(true);
+    if (onImageError) {
+      onImageError(e);
+    }
+  };
+
+  // Determine which image to display
+  // 1. Use currentImageSrc if it exists and hasn't failed to load
+  // 2. Otherwise use default image
+  const displayImage = (!currentImageSrc || imgError || currentImageSrc.trim() === '') 
+    ? DEFAULT_COVER_IMAGE 
+    : currentImageSrc;
 
   return (
     <ProfileCover>
@@ -34,10 +50,11 @@ const CoverPhoto = ({
         src={displayImage}
         alt="Cover Photo"
         key={`thumbnail-${imageVersion}`} // Force re-render when image changes
-        onError={onImageError}
+        onError={handleImageError}
         style={{
           filter: isUploading ? 'blur(2px)' : 'none',
           transition: 'filter 0.3s ease-in-out',
+          backgroundColor: '#f0f2f5', // Light gray background for empty state
         }}
       />
       

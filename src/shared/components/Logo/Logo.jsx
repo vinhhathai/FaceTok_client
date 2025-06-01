@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import styles from './Logo.module.css';
 
 const Logo = ({ size = 'medium', showText = true, ...props }) => {
+  const [imgError, setImgError] = useState(false);
+  const logoPath = '/logo.webp'; // Logo is in the public root directory
+  const fallbackLogoPath = '/logo192.png'; // Fallback to React default logo if main logo fails
+  
   const sizeClassMap = {
     extraSmall: styles.logoImageExtraSmall,
     small: styles.logoImageSmall,
@@ -18,12 +22,18 @@ const Logo = ({ size = 'medium', showText = true, ...props }) => {
     large: styles.logoTextLarge,
   };
 
+  const handleImageError = () => {
+    console.log('Không thể tải hình logo, sử dụng ảnh thay thế');
+    setImgError(true);
+  };
+
   return (
     <div className={styles.logoContainer} {...props}>
       <img
-        src="/assets/logo.png"
-        alt="Chaotok Logo"
+        src={imgError ? fallbackLogoPath : logoPath}
+        alt="Logo Chaotok"
         className={`${styles.logoImage} ${sizeClassMap[size]}`}
+        onError={handleImageError}
       />
       {showText && (
         <Typography

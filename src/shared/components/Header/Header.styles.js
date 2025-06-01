@@ -65,17 +65,20 @@ export const SearchContainer = styled('div')(({ theme }) => ({
   },
   width: '100%',
   flexGrow: 1,
+  marginRight: theme.spacing(2),
+  zIndex: 900,
   [theme.breakpoints.up('sm')]: {
     minWidth: '220px',
-    maxWidth: '450px',
+    maxWidth: '320px',
   },
   [theme.breakpoints.up('md')]: {
     minWidth: '300px',
-    maxWidth: '500px',
+    maxWidth: '400px',
   },
   [theme.breakpoints.down('sm')]: {
     maxWidth: '100%',
     width: '95%',
+    marginRight: 0,
   }
 }));
 
@@ -157,4 +160,52 @@ export const avatarStyles = {
   flexShrink: 0,
   transition: 'all 0.2s ease',
   ml: { xs: 0.5, sm: 1 }
+};
+
+// Badge style
+export const badgeStyle = isMobile => ({
+  '& .MuiBadge-badge': { 
+    fontSize: isMobile ? 8 : 11, 
+    padding: isMobile ? '0 3px' : undefined 
+  }
+});
+
+// User avatar container style
+export const userAvatarContainerStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  ml: { xs: 0.5, sm: 1 },
+  cursor: 'pointer',
+  borderRadius: '50%',
+  transition: 'all 0.2s',
+  '&:hover': {
+    boxShadow: '0px 0px 8px rgba(0, 0, 0, 0.2)',
+  }
+};
+
+// User avatar style
+export const userAvatarStyle = {
+  width: { xs: 30, sm: 36, md: 40 },
+  height: { xs: 30, sm: 36, md: 40 },
+  bgcolor: 'primary.main'
+};
+
+// Menu paper props style
+export const menuPaperProps = {
+  elevation: 3,
+  sx: {
+    minWidth: 200,
+    mt: 1,
+    '& .MuiMenuItem-root': {
+      py: 1,
+    }
+  }
+};
+
+// Search container inline style
+export const searchContainerInlineStyle = { 
+  position: 'relative',
+  maxWidth: { xs: '100%', sm: 300, md: 350 },
+  marginRight: 2
 }; 

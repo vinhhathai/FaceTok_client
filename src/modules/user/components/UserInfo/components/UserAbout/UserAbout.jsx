@@ -178,8 +178,15 @@ const UserAbout = ({ user, displayRelationship, onEditProfile }) => {
             })
           }}
         >
-          <span>Email</span>
-          <strong>{user.email}</strong>
+         {
+          isOwner ? (
+            <>
+              <span>Email</span>
+              <strong>{user.email}</strong>
+            </>
+          ) : (
+            <span>{""}</span>
+          )}
         </Typography>
       </Box>
 

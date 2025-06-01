@@ -11,7 +11,7 @@ import {
 import { showSuccess, showError } from '../../../../../shared/utils/toastMessageUtils';
 
 // Default placeholder images
-const DEFAULT_COVER_IMAGE = '/assets/images/cover_default.jpg';
+const DEFAULT_COVER_IMAGE = '/assets/images/cover_default.svg';
 
 // Define constant toast ID to prevent duplicate toasts
 const THUMBNAIL_UPDATE_TOAST_ID = 'thumbnail-update-toast';
@@ -50,8 +50,12 @@ export const useThumbnailUpload = (user) => {
 
   // Initialize image on user change
   useEffect(() => {
-    if (user?.thumbnail) {
+    // Check if user has a valid thumbnail URL
+    const isValidThumbnail = user?.thumbnail && typeof user.thumbnail === 'string' && user.thumbnail.trim() !== '';
+    
+    if (isValidThumbnail) {
       setCurrentImageSrc(user.thumbnail);
+      setImgError(false); // Reset error state when setting a new image
     } else {
       setCurrentImageSrc(DEFAULT_COVER_IMAGE);
     }
@@ -62,7 +66,7 @@ export const useThumbnailUpload = (user) => {
       setOptimisticImage(null);
     }
     
-    originalImageRef.current = user?.thumbnail || null;
+    originalImageRef.current = isValidThumbnail ? user.thumbnail : null;
     forceRerender();
   }, [user?.id, user?.thumbnail, forceRerender]);
   
@@ -173,6 +177,7 @@ export const useThumbnailUpload = (user) => {
     const localImageUrl = URL.createObjectURL(file);
     setOptimisticImage(localImageUrl);
     setCurrentImageSrc(localImageUrl);
+    setImgError(false); // Reset error state when uploading a new image
     forceRerender();
     
     // Reset the processed flag when starting a new upload
@@ -189,7 +194,10 @@ export const useThumbnailUpload = (user) => {
   };
 
   const handleImageError = () => {
+    console.log('Image error in useThumbnailUpload hook');
     setImgError(true);
+    setCurrentImageSrc(DEFAULT_COVER_IMAGE);
+    
     if (imageElementRef.current) {
       imageElementRef.current.src = DEFAULT_COVER_IMAGE;
     }

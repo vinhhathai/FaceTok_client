@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Typography, CircularProgress } from '@mui/material';
 import {
@@ -8,6 +8,7 @@ import {
   AvatarHoverOverlay,
   UploadInput
 } from '../ProfileHeader.styles';
+const defaultAvatar = '/assets/images/avatar_default.webp';
 
 const ProfileAvatar = ({ 
   avatarSrc, 
@@ -17,11 +18,24 @@ const ProfileAvatar = ({
   handleAvatarChange, 
   isOwner 
 }) => {
+  const [imgError, setImgError] = useState(false);
+  
+  const handleImageError = () => {
+    console.log('Không thể tải ảnh đại diện, sử dụng ảnh mặc định');
+    setImgError(true);
+  };
+  
+  // Use default avatar if source is empty, null, or had an error
+  const displayImage = (!avatarSrc || avatarSrc.trim() === '' || imgError) 
+    ? defaultAvatar 
+    : avatarSrc;
+  
   return (
     <ProfileImageWrapper>
       <ProfileImage 
-        src={avatarSrc} 
+        src={displayImage}
         alt={userName}
+        onError={handleImageError}
         sx={{
           ...(isUploading && { 
             filter: 'blur(2px)',

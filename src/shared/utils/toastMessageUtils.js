@@ -72,7 +72,7 @@ export const clearAllToasts = () => {
  * @param {string} fallbackMessage - Fallback message if error doesn't contain specific message
  * @param {object} options - Toast configuration options
  */
-export const handleApiError = (error, fallbackMessage = 'An error occurred', options = {}) => {
+export const handleApiError = (error, fallbackMessage = 'Đã xảy ra lỗi', options = {}) => {
   let message = fallbackMessage;
   
   if (error) {

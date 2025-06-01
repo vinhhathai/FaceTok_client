@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import { uploadAvatar, selectUploadStatus, resetUploadStatus } from '../../../../../redux/slices/userSlice';
 import { showSuccess, showError } from '../../../../../../../shared/utils/toastMessageUtils';
 
-// Các hằng số
-const DEFAULT_AVATAR = "/assets/images/avatar_default.jpg";
+// Constants
+const DEFAULT_AVATAR = "/assets/images/avatar_default.webp";
 const AVATAR_UPDATE_TOAST_ID = 'avatar-update-toast';
 
 const useAvatarUpload = (user) => {
@@ -23,7 +23,7 @@ const useAvatarUpload = (user) => {
   
   // Update avatar URL when user changes
   useEffect(() => {
-    if (user?.profilePicture) {
+    if (user?.profilePicture && user.profilePicture.trim() !== '') {
       setAvatarSrc(user.profilePicture);
     } else {
       setAvatarSrc(DEFAULT_AVATAR);

@@ -5,7 +5,8 @@ const API_ENDPOINTS = {
   PROFILE: '/user/profile',
   UPLOAD_THUMBNAIL: '/user/upload-thumbnail',
   UPLOAD_AVATAR: '/user/upload-avatar',
-  UPDATE_FULLNAME: '/user/update-fullname'
+  UPDATE_FULLNAME: '/user/update-fullname',
+  SEARCH: '/user/search'
 };
 
 const userApi = {
@@ -228,6 +229,28 @@ const userApi = {
         message: error.message || 'Failed to update fullname',
         status: 500
       };
+    }
+  },
+
+  /**
+   * Search for users by keyword
+   * @param {string} query - Search keyword
+   * @param {object} params - Pagination parameters
+   * @returns {Promise} - Promise containing search results
+   */
+  searchUsers: async (query, params = { page: 1, limit: 10 }) => {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.SEARCH, { 
+        params: { 
+          query,
+          page: params.page, 
+          limit: params.limit 
+        } 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Search API error:', error);
+      throw error;
     }
   }
 };
