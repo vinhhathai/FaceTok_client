@@ -158,6 +158,13 @@ const NameEditModal = ({ isOpen, onClose, user }) => {
       return;
     }
 
+    if (newName.trim().length > 30) {
+      const errorMsg = "Tên không được vượt quá 30 ký tự";
+      setLocalError(errorMsg);
+      safeShowError(errorMsg);
+      return;
+    }
+
     try {
       setIsUpdatingName(true);
       setLocalError(null);

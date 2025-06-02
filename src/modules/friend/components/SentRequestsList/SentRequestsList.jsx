@@ -9,7 +9,6 @@ import {
   Typography, 
   CircularProgress,
   Button,
-  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,6 +19,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../../../../shared/components/Avatar';
 import { FriendListContainer, FriendCard, FriendActionButtons } from '../FriendList/FriendList.styles';
+import { CancelRequestButton } from './SentRequestsList.styles';
 
 function SentRequestsList({ requests, loading, error, onCancelRequest }) {
   const navigate = useNavigate();
@@ -105,15 +105,15 @@ function SentRequestsList({ requests, loading, error, onCancelRequest }) {
                     secondary={recipient.email || 'Đã gửi lời mời kết bạn'}
                   />
                   <FriendActionButtons>
-                    <Button
+                    <CancelRequestButton
                       variant="outlined"
                       color="error"
                       size="small"
                       onClick={(e) => handleCancelRequest(requestId, e)}
-                      startIcon={<CancelIcon />}
+                      startIcon={<CancelIcon fontSize="small" />}
                     >
                       Hủy lời mời
-                    </Button>
+                    </CancelRequestButton>
                   </FriendActionButtons>
                 </ListItem>
               </FriendCard>

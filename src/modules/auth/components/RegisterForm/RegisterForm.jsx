@@ -44,6 +44,8 @@ const RegisterForm = () => {
       newErrors.username = 'Tên người dùng là bắt buộc';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Tên người dùng phải có ít nhất 3 ký tự';
+    } else if (formData.username.length > 30) {
+      newErrors.username = 'Tên người dùng không được vượt quá 30 ký tự';
     }
     
     if (!formData.email) {

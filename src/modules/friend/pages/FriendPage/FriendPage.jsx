@@ -102,7 +102,7 @@ function FriendPage() {
             textColor="primary"
             indicatorColor="primary"
           >
-            <Tab label="BẠN BÈ" {...a11yProps(0)} sx={{ 
+            <Tab label={`BẠN BÈ (${friends.data.length || 0})`} {...a11yProps(0)} sx={{ 
               fontWeight: tabValue === 0 ? 'bold' : 'normal',
               color: tabValue === 0 ? 'primary.main' : 'text.secondary',
             }} />
