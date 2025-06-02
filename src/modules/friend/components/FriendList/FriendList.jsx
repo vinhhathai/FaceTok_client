@@ -1,20 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { List, ListItem, ListItemAvatar, ListItemText, Avatar, IconButton, Box, Typography, CircularProgress } from '@mui/material';
+import { List, ListItem, ListItemAvatar, ListItemText, IconButton, Box, Typography, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MessageIcon from '@mui/icons-material/Message';
 import { deleteFriend } from '../../redux';
 import { useNavigate } from 'react-router-dom';
 import { FriendListContainer, FriendCard, FriendActionButtons } from './FriendList.styles';
+import Avatar from '../../../../shared/components/Avatar/Avatar';
 
 function FriendList({ friends, loading, error }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedFriendId, setSelectedFriendId] = useState(null);
+  const [selectedFriendName, setSelectedFriendName] = useState('');
 
-  const handleDeleteFriend = (friendId) => {
-    if (window.confirm('Bạn có chắc muốn xóa người bạn này?')) {
-      dispatch(deleteFriend(friendId));
+  const handleDeleteFriend = (friendId, friendName) => {
+    setSelectedFriendId(friendId);
+    setSelectedFriendName(friendName);
+    setConfirmDialogOpen(true);
+  };
+  
+  const handleConfirmDelete = () => {
+    if (selectedFriendId) {
+      dispatch(deleteFriend(selectedFriendId));
     }
+    setConfirmDialogOpen(false);
+  };
+  
+  const handleCloseDialog = () => {
+    setConfirmDialogOpen(false);
   };
 
   const handleMessageFriend = (friendId) => {
@@ -50,60 +65,91 @@ function FriendList({ friends, loading, error }) {
   }
 
   return (
-    <FriendListContainer>
-      <List>
-        {friends.map((friend) => (
-          <FriendCard 
-            key={friend.id || friend._id} 
-            elevation={1}
-            sx={{ cursor: 'pointer' }}
-            onClick={(e) => {
-              // Only navigate if the click was not on one of the action buttons
-              if (!e.defaultPrevented) {
-                navigateToProfile(friend.id || friend._id);
-              }
-            }}
-          >
-            <ListItem>
-              <ListItemAvatar>
-                <Avatar 
-                  alt={friend.fullName} 
-                  src={friend.profilePicture || '/assets/default-avatar.png'}
-                />
-              </ListItemAvatar>
-              <ListItemText
-                primary={friend.fullName}
-                secondary={friend.email || friend.bio || 'Người dùng FaceTok'}
-              />
-              <FriendActionButtons>
-                <IconButton 
-                  edge="end" 
-                  aria-label="message" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleMessageFriend(friend.id || friend._id);
-                  }}
-                  color="primary"
-                >
-                  <MessageIcon />
-                </IconButton>
-                <IconButton 
-                  edge="end" 
-                  aria-label="delete" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleDeleteFriend(friend.id || friend._id);
-                  }}
-                  color="error"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </FriendActionButtons>
-            </ListItem>
-          </FriendCard>
-        ))}
-      </List>
-    </FriendListContainer>
+    <>
+      <FriendListContainer>
+        <List>
+          {friends.map((friend) => {
+            const friendId = friend.id || friend._id;
+            
+            return (
+              <FriendCard 
+                key={friendId} 
+                elevation={1}
+                sx={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  // Only navigate if the click was not on one of the action buttons
+                  if (!e.defaultPrevented) {
+                    navigateToProfile(friendId);
+                  }
+                }}
+              >
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar 
+                      alt={friend.fullName} 
+                      src={friend.profilePicture || '/assets/default-avatar.png'}
+                    />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={friend.fullName}
+                    secondary={friend.email || friend.bio || 'Người dùng FaceTok'}
+                  />
+                  <FriendActionButtons>
+                    <IconButton 
+                      edge="end" 
+                      aria-label="message" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleMessageFriend(friendId);
+                      }}
+                      color="primary"
+                    >
+                      <MessageIcon />
+                    </IconButton>
+                    <IconButton 
+                      edge="end" 
+                      aria-label="delete" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDeleteFriend(friendId, friend.fullName);
+                      }}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </FriendActionButtons>
+                </ListItem>
+              </FriendCard>
+            );
+          })}
+        </List>
+      </FriendListContainer>
+
+      {/* Modal xác nhận xóa bạn */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleCloseDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          Xác nhận xóa bạn bè
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Bạn có chắc muốn xóa {selectedFriendName} khỏi danh sách bạn bè?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Hủy
+          </Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained" autoFocus>
+            Xác nhận
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
