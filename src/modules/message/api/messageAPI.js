@@ -1,72 +1,92 @@
 import { apiClient } from '../../../shared/httpClient';
 
+// Get token from local storage
+const getToken = () => localStorage.getItem('token') || '';
+
 /**
- * Get all conversations for the current user
- * @returns {Promise} Promise with conversations data
+ * Get recent conversations for the current user
+ * @returns {Promise} Promise resolving to array of conversations
  */
-export const getConversations = async () => {
+export const getRecentConversations = async () => {
   try {
-    const response = await apiClient.get('/api/conversations');
+    const response = await apiClient.get('/message/conversations');
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get conversation with specific user
+ * @param {string} userId - ID of the user to get conversation with
+ * @returns {Promise} Promise resolving to conversation data
+ */
+export const getConversation = async (userId) => {
+  try {
+    const response = await apiClient.get(`/message/conversation/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get count of unread messages
+ * @returns {Promise} Promise resolving to count of unread messages
+ */
+export const getUnreadCount = async () => {
+  try {
+    const response = await apiClient.get('/message/unread/count');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    throw error;
   }
 };
 
 /**
  * Get messages for a specific conversation
- * @param {string} conversationId - The ID of the conversation
- * @param {Object} params - Query parameters like page, limit
- * @returns {Promise} Promise with messages data
+ * @param {string} conversationId - ID of the conversation
+ * @returns {Promise} Promise resolving to array of messages
  */
-export const getMessages = async (conversationId, params = {}) => {
+export const getMessages = async (conversationId) => {
   try {
-    const response = await apiClient.get(`/api/conversations/${conversationId}/messages`, { params });
+    const response = await apiClient.get(`/message/messages/${conversationId}`);
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    console.error('Error fetching messages:', error);
+    throw error;
   }
 };
 
 /**
- * Send a new message in a conversation
- * @param {string} conversationId - The ID of the conversation
- * @param {Object} messageData - The message data (content, attachments, etc)
- * @returns {Promise} Promise with the created message
+ * Send a new message
+ * @param {Object} messageData - Contains receiverId and message content
+ * @returns {Promise} Promise resolving to the sent message
  */
-export const sendMessage = async (conversationId, messageData) => {
+export const sendMessage = async (messageData) => {
   try {
-    const response = await apiClient.post(`/api/conversations/${conversationId}/messages`, messageData);
+    const response = await apiClient.post('/message/messages', messageData);
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    console.error('Error sending message:', error);
+    throw error;
   }
 };
 
 /**
- * Create a new conversation
- * @param {Object} conversationData - The conversation data (participants, title, etc)
- * @returns {Promise} Promise with the created conversation
+ * Mark a message as read
+ * @param {string} messageId - ID of the message to mark as read
+ * @returns {Promise} Promise resolving to updated message
  */
-export const createConversation = async (conversationData) => {
+export const markAsRead = async (messageId) => {
   try {
-    const response = await apiClient.post('/api/conversations', conversationData);
+    const response = await apiClient.put(`/message/read/${messageId}`, {});
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-/**
- * Mark messages as read
- * @param {string} conversationId - The ID of the conversation
- * @returns {Promise} Promise with the result
- */
-export const markAsRead = async (conversationId) => {
-  try {
-    const response = await apiClient.put(`/api/conversations/${conversationId}/read`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
+    console.error('Error marking message as read:', error);
+    throw error;
   }
 }; 

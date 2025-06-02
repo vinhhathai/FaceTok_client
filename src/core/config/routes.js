@@ -29,6 +29,10 @@ const ProfilePage = lazy(() => import('../../modules/user/pages/ProfilePage/Prof
 // Friend pages
 const FriendPage = lazy(() => import('../../modules/friend/pages/FriendPage/FriendPage'));
 
+// Message pages
+const MessageIndexPage = lazy(() => import('../../modules/message/pages/MessageIndexPage/MessageIndexPage'));
+const ChatPage = lazy(() => import('../../modules/message/pages/ChatPage/ChatPage'));
+
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>
     <Component />
@@ -70,6 +74,16 @@ export const routes = [
   {
     path: '/friends',
     element: withSuspense(FriendPage),
+  },
+  
+  // Message Routes
+  {
+    path: '/messages',
+    element: withSuspense(MessageIndexPage),
+  },
+  {
+    path: '/messages/:conversationId',
+    element: withSuspense(ChatPage),
   },
   
   // Default redirect

@@ -12,7 +12,7 @@ export const store = configureStore({
     auth: authReducer,
     posts: postsReducer,
     friend: friendReducer,
-    message: messageReducer,
+    ...messageReducer,
     notification: notificationReducer,
     post: postDetailReducer,
     ...userReducers,
@@ -27,3 +27,8 @@ export const store = configureStore({
       },
     }),
 });
+
+// Make store available in window object for mock socket access
+if (typeof window !== 'undefined') {
+  window.store = store;
+}

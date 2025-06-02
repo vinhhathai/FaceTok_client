@@ -31,7 +31,7 @@ const NavButtons = () => {
     <>
       <Tooltip title="Trang chủ">
         <IconButton
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           sx={iconButtonStyles(theme)}
           aria-label="Trang chủ"
         >
@@ -65,6 +65,7 @@ const NavButtons = () => {
       
       <Tooltip title="Tin nhắn">
         <IconButton 
+          onClick={() => navigate('/messages')}
           sx={iconButtonStyles(theme)}
           aria-label="Tin nhắn"
         >
