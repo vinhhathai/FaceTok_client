@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUnreadCount } from '../../redux/slices/conversationSlice';
 import useMessageSocket from '../../hooks/useMessageSocket';
 import MessageLayout from '../../../../shared/components/Layout/MessageLayout';
 import ConversationList from '../../components/ConversationList/ConversationList';
 import ChatBox from '../../components/ChatBox/ChatBox';
-import { conversations } from '../../mock/mockData';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { setCurrentConversation } from '../../redux/slices/messageSlice';
 import {
   PageContainer,
   MessageGridContainer,
@@ -26,22 +25,24 @@ const MessageIndexPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [mobileView, setMobileView] = useState('list'); // 'list' or 'chat'
-  const { loading } = useSelector(state => state.conversations);
+  const { loading, conversations } = useSelector(state => state.conversations);
   
   // Initialize WebSocket connection
   useMessageSocket();
   
-  // Fetch unread count on mount
+  // Auto-select first conversation for desktop
   useEffect(() => {
-    dispatch(fetchUnreadCount());
-    
     // Auto-select first conversation for desktop only
-    if (!loading && conversations.length > 0 && !selectedConversation && !isMobile) {
+    if (!loading && conversations && conversations.length > 0 && !selectedConversation && !isMobile) {
+      const firstConversation = conversations[0];
+      console.log('Auto-selecting first conversation:', firstConversation);
       setTimeout(() => {
-        setSelectedConversation(conversations[0]);
+        setSelectedConversation(firstConversation);
+        // Cập nhật currentConversation trong Redux store
+        dispatch(setCurrentConversation(firstConversation));
       }, 500);
     }
-  }, [dispatch, loading, selectedConversation, isMobile]);
+  }, [loading, conversations, selectedConversation, isMobile, dispatch]);
 
   // Reset view when screen size changes
   useEffect(() => {
@@ -54,11 +55,31 @@ const MessageIndexPage = () => {
       // Otherwise show list view
       setMobileView('list');
     }
-  }, [isMobile]);
+  }, [isMobile, selectedConversation]);
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
+    console.log('Selected conversation before dispatch:', conversation);
+    
+    // Kiểm tra cấu trúc participant
+    if (conversation && conversation.participant) {
+      console.log('Participant structure:', conversation.participant);
+      
+      // Kiểm tra ID
+      const participantId = conversation.participant._id || conversation.participant.id;
+      if (!participantId) {
+        console.error('Missing participant ID - please check conversation structure');
+      } else {
+        console.log('Found participant ID:', participantId);
+      }
+    } else {
+      console.error('Missing participant in conversation');
+    }
+    
     setSelectedConversation(conversation);
+    
+    // Cập nhật currentConversation trong Redux store
+    dispatch(setCurrentConversation(conversation));
     
     // In mobile, switch to chat view when selecting a conversation
     if (isMobile) {

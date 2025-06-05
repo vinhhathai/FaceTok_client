@@ -52,29 +52,21 @@ export const getConversation = async (userId) => {
 };
 
 /**
- * Get count of unread messages
- * @returns {Promise} Promise resolving to count of unread messages
- */
-export const getUnreadCount = async () => {
-  try {
-    const response = await apiClient.get('/message/unread/count');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching unread count:', error);
-    throw error;
-  }
-};
-
-/**
  * Get messages for a specific conversation
- * @param {string} conversationId - ID of the conversation
+ * @param {string} roomId - ID of the room
  * @returns {Promise} Promise resolving to array of messages
  */
 export const getMessages = async (roomId) => {
   try {
-    // In the new API structure, messages are part of room details
-    // so we use the room details endpoint
-    const response = await apiClient.get(`/message/room/${roomId}`);
+    // Check if roomId is a MongoDB ObjectId (24 hex chars)
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(roomId);
+    
+    // Use the appropriate endpoint based on ID format
+    const endpoint = isValidObjectId 
+      ? `/message/room/id/${roomId}` // New endpoint for valid MongoDB ObjectId
+      : `/message/room/${roomId}`;    // Old endpoint for other formats (for backward compatibility)
+    
+    const response = await apiClient.get(endpoint);
     
     // Return messages array if available in the response
     if (response.data && response.data.data && response.data.data.messages) {
@@ -103,21 +95,6 @@ export const sendMessage = async (messageData) => {
     return response.data;
   } catch (error) {
     console.error('Error sending message:', error);
-    throw error;
-  }
-};
-
-/**
- * Mark a message as read
- * @param {string} roomId - ID of the room to mark messages as read
- * @returns {Promise} Promise resolving to updated message
- */
-export const markAsRead = async (roomId) => {
-  try {
-    const response = await apiClient.put(`/message/room/${roomId}/read`, {});
-    return response.data;
-  } catch (error) {
-    console.error('Error marking message as read:', error);
     throw error;
   }
 }; 

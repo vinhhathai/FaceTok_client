@@ -13,6 +13,25 @@ import {
   ReadStatusContainer
 } from './MessageItem.styles';
 
+// Hàm helper để trích xuất senderId từ message
+const extractSenderId = (message) => {
+  if (!message) return null;
+  
+  // Handle different formats of senderId
+  if (typeof message.senderId === 'string') {
+    return message.senderId;
+  } else if (typeof message.senderId === 'object' && message.senderId !== null) {
+    return message.senderId._id || message.senderId.id || JSON.stringify(message.senderId);
+  } else if (message.sender) {
+    if (typeof message.sender === 'string') {
+      return message.sender;
+    }
+    return message.sender._id || message.sender.id || JSON.stringify(message.sender);
+  }
+  
+  return null;
+};
+
 const MessageItem = ({ message, isOwn }) => {
   // Format the time
   const formatTime = (timestamp) => {
@@ -28,9 +47,12 @@ const MessageItem = ({ message, isOwn }) => {
   
   const sender = getSender();
 
+  // Sử dụng logic chính xác hơn để xác định tin nhắn là của mình
+  const shouldBeOwn = message.isFromCurrentUser === true || isOwn;
+
   return (
-    <MessageContainer isOwn={isOwn}>
-      {!isOwn && (
+    <MessageContainer isOwn={shouldBeOwn}>
+      {!shouldBeOwn && (
         <SenderAvatar
           src={sender.avatar}
           alt={sender.fullName || 'User'}
@@ -40,19 +62,19 @@ const MessageItem = ({ message, isOwn }) => {
       <MessageContentWrapper>
         <MessageBubble
           elevation={0}
-          isOwn={isOwn}
+          isOwn={shouldBeOwn}
         >
           <Typography variant="body1">{message.content}</Typography>
         </MessageBubble>
 
-        <MessageInfoContainer isOwn={isOwn}>
+        <MessageInfoContainer isOwn={shouldBeOwn}>
           <TimeText
             variant="caption"
           >
             {formatTime(message.createdAt)}
           </TimeText>
 
-          {isOwn && (
+          {shouldBeOwn && (
             <ReadStatusContainer>
               {message.isRead ? (
                 <DoneAllIcon color="primary" sx={{ fontSize: '0.8rem' }} />

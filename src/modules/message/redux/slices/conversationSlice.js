@@ -1,46 +1,53 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // import { conversations } from '../../mock/mockData';
-import { getRecentConversations, getUnreadCount } from '../../api/messageAPI';
+import { getRecentConversations } from '../../api/messageAPI';
+import { adaptRoomsToConversations } from '../../adapters/conversationAdapter';
 
-// Async thunks with real API calls
+// Async thunk để lấy danh sách cuộc trò chuyện
 export const fetchConversations = createAsyncThunk(
   'conversation/fetchConversations',
   async (_, { rejectWithValue }) => {
     try {
       const response = await getRecentConversations();
+      console.log('API response for conversations:', response);
+      
+      let rooms = [];
+      
+      // Xử lý dữ liệu trả về từ API
+      if (response.data && Array.isArray(response.data)) {
+        rooms = response.data;
+      } else if (response.data && Array.isArray(response.data.rooms)) {
+        rooms = response.data.rooms;
+      } else if (response.data && response.data.data && Array.isArray(response.data.data.rooms)) {
+        rooms = response.data.data.rooms;
+      }
+      
+      console.log('Parsed rooms from API:', rooms);
+      
+      // Lấy currentUserId từ localStorage
+      const currentUserId = localStorage.getItem('currentUserId');
+      
+      if (!currentUserId) {
+        console.error('No currentUserId found in localStorage');
+      }
+      
+      // Chuẩn hóa dữ liệu
+      const conversations = adaptRoomsToConversations(rooms, currentUserId);
+      console.log('Normalized conversations:', conversations);
+      
       return {
         success: true,
-        // Check for the correct data structure in the API response
-        data: response.data && Array.isArray(response.data) 
-          ? response.data 
-          : (response.data && Array.isArray(response.data.rooms) 
-              ? response.data.rooms 
-              : [])
+        data: conversations
       };
     } catch (error) {
+      console.error('Error fetching conversations:', error);
       return rejectWithValue(error.message || "Failed to fetch conversations");
-    }
-  }
-);
-
-export const fetchUnreadCount = createAsyncThunk(
-  'conversation/fetchUnreadCount',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await getUnreadCount();
-      return {
-        success: true,
-        data: response.data || { count: 0 }
-      };
-    } catch (error) {
-      return rejectWithValue(error.message || "Failed to fetch unread count");
     }
   }
 );
 
 const initialState = {
   conversations: [],
-  unreadCount: 0,
   loading: false,
   error: null
 };
@@ -50,7 +57,7 @@ const conversationSlice = createSlice({
   initialState,
   reducers: {
     updateConversationLastMessage(state, action) {
-      // Update conversation after new message is sent or received
+      // Cập nhật cuộc trò chuyện sau khi tin nhắn được gửi hoặc nhận
       const { conversationId, message } = action.payload;
       const existingConversation = state.conversations.find(
         conv => conv._id === conversationId
@@ -60,16 +67,12 @@ const conversationSlice = createSlice({
         existingConversation.lastMessage = message;
         existingConversation.updatedAt = new Date().toISOString();
         
-        // If message is unread, increment unread count
-        if (!message.isRead && message.senderId !== localStorage.getItem('currentUserId')) {
-          existingConversation.unreadCount = (existingConversation.unreadCount || 0) + 1;
-          state.unreadCount += 1;
-        }
-        
-        // Re-sort conversations by updatedAt
+        // Sắp xếp lại cuộc trò chuyện theo thời gian cập nhật
         state.conversations.sort((a, b) => 
           new Date(b.updatedAt) - new Date(a.updatedAt)
         );
+      } else {
+        console.warn('Conversation not found for update:', conversationId);
       }
     },
     markConversationAsRead(state, action) {
@@ -79,7 +82,6 @@ const conversationSlice = createSlice({
       );
       
       if (existingConversation && existingConversation.unreadCount) {
-        state.unreadCount -= existingConversation.unreadCount;
         existingConversation.unreadCount = 0;
         
         if (existingConversation.lastMessage) {
@@ -98,20 +100,11 @@ const conversationSlice = createSlice({
       .addCase(fetchConversations.fulfilled, (state, action) => {
         state.loading = false;
         state.conversations = action.payload.data || [];
-        // Count total unread messages
-        state.unreadCount = state.conversations.reduce(
-          (count, conv) => count + (conv.unreadCount || 0), 0
-        );
       })
       .addCase(fetchConversations.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch conversations';
       })
-      
-      // fetchUnreadCount
-      .addCase(fetchUnreadCount.fulfilled, (state, action) => {
-        state.unreadCount = action.payload.data.count;
-      });
   }
 });
 

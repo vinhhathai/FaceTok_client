@@ -31,4 +31,19 @@ export const DateDisplay = styled(Box)(({ theme }) => ({
   backgroundColor: 'rgba(0, 0, 0, 0.04)',
   fontSize: '0.75rem',
   color: theme.palette.text.secondary
+}));
+
+// Container khi không có tin nhắn
+export const EmptyMessageContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  height: 200,
+  color: theme.palette.text.secondary,
+  fontStyle: 'italic',
+  textAlign: 'center',
+  borderRadius: 8,
+  backgroundColor: theme.palette.background.paper,
+  margin: '10px 0',
+  padding: 20
 })); 

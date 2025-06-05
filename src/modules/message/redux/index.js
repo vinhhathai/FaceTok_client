@@ -1,7 +1,6 @@
 import messageReducer, {
   fetchMessages,
   sendMessage,
-  markMessageAsRead,
   setCurrentConversation,
   clearCurrentConversation,
   addReceivedMessage
@@ -9,7 +8,6 @@ import messageReducer, {
 
 import conversationReducer, {
   fetchConversations,
-  fetchUnreadCount,
   updateConversationLastMessage,
   markConversationAsRead
 } from './slices/conversationSlice';
@@ -19,14 +17,12 @@ export {
   // Message actions
   fetchMessages,
   sendMessage,
-  markMessageAsRead,
   setCurrentConversation,
   clearCurrentConversation,
   addReceivedMessage,
   
   // Conversation actions
   fetchConversations,
-  fetchUnreadCount,
   updateConversationLastMessage,
   markConversationAsRead
 };
