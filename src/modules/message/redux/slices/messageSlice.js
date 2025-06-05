@@ -1,23 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { allMessages, currentUserId } from '../../mock/mockData';
-// We'll keep the imports but won't use them until the API is ready
-// import { getMessages, sendMessage as sendMessageApi, markAsRead } from '../../api';
+// import { allMessages, currentUserId } from '../../mock/mockData';
+// We'll use the real API now
+import { getMessages, sendMessage as sendMessageApi, markAsRead } from '../../api/messageAPI';
 
-// Async thunks with mock data
+// Async thunks with real API calls
 export const fetchMessages = createAsyncThunk(
   'message/fetchMessages',
-  async (conversationId, { rejectWithValue }) => {
+  async (roomId, { rejectWithValue }) => {
     try {
-      // Simulate API delay - khi demo giảm delay xuống để thấy tin nhắn nhanh hơn
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Return mock data from our mock data file
+      const response = await getMessages(roomId);
       return {
         success: true,
-        data: allMessages[conversationId] || []
+        data: response
       };
     } catch (error) {
-      return rejectWithValue("Failed to fetch messages");
+      return rejectWithValue(error.message || "Failed to fetch messages");
     }
   }
 );
@@ -26,42 +23,34 @@ export const sendMessage = createAsyncThunk(
   'message/sendMessage',
   async (messageData, { rejectWithValue }) => {
     try {
-      // Simulate API delay - giảm delay khi demo
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Create a new message with mock data
-      const newMessage = {
-        _id: `msg_${Date.now()}`,
-        conversationId: messageData.conversationId || messageData.receiverId,
-        content: messageData.content,
-        senderId: currentUserId,
-        createdAt: new Date().toISOString(),
-        isRead: false
-      };
-      
+      const response = await sendMessageApi(messageData);
+      const messageResponse = response.data && response.data.message 
+        ? response.data.message 
+        : (response.data && response.data.data && response.data.data.message 
+          ? response.data.data.message 
+          : response.data);
+          
       return {
         success: true,
-        data: newMessage
+        data: messageResponse
       };
     } catch (error) {
-      return rejectWithValue("Failed to send message");
+      return rejectWithValue(error.message || "Failed to send message");
     }
   }
 );
 
 export const markMessageAsRead = createAsyncThunk(
   'message/markAsRead',
-  async (messageId, { rejectWithValue }) => {
+  async (roomId, { rejectWithValue }) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      const response = await markAsRead(roomId);
       return {
         success: true,
-        data: { _id: messageId, isRead: true }
+        data: response.data
       };
     } catch (error) {
-      return rejectWithValue("Failed to mark message as read");
+      return rejectWithValue(error.message || "Failed to mark message as read");
     }
   }
 );
@@ -80,25 +69,28 @@ const messageSlice = createSlice({
   reducers: {
     setCurrentConversation(state, action) {
       state.currentConversation = action.payload;
-      
-      // Tự động tải tin nhắn từ dữ liệu mẫu khi chọn hội thoại
-      if (action.payload && action.payload._id) {
-        const conversationId = action.payload._id;
-        state.messages = allMessages[conversationId] || [];
-      } else {
-        state.messages = [];
-      }
+      // Don't auto-load messages here anymore, we'll use the fetchMessages thunk
+      state.messages = [];
     },
     clearCurrentConversation(state) {
       state.currentConversation = null;
       state.messages = [];
     },
     addReceivedMessage(state, action) {
-      // Handle incoming message from socket
+      // Handle incoming message from socket - ensure we have a proper format
+      const message = action.payload.message || action.payload;
+      
+      // Make sure we're only adding messages to the current conversation
       if (state.currentConversation && 
-          (action.payload.senderId === state.currentConversation.participant._id || 
-           action.payload.conversationId === state.currentConversation._id)) {
-        state.messages.push(action.payload);
+          ((message.senderId === state.currentConversation.participant._id) || 
+           (message.roomId === state.currentConversation._id) ||
+           (message.room && message.room._id === state.currentConversation._id))) {
+        
+        // Check if message already exists to avoid duplicates
+        const messageExists = state.messages.some(m => m._id === message._id);
+        if (!messageExists) {
+          state.messages.push(message);
+        }
       }
     }
   },
@@ -125,7 +117,13 @@ const messageSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.sending = false;
-        state.messages.push(action.payload.data);
+        
+        // Only add message if it's not already in the list
+        const newMessage = action.payload.data;
+        const messageExists = state.messages.some(m => m._id === newMessage._id);
+        if (!messageExists) {
+          state.messages.push(newMessage);
+        }
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.sending = false;
@@ -135,9 +133,11 @@ const messageSlice = createSlice({
       // markMessageAsRead
       .addCase(markMessageAsRead.fulfilled, (state, action) => {
         const updatedMessage = action.payload.data;
-        const index = state.messages.findIndex(msg => msg._id === updatedMessage._id);
-        if (index !== -1) {
-          state.messages[index].isRead = true;
+        if (updatedMessage && updatedMessage._id) {
+          const index = state.messages.findIndex(msg => msg._id === updatedMessage._id);
+          if (index !== -1) {
+            state.messages[index].isRead = true;
+          }
         }
       });
   }

@@ -1,7 +1,26 @@
 import { apiClient } from '../../../shared/httpClient';
+import { getCookie } from '../../../shared/utils/cookieUtils';
 
-// Get token from local storage
-const getToken = () => localStorage.getItem('token') || '';
+// Get token from cookie
+const TOKEN_COOKIE_NAME = 'auth_token';
+const getToken = () => getCookie(TOKEN_COOKIE_NAME) || '';
+
+/**
+ * Create or get private chat room between two users
+ * @param {string} targetUserId - ID of the user to chat with
+ * @returns {Promise} Promise resolving to the created/existing room
+ */
+export const createPrivateRoom = async (targetUserId) => {
+  try {
+    const response = await apiClient.post('/message/room/private/create', {
+      targetUserId: targetUserId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating private room:', error);
+    throw error;
+  }
+};
 
 /**
  * Get recent conversations for the current user
@@ -9,7 +28,7 @@ const getToken = () => localStorage.getItem('token') || '';
  */
 export const getRecentConversations = async () => {
   try {
-    const response = await apiClient.get('/message/conversations');
+    const response = await apiClient.get('/message/rooms');
     return response.data;
   } catch (error) {
     console.error('Error fetching conversations:', error);
@@ -24,7 +43,7 @@ export const getRecentConversations = async () => {
  */
 export const getConversation = async (userId) => {
   try {
-    const response = await apiClient.get(`/message/conversation/${userId}`);
+    const response = await apiClient.get(`/message/room/${userId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching conversation:', error);
@@ -51,10 +70,22 @@ export const getUnreadCount = async () => {
  * @param {string} conversationId - ID of the conversation
  * @returns {Promise} Promise resolving to array of messages
  */
-export const getMessages = async (conversationId) => {
+export const getMessages = async (roomId) => {
   try {
-    const response = await apiClient.get(`/message/messages/${conversationId}`);
-    return response.data;
+    // In the new API structure, messages are part of room details
+    // so we use the room details endpoint
+    const response = await apiClient.get(`/message/room/${roomId}`);
+    
+    // Return messages array if available in the response
+    if (response.data && response.data.data && response.data.data.messages) {
+      return response.data.data.messages;
+    } else if (response.data && response.data.data && response.data.data.room) {
+      // If the room has an array of messages, return those
+      return response.data.data.room.messages || [];
+    }
+    
+    // Return empty array if messages not available
+    return [];
   } catch (error) {
     console.error('Error fetching messages:', error);
     throw error;
@@ -78,12 +109,12 @@ export const sendMessage = async (messageData) => {
 
 /**
  * Mark a message as read
- * @param {string} messageId - ID of the message to mark as read
+ * @param {string} roomId - ID of the room to mark messages as read
  * @returns {Promise} Promise resolving to updated message
  */
-export const markAsRead = async (messageId) => {
+export const markAsRead = async (roomId) => {
   try {
-    const response = await apiClient.put(`/message/read/${messageId}`, {});
+    const response = await apiClient.put(`/message/room/${roomId}/read`, {});
     return response.data;
   } catch (error) {
     console.error('Error marking message as read:', error);

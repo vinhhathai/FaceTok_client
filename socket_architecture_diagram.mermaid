@@ -1,0 +1,42 @@
+flowchart TD
+    A[Client-Side Socket Implementation] --> B[useMessageSocket Hook]
+    
+    B --> C[Socket Connection]
+    B --> D[Event Listeners]
+    B --> E[Room Management]
+    
+    C --> C1[Connect to Server]
+    C --> C2[Authentication via Token]
+    C --> C3[Handle Connection Events]
+    
+    D --> D1[Listen for 'message' Events]
+    D --> D2[Listen for 'room-created' Events]
+    D --> D3[Listen for 'room-messages' Events]
+    
+    E --> E1[Join Room on Conversation Change]
+    E --> E2[Send Messages to Room]
+    
+    F[Redux Integration] --> G[messageSlice]
+    F --> H[conversationSlice]
+    
+    G --> G1[Real API Calls]
+    G --> G2[Handle Socket Messages]
+    
+    H --> H1[Fetch Conversations]
+    H --> H2[Update with New Messages]
+    
+    I[Component Updates] --> J[ChatBox]
+    I --> K[MessageItem]
+    I --> L[ChatPage]
+    
+    J --> J1[Use Socket for Sending]
+    J --> J2[HTTP Fallback]
+    
+    K --> K1[Remove Mock Data]
+    
+    L --> L1[JWT Token for User ID]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style F fill:#e8f5e8
+    style I fill:#fff3e0

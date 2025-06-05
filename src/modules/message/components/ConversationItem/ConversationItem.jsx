@@ -1,14 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { 
-  ListItem, 
   ListItemAvatar, 
   Avatar, 
   ListItemText, 
   Typography, 
-  Badge, 
-  Box 
+  Badge
 } from '@mui/material';
+import {
+  StyledConversationItem,
+  ConversationHeader,
+  ConversationInfo,
+  MessagePreview
+} from './ConversationItem.styles';
 
 const ConversationItem = ({ conversation, isActive, onClick }) => {
   // Format time for display
@@ -34,27 +38,18 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
 
   // Get truncated message preview
   const getMessagePreview = (message) => {
-    if (!message || !message.content) return 'No messages yet';
+    if (!message || !message.content) return 'Chưa có tin nhắn';
     return message.content.length > 30 
       ? `${message.content.substring(0, 30)}...` 
       : message.content;
   };
 
   return (
-    <ListItem
+    <StyledConversationItem
       button
       onClick={onClick}
       alignItems="flex-start"
-      sx={{
-        py: 1.5,
-        px: 2,
-        backgroundColor: isActive ? 'action.selected' : 'inherit',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        '&:hover': {
-          backgroundColor: isActive ? 'action.selected' : 'action.hover',
-        },
-      }}
+      isActive={isActive}
     >
       <ListItemAvatar>
         <Badge
@@ -69,35 +64,31 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
         >
           <Avatar 
             src={conversation.participant?.avatar} 
-            alt={conversation.participant?.fullName || 'User'}
+            alt={conversation.participant?.fullName || 'Người dùng'}
           />
         </Badge>
       </ListItemAvatar>
       
       <ListItemText
         primary={
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <ConversationHeader>
             <Typography variant="subtitle2" noWrap>
-              {conversation.participant?.fullName || 'Unknown User'}
+              {conversation.participant?.fullName || 'Người dùng không xác định'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {formatTime(conversation.updatedAt)}
             </Typography>
-          </Box>
+          </ConversationHeader>
         }
         secondary={
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
-            <Typography 
+          <ConversationInfo>
+            <MessagePreview 
               variant="body2" 
-              color={conversation.unreadCount > 0 ? 'text.primary' : 'text.secondary'} 
-              sx={{ 
-                maxWidth: '80%',
-                fontWeight: conversation.unreadCount > 0 ? 500 : 400
-              }}
+              hasUnread={conversation.unreadCount > 0}
               noWrap
             >
               {getMessagePreview(conversation.lastMessage)}
-            </Typography>
+            </MessagePreview>
             
             {conversation.unreadCount > 0 && (
               <Badge
@@ -106,10 +97,10 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
                 sx={{ ml: 1 }}
               />
             )}
-          </Box>
+          </ConversationInfo>
         }
       />
-    </ListItem>
+    </StyledConversationItem>
   );
 };
 

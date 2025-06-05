@@ -1,92 +1,131 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { io } from 'socket.io-client';
 import { addReceivedMessage } from '../redux/slices/messageSlice';
 import { updateConversationLastMessage } from '../redux/slices/conversationSlice';
-import { currentUserId, users } from '../mock/mockData';
+import { getCookie } from '../../../shared/utils/cookieUtils';
 
-// Mock WebSocket hook - simulates incoming messages
+const SOCKET_URL = 'http://localhost:3000/message';
+const TOKEN_COOKIE_NAME = 'auth_token';
+
 const useMessageSocket = () => {
   const dispatch = useDispatch();
-  const intervalRef = useRef(null);
+  const socketRef = useRef(null);
+  const [connected, setConnected] = useState(false);
   const currentConversation = useSelector(state => state.messages.currentConversation);
+  const token = getCookie(TOKEN_COOKIE_NAME);
+  const currentUserId = localStorage.getItem('currentUserId');
 
   useEffect(() => {
-    // Set up mock responses
-    const mockResponses = [
-      "Xin chào bạn!",
-      "Dạo này bạn thế nào?",
-      "Đã nhận được thông tin rồi, cảm ơn bạn.",
-      "Ok, để mình xem lại nhé.",
-      "Hẹn gặp lại bạn sau!",
-      "Ngày mai mình sẽ gửi bạn tài liệu.",
-      "Dự án của mình tiến triển tốt không?",
-      "Chúc bạn cuối tuần vui vẻ!"
-    ];
-    
-    // Create a mock response after sending a message
-    const mockResponse = (conversationId, delay = 3000) => {
-      if (!conversationId) return;
-      
-      const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-      const conversation = window.store?.getState()?.conversations?.conversations?.find(c => c._id === conversationId);
-      
-      if (!conversation) return;
-      
-      // Find the participant to use as the sender
-      const sender = conversation.participant;
-      
-      setTimeout(() => {
-        const newMessage = {
-          _id: `msg_mock_${Date.now()}`,
-          conversationId,
-          content: randomResponse,
-          senderId: sender._id,
-          sender,
-          createdAt: new Date().toISOString(),
-          isRead: false
-        };
-        
-        // Dispatch the new message to the store
-        dispatch(addReceivedMessage(newMessage));
-        
-        // Update the conversation with the new message
-        dispatch(updateConversationLastMessage({
-          conversationId,
-          message: newMessage
-        }));
-      }, delay);
-    };
+    // Create socket connection
+    const socket = io(SOCKET_URL, {
+      extraHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
-    // Save the mockResponse function to window for use outside the hook
-    window.mockResponse = mockResponse;
-    
-    // Tự động sinh tin nhắn ngẫu nhiên hơn
-    const createRandomMessage = () => {
-      if (!currentConversation) return;
+    // Socket connection events
+    socket.on('connect', () => {
+      console.log('Socket connected');
+      setConnected(true);
       
-      // 30% chance of getting a message
-      if (Math.random() < 0.3) {
-        mockResponse(currentConversation._id, 500);
+      // Authenticate with userId
+      if (currentUserId) {
+        socket.emit('authenticate', currentUserId);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      setConnected(false);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      setConnected(false);
+    });
+
+    // Listen for new messages
+    socket.on('message_received', (data) => {
+      console.log('New message received:', data);
+      
+      // Add message to the current conversation if it's relevant
+      if (data.message) {
+        dispatch(addReceivedMessage(data.message));
+        
+        // Update the conversation with the new message in the conversations list
+        dispatch(updateConversationLastMessage({
+          conversationId: data.message.roomId || data.room?._id,
+          message: data.message
+        }));
+      }
+    });
+    
+    // Listen for sent message confirmation
+    socket.on('message_sent', (data) => {
+      console.log('Message sent confirmation:', data);
+      
+      if (data.message) {
+        dispatch(addReceivedMessage(data.message));
+      }
+    });
+
+    socket.on('message_error', (error) => {
+      console.error('Message error:', error);
+      // You can handle error feedback here
+    });
+
+    // Listen for room events
+    socket.on('room-created', (room) => {
+      console.log('New room created:', room);
+      // You can handle new room creation here if needed
+    });
+
+    socket.on('room-messages', (messages) => {
+      console.log('Room messages received:', messages);
+      // This event can be used when joining a room to get previous messages
+    });
+
+    // Clean up socket connection when component unmounts
+    socketRef.current = socket;
+    return () => {
+      if (socket) {
+        socket.disconnect();
       }
     };
-    
-    // Kích hoạt tin nhắn ngẫu nhiên mỗi 15-40 giây
-    intervalRef.current = setInterval(createRandomMessage, 15000 + Math.random() * 25000);
-    
-    // Add window store reference for the mock setup
-    if (typeof window !== 'undefined') {
-      window.store = window.store || {};
+  }, [dispatch, token, currentUserId]);
+
+  // Join room when conversation changes
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (socket && connected && currentConversation) {
+      socket.emit('join_room', currentConversation._id);
+      console.log('Joined room:', currentConversation._id);
     }
+  }, [currentConversation, connected]);
 
-    return () => {
-      clearInterval(intervalRef.current);
-    };
-  }, [dispatch, currentConversation]);
-
-  // Return a placeholder socket
+  // Return the socket and connection status
   return {
-    connected: true,
-    emit: () => console.log('Mock socket emit'),
+    socket: socketRef.current,
+    connected,
+    emit: (event, data) => {
+      if (socketRef.current && connected) {
+        // Ánh xạ send-message sang send_message với cấu trúc dữ liệu đúng
+        if (event === 'send-message') {
+          socketRef.current.emit('send_message', {
+            receiverId: data.receiverId,
+            content: data.content,
+            // Bỏ roomId vì server không sử dụng
+          });
+        } else {
+          // Các sự kiện khác chuyển đổi dấu gạch ngang sang gạch dưới
+          const serverEvent = event.replace(/-/g, '_');
+          socketRef.current.emit(serverEvent, data);
+        }
+      } else {
+        console.warn('Socket not connected, cannot emit event:', event);
+      }
+    }
   };
 };
 

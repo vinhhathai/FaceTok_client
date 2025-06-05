@@ -1,22 +1,24 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { conversations } from '../../mock/mockData';
-// import { getRecentConversations, getUnreadCount } from '../../api';
+// import { conversations } from '../../mock/mockData';
+import { getRecentConversations, getUnreadCount } from '../../api/messageAPI';
 
-// Async thunks with mock data
+// Async thunks with real API calls
 export const fetchConversations = createAsyncThunk(
   'conversation/fetchConversations',
   async (_, { rejectWithValue }) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      // Return mock conversations
+      const response = await getRecentConversations();
       return {
         success: true,
-        data: conversations
+        // Check for the correct data structure in the API response
+        data: response.data && Array.isArray(response.data) 
+          ? response.data 
+          : (response.data && Array.isArray(response.data.rooms) 
+              ? response.data.rooms 
+              : [])
       };
     } catch (error) {
-      return rejectWithValue("Failed to fetch conversations");
+      return rejectWithValue(error.message || "Failed to fetch conversations");
     }
   }
 );
@@ -25,28 +27,20 @@ export const fetchUnreadCount = createAsyncThunk(
   'conversation/fetchUnreadCount',
   async (_, { rejectWithValue }) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Calculate unread count from mock conversations
-      const count = conversations.reduce((total, conv) => total + (conv.unreadCount || 0), 0);
-      
+      const response = await getUnreadCount();
       return {
         success: true,
-        data: { count }
+        data: response.data || { count: 0 }
       };
     } catch (error) {
-      return rejectWithValue("Failed to fetch unread count");
+      return rejectWithValue(error.message || "Failed to fetch unread count");
     }
   }
 );
 
-// Tính tổng số tin nhắn chưa đọc
-const totalUnreadCount = conversations.reduce((total, conv) => total + (conv.unreadCount || 0), 0);
-
 const initialState = {
-  conversations: conversations, // Sử dụng trực tiếp dữ liệu mẫu
-  unreadCount: totalUnreadCount,
+  conversations: [],
+  unreadCount: 0,
   loading: false,
   error: null
 };

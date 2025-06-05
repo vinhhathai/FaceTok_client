@@ -1,7 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Box } from '@mui/material';
 import MessageItem from '../MessageItem/MessageItem';
+import {
+  MessageListContainer,
+  DateGroup,
+  DateHeaderContainer,
+  DateDisplay
+} from './MessageList.styles';
 
 const MessageList = ({ messages, currentUserId }) => {
   const messagesEndRef = useRef(null);
@@ -30,38 +35,14 @@ const MessageList = ({ messages, currentUserId }) => {
   }, {});
   
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        p: 2,
-        overflowY: 'auto',
-        flexGrow: 1,
-        gap: 0.5
-      }}
-    >
+    <MessageListContainer>
       {Object.entries(groupedMessages).map(([date, dateMessages]) => (
-        <Box key={date}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              my: 2
-            }}
-          >
-            <Box
-              sx={{
-                px: 2,
-                py: 0.5,
-                borderRadius: 4,
-                backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                fontSize: '0.75rem',
-                color: 'text.secondary'
-              }}
-            >
+        <DateGroup key={date}>
+          <DateHeaderContainer>
+            <DateDisplay>
               {date}
-            </Box>
-          </Box>
+            </DateDisplay>
+          </DateHeaderContainer>
           
           {dateMessages.map((message) => (
             <MessageItem
@@ -70,10 +51,10 @@ const MessageList = ({ messages, currentUserId }) => {
               isOwn={message.senderId === currentUserId}
             />
           ))}
-        </Box>
+        </DateGroup>
       ))}
       <div ref={messagesEndRef} />
-    </Box>
+    </MessageListContainer>
   );
 };
 

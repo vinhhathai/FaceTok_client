@@ -7,6 +7,8 @@ import { deleteFriend } from '../../redux';
 import { useNavigate } from 'react-router-dom';
 import { FriendListContainer, FriendCard, FriendActionButtons } from './FriendList.styles';
 import Avatar from '../../../../shared/components/Avatar/Avatar';
+import { createPrivateRoom } from '../../../message/api/messageAPI';
+import { toast } from 'react-toastify';
 
 function FriendList({ friends, loading, error }) {
   const dispatch = useDispatch();
@@ -14,6 +16,7 @@ function FriendList({ friends, loading, error }) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedFriendId, setSelectedFriendId] = useState(null);
   const [selectedFriendName, setSelectedFriendName] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
   const handleDeleteFriend = (friendId, friendName) => {
     setSelectedFriendId(friendId);
@@ -32,8 +35,29 @@ function FriendList({ friends, loading, error }) {
     setConfirmDialogOpen(false);
   };
 
-  const handleMessageFriend = (friendId) => {
-    navigate(`/messages/${friendId}`);
+  const handleMessageFriend = async (friendId) => {
+    try {
+      // Hiển thị trạng thái đang tải
+      setChatLoading(true);
+      
+      // Gọi API tạo hoặc tham gia phòng chat
+      const response = await createPrivateRoom(friendId);
+      
+      if (response && response.success && response.data && response.data.room) {
+        // Nếu tạo phòng thành công, chuyển đến trang tin nhắn với roomId
+        navigate(`/messages/${response.data.room._id}`);
+      } else {
+        // Nếu không tìm thấy phòng hoặc có lỗi, vẫn thử chuyển đến trang tin nhắn với userId
+        navigate(`/messages/${friendId}`);
+      }
+    } catch (error) {
+      console.error('Error creating chat room:', error);
+      toast.error('Không thể tạo phòng chat, vui lòng thử lại sau.');
+      // Fallback: chuyển đến trang tin nhắn với userId
+      navigate(`/messages/${friendId}`);
+    } finally {
+      setChatLoading(false);
+    }
   };
   
   const navigateToProfile = (friendId) => {
@@ -103,8 +127,9 @@ function FriendList({ friends, loading, error }) {
                         handleMessageFriend(friendId);
                       }}
                       color="primary"
+                      disabled={chatLoading}
                     >
-                      <MessageIcon />
+                      {chatLoading ? <CircularProgress size={20} /> : <MessageIcon />}
                     </IconButton>
                     <IconButton 
                       edge="end" 

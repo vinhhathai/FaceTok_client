@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography, List, CircularProgress } from '@mui/material';
+import { Typography, CircularProgress } from '@mui/material';
 import ConversationItem from '../ConversationItem/ConversationItem';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchConversations } from '../../redux/slices/conversationSlice';
+import { StatusContainer, ConversationsListWrapper } from './ConversationList.styles';
 
 const ConversationList = ({ onSelectConversation, currentConversationId }) => {
   const dispatch = useDispatch();
@@ -16,58 +17,34 @@ const ConversationList = ({ onSelectConversation, currentConversationId }) => {
 
   if (loading) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          height: '100%', 
-          p: 3 
-        }}
-      >
+      <StatusContainer>
         <CircularProgress />
-      </Box>
+      </StatusContainer>
     );
   }
 
   if (error) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          height: '100%', 
-          p: 3 
-        }}
-      >
+      <StatusContainer>
         <Typography color="error">
-          Failed to load conversations
+          Không thể tải cuộc trò chuyện
         </Typography>
-      </Box>
+      </StatusContainer>
     );
   }
 
   if (conversations.length === 0) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          height: '100%', 
-          p: 3 
-        }}
-      >
+      <StatusContainer>
         <Typography color="text.secondary">
-          No conversations yet
+          Chưa có cuộc trò chuyện nào
         </Typography>
-      </Box>
+      </StatusContainer>
     );
   }
 
   return (
-    <List disablePadding sx={{ overflow: 'auto' }}>
+    <ConversationsListWrapper disablePadding>
       {conversations.map((conversation) => (
         <ConversationItem 
           key={conversation._id}
@@ -76,7 +53,7 @@ const ConversationList = ({ onSelectConversation, currentConversationId }) => {
           onClick={() => onSelectConversation(conversation)}
         />
       ))}
-    </List>
+    </ConversationsListWrapper>
   );
 };
 

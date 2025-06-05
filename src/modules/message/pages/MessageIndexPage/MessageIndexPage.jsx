@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Grid, Paper, IconButton, useMediaQuery, useTheme } from '@mui/material';
+import { Typography, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUnreadCount } from '../../redux/slices/conversationSlice';
 import useMessageSocket from '../../hooks/useMessageSocket';
@@ -8,6 +8,17 @@ import ConversationList from '../../components/ConversationList/ConversationList
 import ChatBox from '../../components/ChatBox/ChatBox';
 import { conversations } from '../../mock/mockData';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import {
+  PageContainer,
+  MessageGridContainer,
+  ConversationsGridItem,
+  ConversationsPaper,
+  ConversationsHeader,
+  ConversationsListContainer,
+  ChatAreaGridItem,
+  MobileBackBox,
+  WelcomeContainer
+} from './MessageIndexPage.styles';
 
 const MessageIndexPage = () => {
   const dispatch = useDispatch();
@@ -74,78 +85,39 @@ const MessageIndexPage = () => {
   
   return (
     <MessageLayout>
-      <Box sx={{ height: '100%' }}>
-        <Grid container sx={{ height: '100%' }}>
+      <PageContainer>
+        <MessageGridContainer container>
           {/* Conversations List */}
           {showConversationsList && (
-            <Grid 
-              item 
-              xs={12} 
-              md={4} 
-              lg={3}
-              sx={{ 
-                height: '100%',
-                borderRight: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  height: '100%', 
-                  borderRadius: 0,
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                <Box sx={{ 
-                  p: 2, 
-                  borderBottom: '1px solid', 
-                  borderColor: 'divider',
-                  fontWeight: 'bold'
-                }}>
+            <ConversationsGridItem item xs={12} md={4} lg={3}>
+              <ConversationsPaper elevation={0}>
+                <ConversationsHeader>
                   Messages
-                </Box>
+                </ConversationsHeader>
                 
-                <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                <ConversationsListContainer>
                   <ConversationList 
                     onSelectConversation={handleSelectConversation}
                     currentConversationId={selectedConversation?._id}
                   />
-                </Box>
-              </Paper>
-            </Grid>
+                </ConversationsListContainer>
+              </ConversationsPaper>
+            </ConversationsGridItem>
           )}
           
           {/* Chat Area */}
           {(!isMobile || mobileView === 'chat') && (
-            <Grid 
-              item 
-              xs={12} 
-              md={8} 
-              lg={9}
-              sx={{ 
-                height: '100%',
-              }}
-            >
+            <ChatAreaGridItem item xs={12} md={8} lg={9}>
               {/* Back button always visible on mobile when in chat view */}
               {isMobile && mobileView === 'chat' && (
-                <Box sx={{ 
-                  p: 1, 
-                  borderBottom: '1px solid', 
-                  borderColor: 'divider',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor: theme.palette.background.paper,
-                }}>
+                <MobileBackBox>
                   <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
                     {selectedConversation?.participant?.fullName || 'Conversation'}
                   </Typography>
                   <IconButton onClick={handleBackToList} color="primary">
                     <ArrowBackIcon />
                   </IconButton>
-                </Box>
+                </MobileBackBox>
               )}
               
               {selectedConversation ? (
@@ -154,29 +126,19 @@ const MessageIndexPage = () => {
                   onBack={handleBackToList}
                 />
               ) : (
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    height: '100%',
-                    textAlign: 'center',
-                    p: 3
-                  }}
-                >
+                <WelcomeContainer>
                   <Typography variant="h5" gutterBottom>
                     Welcome to Messages
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
                     Select a conversation from the list or start a new one to begin chatting
                   </Typography>
-                </Box>
+                </WelcomeContainer>
               )}
-            </Grid>
+            </ChatAreaGridItem>
           )}
-        </Grid>
-      </Box>
+        </MessageGridContainer>
+      </PageContainer>
     </MessageLayout>
   );
 };
