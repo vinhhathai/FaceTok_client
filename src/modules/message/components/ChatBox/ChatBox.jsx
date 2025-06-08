@@ -5,8 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MessageList from '../MessageList/MessageList';
 import ChatInput from '../ChatInput/ChatInput';
-import { fetchMessages, forceUpdateMessages } from '../../redux/slices/messageSlice';
-import { markConversationAsRead } from '../../redux/slices/conversationSlice';
+import { fetchMessages, addReceivedMessage } from '../../redux/slices/messageSlice';
 import useMessageSocket from '../../hooks/useMessageSocket';
 import { toast } from 'react-toastify';
 import {
@@ -26,8 +25,6 @@ const ChatBox = ({ conversation, onBack }) => {
   const { messages, loading, sending, currentConversation } = useSelector(state => state.messages);
   const { emit, connected } = useMessageSocket();
   const [inputDisabled, setInputDisabled] = useState(false);
-  const [forceUpdateCounter, setForceUpdateCounter] = useState(0);
-  const messageAddedRef = useRef(false);
   
   // Lấy ID người dùng từ localStorage
   const myChatId = localStorage.getItem('currentUserId');
@@ -35,109 +32,63 @@ const ChatBox = ({ conversation, onBack }) => {
   // Sử dụng conversation từ props và currentConversation từ Redux
   const activeConversation = conversation || currentConversation;
 
-  // Force update ít hơn, chỉ khi cần thiết
-  useEffect(() => {
-    const updateInterval = setInterval(() => {
-      if (messageAddedRef.current) {
-        setForceUpdateCounter(prev => prev + 1);
-        messageAddedRef.current = false;
-      }
-    }, 500); // Tăng thời gian lên để giảm số lần update
-    
-    return () => clearInterval(updateInterval);
-  }, []);
-  
-  // Lắng nghe sự kiện MESSAGE_ADDED_TO_REDUX để cập nhật UI 
-  useEffect(() => {
-    const handleMessageAddedToRedux = () => {
-      messageAddedRef.current = true;
-    };
-    
-    window.addEventListener('MESSAGE_ADDED_TO_REDUX', handleMessageAddedToRedux);
-    
-    return () => {
-      window.removeEventListener('MESSAGE_ADDED_TO_REDUX', handleMessageAddedToRedux);
-    };
-  }, []);
-
-  // Lắng nghe sự kiện MESSAGE_SENT_SUCCESS để tự động cập nhật
-  useEffect(() => {
-    const handleMessageSentSuccess = () => {
-      messageAddedRef.current = true;
-    };
-    
-    window.addEventListener('MESSAGE_SENT_SUCCESS', handleMessageSentSuccess);
-    
-    return () => {
-      window.removeEventListener('MESSAGE_SENT_SUCCESS', handleMessageSentSuccess);
-    };
-  }, []);
-
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
   useEffect(() => {
     if (activeConversation?._id) {
       dispatch(fetchMessages(activeConversation._id));
-      dispatch(markConversationAsRead({ conversationId: activeConversation._id }));
     }
   }, [dispatch, activeConversation]);
   
-  // Xử lý gửi tin nhắn mới
+  // Xử lý gửi tin nhắn mới với Optimistic UI
   const handleSendMessage = useCallback(async (content) => {
     if (!content.trim() || !activeConversation) return;
     
     try {
       setInputDisabled(true);
       
-      // Xác định receiverId
-      let receiverId = null;
-      
-      // Lấy receiverId từ participant trong conversation đã chuẩn hóa
-      if (activeConversation.participant && activeConversation.participant._id) {
-        receiverId = activeConversation.participant._id;
-      }
-      // Fallback nếu cấu trúc khác
-      else if (activeConversation.members && Array.isArray(activeConversation.members)) {
-        // Lọc members khác với currentUserId
-        const otherMembers = activeConversation.members.filter(member => {
-          const memberId = member._id || member.id;
-          return memberId !== myChatId;
-        });
-        
-        if (otherMembers.length > 0) {
-          receiverId = otherMembers[0]._id || otherMembers[0].id;
-        }
-      }
-      
-      // Kiểm tra xem đã có receiverId chưa
-      if (!receiverId) {
-        toast.error('Lỗi: Không thể xác định người nhận');
+      // Kiểm tra roomId có tồn tại không
+      if (!activeConversation._id) {
+        toast.error('Lỗi: Không thể xác định phòng chat');
         return;
       }
+      
+      // Tạo tin nhắn tạm thời để hiển thị ngay lập tức (Optimistic UI)
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage = {
+        _id: tempId,
+        content,
+        senderId: myChatId,
+        roomId: activeConversation._id,
+        createdAt: new Date().toISOString(),
+        isFromCurrentUser: true,
+        isOptimistic: true // Đánh dấu là tin nhắn optimistic
+      };
+      
+      // Thêm tin nhắn tạm thời vào Redux store
+      dispatch(addReceivedMessage(optimisticMessage));
       
       // Sử dụng socket để gửi tin nhắn
       if (connected) {
         const emitData = {
-          receiverId: receiverId,
+          roomId: activeConversation._id,
           content
         };
         
         const sent = emit('send-message', emitData);
         
-        if (sent) {
-          // Đánh dấu cần cập nhật UI
-          messageAddedRef.current = true;
-        } else {
+        if (!sent) {
           toast.error('Không thể gửi tin nhắn. Lỗi kết nối đến server.');
         }
       } else {
         toast.error('Không thể gửi tin nhắn. Đang mất kết nối đến server.');
       }
     } catch (error) {
+      console.error('Không thể gửi tin nhắn. Vui lòng thử lại.', error);
       toast.error('Không thể gửi tin nhắn. Vui lòng thử lại.');
     } finally {
       setInputDisabled(false);
     }
-  }, [activeConversation, connected, emit, myChatId]);
+  }, [activeConversation, connected, emit, dispatch, myChatId]);
 
   // Nếu không có cuộc trò chuyện đang kích hoạt, hiển thị placeholder
   if (!activeConversation) {
@@ -187,7 +138,6 @@ const ChatBox = ({ conversation, onBack }) => {
         <MessageList 
           messages={messages} 
           currentUserId={myChatId}
-          key={`message-list-${forceUpdateCounter}`} 
         />
       )}
       

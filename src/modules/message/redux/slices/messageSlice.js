@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // import { allMessages, currentUserId } from '../../mock/mockData';
 // We'll use the real API now
-import { getMessages, sendMessage as sendMessageApi } from '../../api/messageAPI';
+import { getMessages, sendMessageToRoom } from '../../api/messageAPI';
 
 // Hàm helper để trích xuất senderId từ message
 const extractSenderId = (message) => {
@@ -33,7 +33,7 @@ const isOwnMessage = (message, currentUserId) => {
     (typeof senderId === 'string' && senderId.includes(currentUserId));
 };
 
-// Async thunks with real API calls
+// Async thunks với API mới
 export const fetchMessages = createAsyncThunk(
   'message/fetchMessages',
   async (roomId, { rejectWithValue }) => {
@@ -51,18 +51,12 @@ export const fetchMessages = createAsyncThunk(
 
 export const sendMessage = createAsyncThunk(
   'message/sendMessage',
-  async (messageData, { rejectWithValue }) => {
+  async ({ roomId, content }, { rejectWithValue }) => {
     try {
-      const response = await sendMessageApi(messageData);
-      const messageResponse = response.data && response.data.message 
-        ? response.data.message 
-        : (response.data && response.data.data && response.data.data.message 
-          ? response.data.data.message 
-          : response.data);
-          
+      const response = await sendMessageToRoom(roomId, content);
       return {
         success: true,
-        data: messageResponse
+        data: response.data?.message || response.data
       };
     } catch (error) {
       return rejectWithValue(error.message || "Failed to send message");
@@ -91,66 +85,61 @@ const messageSlice = createSlice({
       state.messages = [];
     },
     addReceivedMessage(state, action) {
-      // Handle incoming message from socket - ensure we have a proper format
+      // Handle incoming message from socket
       const message = action.payload.message || action.payload;
       
       // Kiểm tra dữ liệu hợp lệ
       if (!message || !message._id) {
-        return;
-      }
-      
-      // Nếu chưa có conversation hiện tại thì return
-      if (!state.currentConversation) {
+        console.warn('Received invalid message data:', message);
         return;
       }
       
       // Lấy userId hiện tại từ localStorage
       const currentUserId = localStorage.getItem('currentUserId');
       
-      // Xác định đúng senderId từ message
-      const senderId = extractSenderId(message);
+      // Lấy roomId từ message
+      const roomIdFromMessage = message.roomId;
       
-      // Lấy roomId từ message (xử lý cả hai format từ message_sent và message_received)
-      const roomIdFromMessage = 
-        message.roomId || 
-        (message.room && message.room._id) || 
-        (action.payload.room && action.payload.room._id);
-      
-      const conversationId = state.currentConversation._id;
-      
-      // Kiểm tra message thuộc về conversation hiện tại không
-      const belongsToCurrentConversation = 
-        roomIdFromMessage === conversationId || 
-        (state.currentConversation.participant && 
-         (String(senderId) === String(state.currentConversation.participant._id) || 
-          String(senderId) === String(state.currentConversation.participant.id)));
-      
-      if (belongsToCurrentConversation) {
-        // Check if message already exists to avoid duplicates
-        const messageExists = state.messages.some(m => m._id === message._id);
-        
-        if (!messageExists) {
-          // Force fix cho các trường bị thiếu
+      // Kiểm tra xem cần thay thế tin nhắn optimistic không
+      if (message.replaceOptimisticId) {
+        const optimisticIndex = state.messages.findIndex(m => m._id === message.replaceOptimisticId);
+        if (optimisticIndex !== -1) {
+          // Thay thế tin nhắn optimistic bằng tin nhắn thật
+          console.log('Replacing optimistic message in state:', message.replaceOptimisticId, '->', message._id);
+          
+          // Thêm trường isFromCurrentUser
           const completeMessage = {
             ...message,
             createdAt: message.createdAt || new Date().toISOString(),
-            senderId: senderId || currentUserId,
-            // Gán thêm một flag để đánh dấu message này là từ current user
             isFromCurrentUser: isOwnMessage(message, currentUserId)
           };
           
-          state.messages.push(completeMessage);
-          
-          // Phát sự kiện để UI cập nhật
-          try {
-            const updateEvent = new CustomEvent('MESSAGE_ADDED_TO_REDUX', {
-              detail: completeMessage
-            });
-            window.dispatchEvent(updateEvent);
-          } catch (e) {
-            console.error('Error dispatching custom event:', e);
-          }
+          // Thay thế tin nhắn optimistic
+          state.messages[optimisticIndex] = completeMessage;
+          return;
         }
+      }
+      
+      // Kiểm tra tin nhắn đã tồn tại chưa
+      const messageExists = state.messages.some(m => m._id === message._id);
+      
+      // Nếu tin nhắn không tồn tại, thêm vào danh sách
+      if (!messageExists) {
+        // Thêm trường isFromCurrentUser
+        const completeMessage = {
+          ...message,
+          createdAt: message.createdAt || new Date().toISOString(),
+          isFromCurrentUser: isOwnMessage(message, currentUserId)
+        };
+        
+        // Thêm tin nhắn vào state messages, bất kể có conversation hay không
+        // Điều này giúp tin nhắn được hiển thị ngay cả khi mới vào phòng
+        state.messages.push(completeMessage);
+        
+        // Log tin nhắn mới để debug
+        console.log('Added new message to state:', completeMessage);
+      } else {
+        console.log('Message already exists in state, skipping:', message._id);
       }
     },
     forceUpdateMessages(state) {
@@ -181,11 +170,13 @@ const messageSlice = createSlice({
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.sending = false;
         
-        // Only add message if it's not already in the list
+        // Chỉ thêm tin nhắn nếu chưa tồn tại
         const newMessage = action.payload.data;
-        const messageExists = state.messages.some(m => m._id === newMessage._id);
-        if (!messageExists) {
-          state.messages.push(newMessage);
+        if (newMessage) {
+          const messageExists = state.messages.some(m => m._id === newMessage._id);
+          if (!messageExists) {
+            state.messages.push(newMessage);
+          }
         }
       })
       .addCase(sendMessage.rejected, (state, action) => {

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Typography } from '@mui/material';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import DoneIcon from '@mui/icons-material/Done';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import {
   MessageContainer,
   SenderAvatar,
@@ -49,6 +50,9 @@ const MessageItem = ({ message, isOwn }) => {
 
   // Sử dụng logic chính xác hơn để xác định tin nhắn là của mình
   const shouldBeOwn = message.isFromCurrentUser === true || isOwn;
+  
+  // Kiểm tra xem tin nhắn có phải là optimistic không
+  const isOptimistic = message.isOptimistic === true;
 
   return (
     <MessageContainer isOwn={shouldBeOwn}>
@@ -63,6 +67,10 @@ const MessageItem = ({ message, isOwn }) => {
         <MessageBubble
           elevation={0}
           isOwn={shouldBeOwn}
+          sx={{
+            opacity: isOptimistic ? 0.7 : 1, // Làm mờ tin nhắn optimistic
+            transition: 'opacity 0.3s ease'
+          }}
         >
           <Typography variant="body1">{message.content}</Typography>
         </MessageBubble>
@@ -76,7 +84,9 @@ const MessageItem = ({ message, isOwn }) => {
 
           {shouldBeOwn && (
             <ReadStatusContainer>
-              {message.isRead ? (
+              {isOptimistic ? (
+                <ScheduleIcon sx={{ fontSize: '0.8rem', color: 'text.secondary' }} />
+              ) : message.isRead ? (
                 <DoneAllIcon color="primary" sx={{ fontSize: '0.8rem' }} />
               ) : (
                 <DoneIcon sx={{ fontSize: '0.8rem', color: 'text.secondary' }} />

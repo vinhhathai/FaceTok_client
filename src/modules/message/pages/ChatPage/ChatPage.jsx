@@ -12,7 +12,7 @@ import MessageLayout from '../../../../shared/components/Layout/MessageLayout';
 import useMessageSocket from '../../hooks/useMessageSocket';
 import { setCurrentConversation, clearCurrentConversation } from '../../redux/slices/messageSlice';
 import { fetchConversations } from '../../redux/slices/conversationSlice';
-import { createPrivateRoom } from '../../api/messageAPI';
+import { getOrCreateRoom } from '../../api/messageAPI';
 import { toast } from 'react-toastify';
 import {
   ChatPageContainer,
@@ -38,6 +38,7 @@ const ChatPage = () => {
   const [showConversations, setShowConversations] = useState(!conversationId || !isMobile);
   const [showChat, setShowChat] = useState(!!conversationId || !isMobile);
   const [loadingRoom, setLoadingRoom] = useState(false);
+  const [processingRoomCreation, setProcessingRoomCreation] = useState(false);
   
   const { conversations, loading: conversationsLoading } = useSelector(state => state.conversations);
   const { currentConversation } = useSelector(state => state.messages);
@@ -117,11 +118,19 @@ const ChatPage = () => {
           return;
         }
         
+        // Ngăn ngừa nhiều cuộc gọi API đồng thời
+        if (processingRoomCreation) {
+          return;
+        }
+        
+        // Đánh dấu đang xử lý
+        setProcessingRoomCreation(true);
+        
         // Thử tạo hoặc tìm phòng chat với người dùng này
         try {
           setLoadingRoom(true);
           
-          const response = await createPrivateRoom(conversationId);
+          const response = await getOrCreateRoom(conversationId);
           
           if (response && response.success && response.data && response.data.room) {
             // Nếu tạo phòng thành công, cập nhật URL và chuyển đến phòng chat
@@ -159,12 +168,14 @@ const ChatPage = () => {
           navigate('/messages', { replace: true });
         } finally {
           setLoadingRoom(false);
+          // Đặt lại trạng thái xử lý
+          setProcessingRoomCreation(false);
         }
       }
     };
     
     checkOrCreateRoom();
-  }, [conversationId, conversations, conversationsLoading, dispatch, isMobile, navigate]);
+  }, [conversationId, conversations, conversationsLoading, dispatch, isMobile, navigate, processingRoomCreation]);
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {

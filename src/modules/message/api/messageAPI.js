@@ -6,77 +6,68 @@ const TOKEN_COOKIE_NAME = 'auth_token';
 const getToken = () => getCookie(TOKEN_COOKIE_NAME) || '';
 
 /**
- * Create or get private chat room between two users
- * @param {string} targetUserId - ID of the user to chat with
- * @returns {Promise} Promise resolving to the created/existing room
+ * Lấy hoặc tạo phòng chat giữa hai người dùng
+ * @param {string} targetUserId - ID của người dùng muốn chat cùng
+ * @returns {Promise} Promise trả về thông tin phòng chat
  */
-export const createPrivateRoom = async (targetUserId) => {
+export const getOrCreateRoom = async (targetUserId) => {
   try {
-    const response = await apiClient.post('/message/room/private/create', {
+    const response = await apiClient.post('/message/room/get-or-create', {
       targetUserId: targetUserId
     });
     return response.data;
   } catch (error) {
-    console.error('Error creating private room:', error);
+    console.error('Error getting or creating room:', error);
     throw error;
   }
 };
 
 /**
- * Get recent conversations for the current user
- * @returns {Promise} Promise resolving to array of conversations
+ * Lấy danh sách phòng chat của người dùng hiện tại
+ * @returns {Promise} Promise trả về mảng các phòng chat
  */
-export const getRecentConversations = async () => {
+export const getUserRooms = async () => {
   try {
     const response = await apiClient.get('/message/rooms');
     return response.data;
   } catch (error) {
-    console.error('Error fetching conversations:', error);
+    console.error('Error fetching rooms:', error);
     throw error;
   }
 };
 
 /**
- * Get conversation with specific user
- * @param {string} userId - ID of the user to get conversation with
- * @returns {Promise} Promise resolving to conversation data
+ * Lấy thông tin chi tiết phòng chat
+ * @param {string} roomId - ID của phòng chat
+ * @returns {Promise} Promise trả về thông tin phòng chat
  */
-export const getConversation = async (userId) => {
+export const getRoomById = async (roomId) => {
   try {
-    const response = await apiClient.get(`/message/room/${userId}`);
+    const response = await apiClient.get(`/message/room/${roomId}`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching conversation:', error);
+    console.error('Error fetching room:', error);
     throw error;
   }
 };
 
 /**
- * Get messages for a specific conversation
- * @param {string} roomId - ID of the room
- * @returns {Promise} Promise resolving to array of messages
+ * Lấy tin nhắn trong phòng chat
+ * @param {string} roomId - ID của phòng chat
+ * @param {number} limit - Số lượng tin nhắn tối đa
+ * @param {number} skip - Số tin nhắn bỏ qua (phân trang)
+ * @returns {Promise} Promise trả về mảng tin nhắn
  */
-export const getMessages = async (roomId) => {
+export const getMessages = async (roomId, limit = 20, skip = 0) => {
   try {
-    // Check if roomId is a MongoDB ObjectId (24 hex chars)
-    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(roomId);
+    const response = await apiClient.get(`/message/room/${roomId}/messages`, {
+      params: { limit, skip }
+    });
     
-    // Use the appropriate endpoint based on ID format
-    const endpoint = isValidObjectId 
-      ? `/message/room/id/${roomId}` // New endpoint for valid MongoDB ObjectId
-      : `/message/room/${roomId}`;    // Old endpoint for other formats (for backward compatibility)
-    
-    const response = await apiClient.get(endpoint);
-    
-    // Return messages array if available in the response
     if (response.data && response.data.data && response.data.data.messages) {
       return response.data.data.messages;
-    } else if (response.data && response.data.data && response.data.data.room) {
-      // If the room has an array of messages, return those
-      return response.data.data.room.messages || [];
     }
     
-    // Return empty array if messages not available
     return [];
   } catch (error) {
     console.error('Error fetching messages:', error);
@@ -85,16 +76,19 @@ export const getMessages = async (roomId) => {
 };
 
 /**
- * Send a new message
- * @param {Object} messageData - Contains receiverId and message content
- * @returns {Promise} Promise resolving to the sent message
+ * Gửi tin nhắn vào phòng chat
+ * @param {string} roomId - ID của phòng chat
+ * @param {string} content - Nội dung tin nhắn
+ * @returns {Promise} Promise trả về thông tin tin nhắn đã gửi
  */
-export const sendMessage = async (messageData) => {
+export const sendMessageToRoom = async (roomId, content) => {
   try {
-    const response = await apiClient.post('/message/messages', messageData);
+    const response = await apiClient.post(`/message/room/${roomId}/message`, {
+      content
+    });
     return response.data;
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error('Error sending message to room:', error);
     throw error;
   }
 }; 
