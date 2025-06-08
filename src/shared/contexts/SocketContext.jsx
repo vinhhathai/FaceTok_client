@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useDispatch } from 'react-redux';
 import { addReceivedMessage, updateConversationLastMessage } from '../../modules/message/redux';
 import { toast } from 'react-toastify';
+import { store } from '../../core/config/store';
 
 const SOCKET_URL = 'http://localhost:3000/message';
 const TOKEN_COOKIE_NAME = 'auth_token';
@@ -40,14 +41,26 @@ export const SocketProvider = ({ children }) => {
     
     // Tạo kết nối socket
     const socket = io(SOCKET_URL, {
+      auth: {
+        token: token
+      },
       extraHeaders: {
         Authorization: `Bearer ${token}`
-      }
+      },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000
     });
     
     // Socket connection events
     socket.on('connect', () => {
+      console.log(`Socket connected with ID: ${socket.id}`);
       setConnected(true);
+      
+      // Xác thực bằng token
+      socket.emit('authenticate', { accessToken: token });
       
       // Lấy userId từ token
       try {
@@ -56,7 +69,6 @@ export const SocketProvider = ({ children }) => {
         
         if (userId) {
           localStorage.setItem('currentUserId', userId);
-          socket.emit('authenticate', userId);
         }
       } catch (error) {
         console.error('Error decoding token in socket connection:', error);
@@ -74,31 +86,87 @@ export const SocketProvider = ({ children }) => {
     
     // Lắng nghe tin nhắn mới đến - sẽ hoạt động ở mọi trang
     socket.on('message_received', (data) => {
-      // Dispatch tới Redux store
+      // Đảm bảo dữ liệu tin nhắn hợp lệ
+      if (!data) {
+        console.error('Received empty message_received event');
+        return;
+      }
+
+      console.log('Received message_received event:', data);
+      
+      // Chuẩn hóa dữ liệu tin nhắn
+      let messageData = data;
+      
+      // Trong trường hợp dữ liệu được bọc trong object
       if (data.message) {
-        // Thêm tin nhắn vào conversation hiện tại nếu đang mở
-        dispatch(addReceivedMessage(data.message));
+        messageData = data.message;
+      }
+      
+      // Đảm bảo có roomId
+      if (!messageData.roomId) {
+        console.error('Message data missing roomId:', messageData);
+        return;
+      }
+      
+      // Đảm bảo có _id
+      if (!messageData._id) {
+        console.error('Message data missing _id:', messageData);
+        return;
+      }
+      
+      // Lấy tin nhắn hiện tại từ Redux store để kiểm tra xem có tin nhắn optimistic không
+      const currentState = store.getState();
+      const currentMessages = currentState.messages.messages;
+      
+      // Kiểm tra xem tin nhắn này có phải từ người dùng hiện tại không
+      const currentUserId = localStorage.getItem('currentUserId');
+      const isFromCurrentUser = messageData.senderId === currentUserId || 
+                               (messageData.sender && messageData.sender._id === currentUserId);
+      
+      // Nếu tin nhắn từ người dùng hiện tại, kiểm tra xem có tin nhắn optimistic không
+      if (isFromCurrentUser) {
+        // Tìm tin nhắn optimistic có nội dung giống với tin nhắn thật
+        const optimisticMessage = currentMessages.find(msg => 
+          msg.isOptimistic && msg.content === messageData.content
+        );
         
-        // Cập nhật conversation trong danh sách
-        dispatch(updateConversationLastMessage({
-          conversationId: data.message.roomId || data.room?._id,
-          message: data.message
-        }));
+        if (optimisticMessage) {
+          console.log('Replacing optimistic message with real message:', optimisticMessage._id, '->', messageData._id);
+          // Thêm ID của tin nhắn optimistic vào tin nhắn thật để xử lý thay thế
+          messageData.replaceOptimisticId = optimisticMessage._id;
+        }
+      }
+      
+      // Thêm tin nhắn vào Redux store
+      dispatch(addReceivedMessage(messageData));
+      
+      // Cập nhật conversation trong danh sách
+      dispatch(updateConversationLastMessage({
+        conversationId: messageData.roomId,
+        message: messageData
+      }));
+      
+      // Phát sự kiện tin nhắn mới cho toàn bộ ứng dụng
+      const messageEvent = new CustomEvent(MESSAGE_RECEIVED_EVENT, { 
+        detail: messageData 
+      });
+      window.dispatchEvent(messageEvent);
+      
+      // Bỏ qua toast thông báo cho tất cả tin nhắn
+      // Nếu muốn chỉ hiển thị thông báo cho tin nhắn từ người khác, bỏ comment dòng dưới
+      /*
+      if (!isFromCurrentUser) {
+        const senderName = messageData.sender?.fullName || 
+                          messageData.senderName || 
+                          'Tin nhắn mới';
         
-        // Phát sự kiện tin nhắn mới cho toàn bộ ứng dụng
-        const messageEvent = new CustomEvent(MESSAGE_RECEIVED_EVENT, { 
-          detail: data.message 
-        });
-        window.dispatchEvent(messageEvent);
-        
-        // Hiển thị thông báo
         toast.info(
           <MessageNotification 
-            senderName={data.message.sender?.fullName || 'Tin nhắn mới'} 
-            content={data.message.content}
+            senderName={senderName} 
+            content={messageData.content}
             onClick={() => {
-              // Chuyển người dùng đến trang tin nhắn khi click vào notification
-              window.location.href = '/home/messages';
+              // Chuyển người dùng đến trang tin nhắn với roomId cụ thể
+              window.location.href = `/messages/${messageData.roomId}`;
             }}
           />,
           {
@@ -110,6 +178,7 @@ export const SocketProvider = ({ children }) => {
           }
         );
       }
+      */
     });
     
     // Lắng nghe xác nhận tin nhắn đã gửi
@@ -174,19 +243,15 @@ export const SocketProvider = ({ children }) => {
     
     // Ánh xạ send-message sang send_message với cấu trúc dữ liệu đúng
     if (event === 'send-message') {
-      if (!data.receiverId) {
-        console.error('Cannot send message: Missing receiverId', data);
-        toast.error('Lỗi gửi tin nhắn: Thiếu người nhận');
+      if (!data.roomId) {
+        console.error('Cannot send message: Missing roomId', data);
+        toast.error('Lỗi gửi tin nhắn: Thiếu roomId');
         return false;
       }
       
-      // Đảm bảo receiverId là chuỗi
-      const receiverId = String(data.receiverId);
-      console.log('Emitting send_message with receiverId:', receiverId);
-      
       try {
         socketRef.current.emit('send_message', {
-          receiverId: receiverId,
+          roomId: data.roomId,
           content: data.content,
         });
         
@@ -194,11 +259,6 @@ export const SocketProvider = ({ children }) => {
         console.log('Emit send_message successful');
         
         // Listen for specific events to debug the send message flow
-        socketRef.current.once('message_sent', (response) => {
-          console.log('Message sent successfully:', response);
-          toast.success('Gửi tin nhắn thành công');
-        });
-        
         socketRef.current.once('message_error', (error) => {
           console.error('Error sending message:', error);
           toast.error(`Lỗi: ${error.message || 'Không thể gửi tin nhắn'}`);
@@ -223,18 +283,32 @@ export const SocketProvider = ({ children }) => {
   };
   
   // Utility function để join/leave room
-  const joinRoom = (roomId) => {
-    if (socketRef.current && connected && roomId) {
-      socketRef.current.emit('join_room', roomId);
-      return true;
+  const joinRoom = (data) => {
+    if (socketRef.current && connected) {
+      // Kiểm tra data có thể là object hoặc string
+      if (typeof data === 'object' && data.roomId) {
+        socketRef.current.emit('join_room', data);
+        return true;
+      } else if (typeof data === 'string') {
+        // Hỗ trợ cách cũ để tương thích ngược
+        socketRef.current.emit('join_room', { roomId: data });
+        return true;
+      }
     }
     return false;
   };
   
-  const leaveRoom = (roomId) => {
-    if (socketRef.current && connected && roomId) {
-      socketRef.current.emit('leave_room', roomId);
-      return true;
+  const leaveRoom = (data) => {
+    if (socketRef.current && connected) {
+      // Kiểm tra data có thể là object hoặc string
+      if (typeof data === 'object' && data.roomId) {
+        socketRef.current.emit('leave_room', data);
+        return true;
+      } else if (typeof data === 'string') {
+        // Hỗ trợ cách cũ để tương thích ngược
+        socketRef.current.emit('leave_room', { roomId: data });
+        return true;
+      }
     }
     return false;
   };

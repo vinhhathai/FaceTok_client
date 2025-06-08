@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // import { conversations } from '../../mock/mockData';
-import { getRecentConversations } from '../../api/messageAPI';
+import { getUserRooms } from '../../api/messageAPI';
 import { adaptRoomsToConversations } from '../../adapters/conversationAdapter';
 
 // Async thunk để lấy danh sách cuộc trò chuyện
@@ -8,7 +8,7 @@ export const fetchConversations = createAsyncThunk(
   'conversation/fetchConversations',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await getRecentConversations();
+      const response = await getUserRooms();
       console.log('API response for conversations:', response);
       
       let rooms = [];

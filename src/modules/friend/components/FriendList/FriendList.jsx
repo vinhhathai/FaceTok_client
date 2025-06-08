@@ -7,7 +7,7 @@ import { deleteFriend } from '../../redux';
 import { useNavigate } from 'react-router-dom';
 import { FriendListContainer, FriendCard, FriendActionButtons } from './FriendList.styles';
 import Avatar from '../../../../shared/components/Avatar/Avatar';
-import { createPrivateRoom } from '../../../message/api/messageAPI';
+import { getOrCreateRoom } from '../../../message/api/messageAPI';
 import { toast } from 'react-toastify';
 
 function FriendList({ friends, loading, error }) {
@@ -17,6 +17,7 @@ function FriendList({ friends, loading, error }) {
   const [selectedFriendId, setSelectedFriendId] = useState(null);
   const [selectedFriendName, setSelectedFriendName] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [processingFriendIds, setProcessingFriendIds] = useState(new Set());
 
   const handleDeleteFriend = (friendId, friendName) => {
     setSelectedFriendId(friendId);
@@ -37,11 +38,20 @@ function FriendList({ friends, loading, error }) {
 
   const handleMessageFriend = async (friendId) => {
     try {
+      // Kiểm tra xem friendId đã đang được xử lý chưa
+      if (processingFriendIds.has(friendId)) {
+        console.log('Already processing this friend, skipping duplicate request');
+        return;
+      }
+      
+      // Đánh dấu đang xử lý friendId này
+      setProcessingFriendIds(prev => new Set([...prev, friendId]));
+      
       // Hiển thị trạng thái đang tải
       setChatLoading(true);
       
       // Gọi API tạo hoặc tham gia phòng chat
-      const response = await createPrivateRoom(friendId);
+      const response = await getOrCreateRoom(friendId);
       
       if (response && response.success && response.data && response.data.room) {
         // Nếu tạo phòng thành công, chuyển đến trang tin nhắn với roomId
@@ -57,6 +67,13 @@ function FriendList({ friends, loading, error }) {
       navigate(`/messages/${friendId}`);
     } finally {
       setChatLoading(false);
+      
+      // Xóa khỏi danh sách đang xử lý
+      setProcessingFriendIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(friendId);
+        return newSet;
+      });
     }
   };
   
