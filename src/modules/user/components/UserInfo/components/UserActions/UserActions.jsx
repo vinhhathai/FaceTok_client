@@ -166,7 +166,7 @@ const UserActions = ({ user, onEditProfile }) => {
   };
 
   const handleMessageUser = () => {
-    navigate(`/messages/${user.id}`);
+    navigate(`/messages`, {state: { conversationId: user.id } });
   };
   
   // Hiển thị nút phù hợp dựa trên trạng thái mối quan hệ

@@ -95,11 +95,11 @@ function FriendSearch() {
   };
 
   const handleMessageFriend = (friendId) => {
-    navigate(`/messages/${friendId}`);
+    navigate(`/messages/`, { state: { friendId } });
   };
 
   const navigateToProfile = (userId) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/profile/`, { state: { userId } });
   };
 
   return (

@@ -1,34 +1,40 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { Box, Tab, Tabs, Typography, useMediaQuery } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Box, Tab, Tabs, Typography, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import PropTypes from "prop-types";
 
 // Components
 import Header from "../../../../shared/components/Header/Header";
 import MainLayout from "../../../../shared/components/MainLayout/MainLayout";
 import WeatherBar from "../../../../shared/components/WeatherBar";
-import UserInfo from '../../components/UserInfo/UserInfo';
-import UserPosts from '../../components/UserPosts/UserPosts';
-import UserGallery from '../../components/UserGallery/UserGallery';
-import UserFriends from '../../components/UserFriends/UserFriends';
-import UserAbout from '../../components/UserAbout';
-import ProfileThumbnail from '../../components/ProfileThumbnail/ProfileThumbnail';
+import UserInfo from "../../components/UserInfo/UserInfo";
+import UserPosts from "../../components/UserPosts/UserPosts";
+import UserGallery from "../../components/UserGallery/UserGallery";
+import UserFriends from "../../components/UserFriends/UserFriends";
+import UserAbout from "../../components/UserAbout";
+import ProfileThumbnail from "../../components/ProfileThumbnail/ProfileThumbnail";
 
 // Styles
-import { 
-  ProfileContainer, 
-  LoadingContainer, 
-  TabsContainer, 
-  TabContentContainer, 
-  TabPanelStyles 
-} from './ProfilePage.styles';
-import { fetchUserProfile, selectUserProfile, selectUserStatus, selectUserError } from '../../redux/slices/userSlice';
+import {
+  ProfileContainer,
+  LoadingContainer,
+  TabsContainer,
+  TabContentContainer,
+  TabPanelStyles,
+} from "./ProfilePage.styles";
+import {
+  fetchUserProfile,
+  selectUserProfile,
+  selectUserStatus,
+  selectUserError,
+} from "../../redux/slices/userSlice";
 
 // Default images
-const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
-const DEFAULT_COVER = 'https://artmin96.github.io/argon-social/assets/images/users/cover/cover-1.gif';
+const DEFAULT_AVATAR = "/assets/images/avatar_default.jpg";
+const DEFAULT_COVER =
+  "https://artmin96.github.io/argon-social/assets/images/users/cover/cover-1.gif";
 
 // Custom TabPanel
 function TabPanel(props) {
@@ -43,11 +49,7 @@ function TabPanel(props) {
       {...other}
       style={TabPanelStyles}
     >
-      {value === index && (
-        <Box>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box>{children}</Box>}
     </div>
   );
 }
@@ -61,21 +63,22 @@ TabPanel.propTypes = {
 function a11yProps(index) {
   return {
     id: `profile-tab-${index}`,
-    'aria-controls': `profile-tabpanel-${index}`,
+    "aria-controls": `profile-tabpanel-${index}`,
   };
 }
 
 const ProfilePage = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
-  const { userId } = useParams(); // Lấy userId từ URL
+  const location = useLocation();
+  const userId = location.state?.userId; // Ưu tiên lấy từ URL, fallback lấy từ state
   const [tabValue, setTabValue] = useState(0);
-  
+
   // Use Redux selectors to get profile data
-  const userProfile = useSelector(state => selectUserProfile(state));
-  const status = useSelector(state => selectUserStatus(state));
-  const error = useSelector(state => selectUserError(state));
+  const userProfile = useSelector((state) => selectUserProfile(state));
+  const status = useSelector((state) => selectUserStatus(state));
+  const error = useSelector((state) => selectUserError(state));
 
   // Check if the current tab is the friends tab
   const isFriendsTab = isMobile ? tabValue === 2 : tabValue === 3;
@@ -110,10 +113,10 @@ const ProfilePage = () => {
   const ProfileContent = () => (
     <Box>
       <TabsContainer>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange} 
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
             aria-label="profile tabs"
             variant="fullWidth"
           >
@@ -123,22 +126,22 @@ const ProfilePage = () => {
             <Tab label="Bạn bè" {...a11yProps(isMobile ? 2 : 3)} />
           </Tabs>
         </Box>
-        
+
         <TabContentContainer>
           <TabPanel value={tabValue} index={0}>
             <UserPosts userId={userId} />
           </TabPanel>
-          
+
           {!isMobile && (
             <TabPanel value={tabValue} index={1}>
               <UserAbout user={userProfile} />
             </TabPanel>
           )}
-          
+
           <TabPanel value={tabValue} index={isMobile ? 1 : 2}>
             <UserGallery userId={userId} />
           </TabPanel>
-          
+
           <TabPanel value={tabValue} index={isMobile ? 2 : 3}>
             <UserFriends userId={userId} />
           </TabPanel>
@@ -148,7 +151,7 @@ const ProfilePage = () => {
   );
 
   // Loading state
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
       <>
         <Header />
@@ -160,18 +163,20 @@ const ProfilePage = () => {
   }
 
   // Error state
-  if (status === 'failed') {
+  if (status === "failed") {
     // Kiểm tra xem có phải lỗi cập nhật fullname không
     // Nếu là lỗi fullname thì vẫn hiển thị trang bình thường
     const isFullnameError = error && error.isFullnameError;
-    
+
     if (!isFullnameError) {
       return (
         <>
           <Header />
           <LoadingContainer>
             <Typography color="error">
-              {typeof error === 'object' ? (error.message || 'Có lỗi xảy ra khi tải thông tin người dùng') : error || 'Có lỗi xảy ra khi tải thông tin người dùng'}
+              {typeof error === "object"
+                ? error.message || "Có lỗi xảy ra khi tải thông tin người dùng"
+                : error || "Có lỗi xảy ra khi tải thông tin người dùng"}
             </Typography>
           </LoadingContainer>
         </>
@@ -207,4 +212,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

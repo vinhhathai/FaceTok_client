@@ -31,7 +31,10 @@ export const ConversationsHeader = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2), 
   borderBottom: '1px solid', 
   borderColor: theme.palette.divider,
-  fontWeight: 'bold'
+  fontWeight: 'bold',
+  [theme.breakpoints.down('md')]: {
+    padding: theme.spacing(1.5),
+  }
 }));
 
 // Box chứa danh sách cuộc hội thoại
@@ -53,7 +56,18 @@ export const MobileBackBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  backgroundColor: theme.palette.background.paper
+  backgroundColor: theme.palette.background.paper,
+  minHeight: '40px',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(0.5, 1),
+    minHeight: '36px'
+  },
+  '& .MuiTypography-subtitle1': {
+    fontSize: '0.95rem'
+  },
+  '& .MuiIconButton-root': {
+    padding: theme.spacing(0.5)
+  }
 }));
 
 // Box cho màn hình chào mừng khi không có cuộc trò chuyện nào được chọn

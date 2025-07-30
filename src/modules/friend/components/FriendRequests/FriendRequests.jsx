@@ -20,7 +20,7 @@ function FriendRequests({ requests, loading, error }) {
   };
   
   const navigateToProfile = (userId) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/profile/`, { state: { userId } });
   };
 
   if (loading) {

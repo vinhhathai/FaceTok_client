@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, IconButton, useMediaQuery, useTheme, Alert } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { jwtDecode } from 'jwt-decode';
 import { getCookie } from '../../../../shared/utils/cookieUtils';
 
 import ConversationList from '../../components/ConversationList/ConversationList';
 import ChatBox from '../../components/ChatBox/ChatBox';
-import MessageLayout from '../../../../shared/components/Layout/MessageLayout';
+import MessageLayout from '../../components/Layout/MessageLayout';
 import useMessageSocket from '../../hooks/useMessageSocket';
 import { setCurrentConversation, clearCurrentConversation } from '../../redux/slices/messageSlice';
 import { fetchConversations } from '../../redux/slices/conversationSlice';
@@ -33,7 +33,7 @@ const ChatPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { conversationId } = useParams();
+  const { conversationId } = useLocation().state || {};
   
   const [showConversations, setShowConversations] = useState(!conversationId || !isMobile);
   const [showChat, setShowChat] = useState(!!conversationId || !isMobile);
@@ -114,7 +114,7 @@ const ChatPage = () => {
         // Trước khi gửi, kiểm tra xem ID có hợp lệ không
         if (!isValidMongoId(conversationId)) {
           toast.error('ID người dùng không hợp lệ');
-          navigate('/messages', { replace: true });
+          navigate('/messages', {  replace: true });
           return;
         }
         
@@ -133,9 +133,9 @@ const ChatPage = () => {
           const response = await getOrCreateRoom(conversationId);
           
           if (response && response.success && response.data && response.data.room) {
-            // Nếu tạo phòng thành công, cập nhật URL và chuyển đến phòng chat
-            navigate(`/messages/${response.data.room._id}`, { replace: true });
-            
+            // Nếu tạo phòng thành công, chuyển về /messages và truyền roomId qua state
+            navigate('/messages', { replace: true, state: { roomId: response.data.room._id } });
+
             // Tìm phòng trong danh sách hoặc tải lại danh sách phòng
             const room = conversations.find(conv => conv._id === response.data.room._id);
             if (room) {
@@ -179,8 +179,9 @@ const ChatPage = () => {
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
-    navigate(`/messages/${conversation._id}`);
-    
+    // Ẩn roomId khỏi URL, truyền qua state
+    navigate('/messages', { state: { roomId: conversation._id } });
+
     if (isMobile) {
       setShowConversations(false);
       setShowChat(true);

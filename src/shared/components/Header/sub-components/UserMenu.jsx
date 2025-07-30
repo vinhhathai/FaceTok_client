@@ -35,9 +35,9 @@ const UserMenu = () => {
 
   const handleProfileClick = () => {
     if (user && user.id) {
-      navigate(`/profile/${user.id}`);
+      navigate('/profile', { state: { userId: user.id } });
     } else {
-      navigate(`/profile`);
+      navigate('/profile');
     }
     handleMenuClose();
   };

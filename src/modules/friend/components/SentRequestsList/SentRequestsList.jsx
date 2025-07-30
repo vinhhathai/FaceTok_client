@@ -44,7 +44,7 @@ function SentRequestsList({ requests, loading, error, onCancelRequest }) {
   };
   
   const navigateToProfile = (userId) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/profile/`, { state: { userId } });
   };
 
   if (loading) {

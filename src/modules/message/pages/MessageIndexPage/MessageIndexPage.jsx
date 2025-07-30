@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import useMessageSocket from '../../hooks/useMessageSocket';
-import MessageLayout from '../../../../shared/components/Layout/MessageLayout';
+import MessageLayout from '../../components/Layout/MessageLayout';
 import ConversationList from '../../components/ConversationList/ConversationList';
 import ChatBox from '../../components/ChatBox/ChatBox';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -113,7 +113,7 @@ const MessageIndexPage = () => {
             <ConversationsGridItem item xs={12} md={4} lg={3}>
               <ConversationsPaper elevation={0}>
                 <ConversationsHeader>
-                  Messages
+                  Tin nhắn
                 </ConversationsHeader>
                 
                 <ConversationsListContainer>

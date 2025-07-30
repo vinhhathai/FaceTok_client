@@ -103,31 +103,22 @@ const ChatBox = ({ conversation, onBack }) => {
 
   return (
     <ChatBoxContainer elevation={0}>
-      {/* Chat header */}
-      <ChatHeader>
-        {/* Back button only on mobile */}
-        {isMobile && onBack && (
-          <IconButton 
-            color="primary" 
-            onClick={onBack} 
-            sx={{ mr: 1 }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-        )}
-
-        <UserInfoContainer>
-          <UserAvatar 
-            src={activeConversation.participant?.avatar} 
-            alt={activeConversation.participant?.fullName}
-          />
-          <Box>
-            <Typography variant="subtitle1">
-              {activeConversation.participant?.fullName || "Unknown User"}
-            </Typography>
-          </Box>
-        </UserInfoContainer>
-      </ChatHeader>
+      {/* Chat header - Hiển thị chỉ khi không ở chế độ mobile */}
+      {!isMobile && (
+        <ChatHeader>
+          <UserInfoContainer>
+            <UserAvatar 
+              src={activeConversation.participant?.profilePicture} 
+              alt={activeConversation.participant?.fullName}
+            />
+            <Box>
+              <Typography variant="subtitle1">
+                {activeConversation.participant?.fullName || "Unknown User"}
+              </Typography>
+            </Box>
+          </UserInfoContainer>
+        </ChatHeader>
+      )}
       
       {/* Message list */}
       {loading ? (

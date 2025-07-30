@@ -1,5 +1,12 @@
 import React from 'react';
 import { Grid, Container, Box, useMediaQuery, useTheme } from '@mui/material';
+import { 
+  containerStyles, 
+  gridContainerStyles, 
+  leftSidebarStyles, 
+  rightSidebarStyles, 
+  rightSidebarBoxStyles 
+} from './MainLayout.styles';
 
 function MainLayout({ thumbnail, leftSidebar, content, rightSidebar, isMobile, isFriendsTab }) {
   const theme = useTheme();
@@ -10,8 +17,8 @@ function MainLayout({ thumbnail, leftSidebar, content, rightSidebar, isMobile, i
   const hideLeftSidebar = isMobile && isFriendsTab;
 
   return (
-    <Container maxWidth="xl" sx={{ mt: isTabletOrMobile ? 0 : 3 }}>
-      <Grid container spacing={isTabletOrMobile ? 0 : 3}>
+    <Container maxWidth="xl" sx={containerStyles(isTabletOrMobile)}>
+      <Grid container sx={gridContainerStyles(isTabletOrMobile)}>
         {/* Thumbnail Row (Optional) */}
         {thumbnail && (
           <Grid item xs={12}>
@@ -21,26 +28,18 @@ function MainLayout({ thumbnail, leftSidebar, content, rightSidebar, isMobile, i
 
         {/* Main Content Row */}
         {/* Left Sidebar - Show on all devices except mobile friends page */}
-        <Grid item xs={12} md={3} lg={3} sx={{ 
-          display: hideLeftSidebar ? 'none' : 'block'
-        }}>
+        <Grid item xs={12} md={3} lg={3} sx={{ ...leftSidebarStyles(hideLeftSidebar), pr: { md: 2, lg: 3 } }}>
           {leftSidebar}
         </Grid>
 
         {/* Main Content */}
-        <Grid item xs={12} md={6} lg={6}>
+        <Grid item xs={12} md={6} lg={6} sx={{ px: { md: 1, lg: 2 } }}>
           {content}
         </Grid>
 
         {/* Right Sidebar - Desktop only */}
-        <Grid item xs={12} md={3} lg={3} sx={{ 
-          display: { xs: 'none', md: 'block' }
-        }}>
-          <Box sx={{ 
-            position: 'sticky',
-            top: '16px',
-            height: 'auto'
-          }}>
+        <Grid item xs={12} md={3} lg={3} sx={{ ...rightSidebarStyles, pl: { md: 2, lg: 3 } }}>
+          <Box sx={rightSidebarBoxStyles}>
             {rightSidebar}
           </Box>
         </Grid>

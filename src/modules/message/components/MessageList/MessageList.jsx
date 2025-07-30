@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { useMediaQuery, useTheme } from '@mui/material';
 import MessageItem from '../MessageItem/MessageItem';
 import {
   MessageListContainer,
@@ -11,7 +12,10 @@ import {
 
 const MessageList = ({ messages, currentUserId }) => {
   const messagesEndRef = useRef(null);
+  const containerRef = useRef(null);
   const previousMessagesLength = useRef(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   // Scroll to bottom when new messages are added
   useEffect(() => {
@@ -26,11 +30,15 @@ const MessageList = ({ messages, currentUserId }) => {
     }
   }, [messages]);
 
-  // Force scroll to bottom on initial load
+  // Force scroll to bottom on initial load with a slight delay to ensure rendering is complete
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
-    }
+    const timer = setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   // Function to properly extract senderId from any message format
@@ -67,7 +75,8 @@ const MessageList = ({ messages, currentUserId }) => {
   // Kiểm tra tin nhắn rỗng
   if (!messages || messages.length === 0) {
     return (
-      <MessageListContainer>
+      <MessageListContainer ref={containerRef}>
+        {isMobile && <div style={{ height: '60px', flexShrink: 0, marginBottom: '8px' }} />} {/* Spacer cho mobile */}
         <EmptyMessageContainer>
           Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
         </EmptyMessageContainer>
@@ -113,7 +122,10 @@ const MessageList = ({ messages, currentUserId }) => {
   const cleanCurrentUserId = String(currentUserId).trim();
   
   return (
-    <MessageListContainer>
+    <MessageListContainer ref={containerRef}>
+      {/* Thêm phần tử giả có chiều cao cố định trên mobile để tránh bị che bởi header */}
+      {isMobile && <div style={{ height: '60px', flexShrink: 0, marginBottom: '8px' }} />}
+      
       {sortedGroupedMessages.map(([date, dateMessages]) => (
         <DateGroup key={date}>
           <DateHeaderContainer>
