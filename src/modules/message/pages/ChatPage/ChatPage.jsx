@@ -10,7 +10,6 @@ import ConversationList from '@message/components/ConversationList/ConversationL
 import ChatBox from '@message/components/ChatBox/ChatBox';
 import MessageLayout from '@message/components/Layout/MessageLayout';
 import useMessageSocket from '@message/hooks/useMessageSocket';
-import { setCurrentConversation, clearCurrentConversation } from '@message/redux/slices/messageSlice';
 import { fetchConversations } from '@message/redux/slices/conversationSlice';
 import { getOrCreateRoom } from '@message/api/messageAPI';
 import { toast } from 'react-toastify';
@@ -40,8 +39,10 @@ const ChatPage = () => {
   const [loadingRoom, setLoadingRoom] = useState(false);
   const [processingRoomCreation, setProcessingRoomCreation] = useState(false);
   
+  const [currentConversation, setCurrentConversation] = useState(null);
+  
+  // Lấy conversations từ Redux
   const { conversations, loading: conversationsLoading } = useSelector(state => state.conversations);
-  const { currentConversation } = useSelector(state => state.messages);
   
   // Kiểm tra xem ID có phải là ObjectId MongoDB hợp lệ không (24 ký tự hex)
   const isValidMongoId = (id) => {
@@ -49,7 +50,7 @@ const ChatPage = () => {
   };
   
   // Initialize WebSocket connection
-  const { connected } = useMessageSocket();
+  const { connected } = useMessageSocket(currentConversation);
   
   // Get current user ID from token in cookie
   useEffect(() => {
@@ -104,7 +105,7 @@ const ChatPage = () => {
     const checkOrCreateRoom = async () => {
       if (!conversationId) {
         // Nếu không có conversationId, xóa cuộc trò chuyện hiện tại
-        dispatch(clearCurrentConversation());
+        setCurrentConversation(null);
         
         if (isMobile) {
           setShowConversations(true);
@@ -120,79 +121,74 @@ const ChatPage = () => {
       
       if (existingRoom) {
         // Nếu tìm thấy phòng hiện có, hiển thị nó
-        dispatch(setCurrentConversation(existingRoom));
+        setCurrentConversation(existingRoom);
         
         if (isMobile) {
           setShowConversations(false);
           setShowChat(true);
         }
-      } else {
-        // Nếu không tìm thấy phòng, có thể conversationId là userId
-        // Trước khi gửi, kiểm tra xem ID có hợp lệ không
-        if (!isValidMongoId(conversationId)) {
-          toast.error('ID người dùng không hợp lệ');
-          navigate('/messages', {  replace: true });
-          return;
-        }
+        return;
+      }
+      
+      // Trước khi gửi, kiểm tra xem ID có hợp lệ không
+      if (!isValidMongoId(conversationId)) {
+        toast.error('ID người dùng không hợp lệ');
+        navigate('/messages', {  replace: true });
+        return;
+      }
+      
+      // Ngăn ngừa nhiều cuộc gọi API đồng thời
+      if (processingRoomCreation) {
+        return;
+      }
+      
+      // Đánh dấu đang xử lý
+      setProcessingRoomCreation(true);
+      
+      // Thử tạo hoặc tìm phòng chat với người dùng này
+      try {
+        setLoadingRoom(true);
         
-        // Ngăn ngừa nhiều cuộc gọi API đồng thời
-        if (processingRoomCreation) {
-          return;
-        }
+        const response = await getOrCreateRoom(conversationId);
         
-        // Đánh dấu đang xử lý
-        setProcessingRoomCreation(true);
-        
-        // Thử tạo hoặc tìm phòng chat với người dùng này
-        try {
-          setLoadingRoom(true);
-          
-          const response = await getOrCreateRoom(conversationId);
-          
-          if (response && response.success && response.data && response.data.room) {
-            // Nếu tạo phòng thành công, chuyển về /messages và truyền roomId qua state
-            navigate('/messages', { replace: true, state: { roomId: response.data.room._id } });
+        if (response && response.success && response.data && response.data.room) {
+          // Nếu tạo phòng thành công, chuyển về /messages và truyền roomId qua state
+          navigate('/messages', { replace: true, state: { roomId: response.data.room._id } });
 
-            // Tìm phòng trong danh sách hoặc tải lại danh sách phòng
-            const room = conversations.find(conv => conv._id === response.data.room._id);
-            if (room) {
-              dispatch(setCurrentConversation(room));
-            } else {
-              dispatch(fetchConversations());
-            }
-            
-            if (isMobile) {
-              setShowConversations(false);
-              setShowChat(true);
-            }
-          } else {
-            // Không thể tạo phòng, chuyển về danh sách trò chuyện
-            navigate('/messages', { replace: true });
-            
-            const errorMessage = response?.error?.message || 'Không thể tạo phòng chat với người dùng này.';
-            toast.error(errorMessage);
-          }
-        } catch (error) {
-          console.error('Error creating room:', error);
+          // Tìm phòng trong danh sách hoặc tải lại danh sách phòng
+          setCurrentConversation(response.data.room);
           
-          // Hiển thị thông báo lỗi chi tiết hơn nếu có
-          let errorMessage = 'Không thể tạo phòng chat, vui lòng thử lại sau.';
-          if (error.response?.data?.error?.message) {
-            errorMessage = error.response.data.error.message;
+          if (isMobile) {
+            setShowConversations(false);
+            setShowChat(true);
           }
-          
-          toast.error(errorMessage);
+        } else {
+          // Không thể tạo phòng, chuyển về danh sách trò chuyện
           navigate('/messages', { replace: true });
-        } finally {
-          setLoadingRoom(false);
-          // Đặt lại trạng thái xử lý
-          setProcessingRoomCreation(false);
+          
+          const errorMessage = response?.error?.message || 'Không thể tạo phòng chat với người dùng này.';
+          toast.error(errorMessage);
         }
+      } catch (error) {
+        console.error('Error creating room:', error);
+        
+        // Hiển thị thông báo lỗi chi tiết hơn nếu có
+        let errorMessage = 'Không thể tạo phòng chat, vui lòng thử lại sau.';
+        if (error.response?.data?.error?.message) {
+          errorMessage = error.response.data.error.message;
+        }
+        
+        toast.error(errorMessage);
+        navigate('/messages', { replace: true });
+      } finally {
+        setLoadingRoom(false);
+        // Đặt lại trạng thái xử lý
+        setProcessingRoomCreation(false);
       }
     };
     
     checkOrCreateRoom();
-  }, [conversationId, conversations, conversationsLoading, dispatch, isMobile, navigate, processingRoomCreation]);
+  }, [conversationId, currentConversation, isMobile, navigate, processingRoomCreation, conversations, conversationsLoading]);
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
@@ -283,7 +279,11 @@ const ChatPage = () => {
                 </MobileBackButtonBox>
               )}
               
-              <ChatBox conversation={currentConversation} />
+              <ChatBox 
+                conversation={currentConversation}
+                onBack={handleBackToConversations}
+                currentConversation={currentConversation}
+              />
             </ChatAreaGridItem>
           )}
         </ChatGridContainer>

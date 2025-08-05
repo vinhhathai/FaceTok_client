@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useSocket } from '@contexts/SocketContext';
 
 /**
  * Hook để sử dụng socket connection cho trang tin nhắn
+ * @param {Object} currentConversation - Conversation hiện tại (truyền qua props)
  */
-const useMessageSocket = () => {
-  const currentConversation = useSelector(state => state.messages.currentConversation);
+const useMessageSocket = (currentConversation) => {
   const { socket, connected, emit, joinRoom, leaveRoom } = useSocket();
   const previousRoomIdRef = useRef(null);
   const timerRef = useRef(null);

@@ -30,21 +30,13 @@ export const sendMessage = createAsyncThunk(
 );
 
 const initialState = {
-  messages: [],
-  currentConversation: null
+  messages: []
 };
 
 const messageSlice = createSlice({
   name: 'message',
   initialState,
   reducers: {
-    setCurrentConversation(state, action) {
-      state.currentConversation = action.payload;
-      state.messages = [];
-    },
-    clearCurrentConversation(state) {
-      state.currentConversation = null;
-    },
     addReceivedMessage(state, action) {
       const newMessage = action.payload;
       
@@ -53,13 +45,6 @@ const messageSlice = createSlice({
       if (!messageExists) {
         // Thêm tin nhắn mới vào cuối mảng
         state.messages.push(newMessage);
-        
-        // Sắp xếp lại tin nhắn theo thời gian tăng dần (oldest first)
-        state.messages.sort((a, b) => {
-          const dateA = new Date(a.createdAt).getTime();
-          const dateB = new Date(b.createdAt).getTime();
-          return dateA - dateB;
-        });
       }
     },
     forceUpdateMessages(state) {
@@ -81,19 +66,12 @@ const messageSlice = createSlice({
           const messageExists = state.messages.some(m => m._id === newMessage._id);
           if (!messageExists) {
             state.messages.push(newMessage);
-            
-            // Sắp xếp lại tin nhắn theo thời gian tăng dần (oldest first)
-            state.messages.sort((a, b) => {
-              const dateA = new Date(a.createdAt).getTime();
-              const dateB = new Date(b.createdAt).getTime();
-              return dateA - dateB;
-            });
           }
         }
       })
   }
 });
 
-export const { addReceivedMessage, setCurrentConversation, clearCurrentConversation, forceUpdateMessages } = messageSlice.actions;
+export const { addReceivedMessage, forceUpdateMessages } = messageSlice.actions;
 
 export default messageSlice.reducer; 

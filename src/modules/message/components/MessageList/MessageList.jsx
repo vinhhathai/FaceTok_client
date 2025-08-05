@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useMediaQuery, useTheme } from '@mui/material';
 import MessageItem from '../MessageItem/MessageItem';
@@ -17,6 +17,17 @@ const MessageList = ({ messages, currentUserId }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
+  // Sort messages với useMemo thay vì Redux
+  const sortedMessages = useMemo(() => {
+    if (!messages || messages.length === 0) return [];
+    
+    return [...messages].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateA - dateB; // Oldest first
+    });
+  }, [messages]);
+
   // Scroll to bottom when new messages are added
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -24,9 +35,9 @@ const MessageList = ({ messages, currentUserId }) => {
     }
     
     // Kiểm tra nếu có tin nhắn mới thì mới log
-    if (messages && messages.length !== previousMessagesLength.current) {
-      previousMessagesLength.current = messages.length;
-      console.log(`MessageList: Messages updated, count: ${messages.length}`);
+    if (sortedMessages && sortedMessages.length !== previousMessagesLength.current) {
+      previousMessagesLength.current = sortedMessages.length;
+      console.log(`MessageList: Messages updated, count: ${sortedMessages.length}`);
       
       // Scroll to bottom khi có tin nhắn mới
       setTimeout(() => {
@@ -35,7 +46,7 @@ const MessageList = ({ messages, currentUserId }) => {
         }
       }, 100);
     }
-  }, [messages]);
+  }, [sortedMessages]);
 
   // Force scroll to bottom on initial load with a slight delay to ensure rendering is complete
   useEffect(() => {
@@ -104,13 +115,6 @@ const MessageList = ({ messages, currentUserId }) => {
       </MessageListContainer>
     );
   }
-  
-  // Sort messages by timestamp first
-  const sortedMessages = [...messages].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return dateA - dateB; // Ascending (oldest first) - giữ nguyên để tin nhắn mới ở dưới
-  });
   
   // Debug: Log thứ tự tin nhắn
   console.log('MessageList: Sorted messages:', sortedMessages.map(m => ({

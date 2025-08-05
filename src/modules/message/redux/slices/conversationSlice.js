@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // import { conversations } from '../../mock/mockData';
-import { getUserRooms, deleteConversation } from '@message/api/messageAPI';
+import { getUserRooms } from '@message/api/messageAPI';
 import { adaptRoomsToConversations } from '@message/adapters/conversationAdapter';
 
 // Async thunk để lấy danh sách cuộc trò chuyện
@@ -42,21 +42,6 @@ export const fetchConversations = createAsyncThunk(
     } catch (error) {
       console.error('Error fetching conversations:', error);
       return rejectWithValue(error.message || "Failed to fetch conversations");
-    }
-  }
-);
-
-// Async thunk để xóa cuộc trò chuyện
-export const deleteConversationAction = createAsyncThunk(
-  'conversation/deleteConversation',
-  async (roomId, { rejectWithValue }) => {
-    try {
-      const response = await deleteConversation(roomId);
-      console.log('Delete conversation response:', response);
-      return { roomId, response };
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
-      return rejectWithValue(error.message || "Failed to delete conversation");
     }
   }
 );
@@ -136,15 +121,6 @@ const conversationSlice = createSlice({
       // fetchConversations
       .addCase(fetchConversations.fulfilled, (state, action) => {
         state.conversations = action.payload.data || [];
-      })
-      
-      // deleteConversationAction
-      .addCase(deleteConversationAction.fulfilled, (state, action) => {
-        // Xóa conversation khỏi state
-        const { roomId } = action.payload;
-        state.conversations = state.conversations.filter(
-          conv => conv._id !== roomId
-        );
       })
   }
 });

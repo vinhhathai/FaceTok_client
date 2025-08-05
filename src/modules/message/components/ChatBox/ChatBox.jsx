@@ -18,12 +18,12 @@ import {
   InputContainer
 } from './ChatBox.styles';
 
-const ChatBox = ({ conversation, onBack }) => {
+const ChatBox = ({ conversation, onBack, currentConversation }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { messages, currentConversation } = useSelector(state => state.messages);
-  const { emit, connected } = useMessageSocket();
+  const { messages } = useSelector(state => state.messages);
+  const { emit, connected } = useMessageSocket(currentConversation);
   
   // Local states thay vì Redux loading states
   const [loading, setLoading] = useState(false);
@@ -36,7 +36,7 @@ const ChatBox = ({ conversation, onBack }) => {
   // Debug: Log currentUserId
   console.log('ChatBox: currentUserId from localStorage:', myChatId);
   
-  // Sử dụng conversation từ props và currentConversation từ Redux
+  // Sử dụng conversation từ props và currentConversation từ props
   const activeConversation = conversation || currentConversation;
 
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
@@ -153,7 +153,8 @@ const ChatBox = ({ conversation, onBack }) => {
 
 ChatBox.propTypes = {
   conversation: PropTypes.object,
-  onBack: PropTypes.func
+  onBack: PropTypes.func,
+  currentConversation: PropTypes.object
 };
 
 export default ChatBox; 

@@ -31,6 +31,13 @@ const ConversationList = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // Local state để quản lý conversation list thay vì Redux
+  const [localConversations, setLocalConversations] = useState([]);
+
+  // Sync Redux state với local state
+  useEffect(() => {
+    setLocalConversations(conversations);
+  }, [conversations]);
 
   // Fetch conversations on component mount
   useEffect(() => {
@@ -60,12 +67,18 @@ const ConversationList = ({
     setDeleteDialogOpen(true);
   };
 
-  // Confirm delete
+  // Confirm delete - KHÔNG dùng Redux, chỉ dùng local state
   const confirmDelete = async () => {
     if (conversationToDelete) {
       setDeleteLoading(true);
       try {
+        // Gọi API delete
         await deleteConversation(conversationToDelete._id);
+        
+        // Xóa khỏi local state thay vì Redux
+        setLocalConversations(prev => 
+          prev.filter(conv => conv._id !== conversationToDelete._id)
+        );
         
         // Show success message
         toast.success(`Đã xóa cuộc trò chuyện với ${conversationToDelete.participant?.fullName || 'người dùng'}`);
@@ -108,7 +121,7 @@ const ConversationList = ({
     );
   }
 
-  if (conversations.length === 0) {
+  if (localConversations.length === 0) {
     return (
       <StatusContainer>
         <Typography color="text.secondary">
@@ -121,7 +134,7 @@ const ConversationList = ({
   return (
     <>
       <ConversationsListWrapper disablePadding>
-        {conversations.map((conversation) => (
+        {localConversations.map((conversation) => (
           <ConversationItem
             key={conversation._id}
             conversation={conversation}

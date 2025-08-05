@@ -6,7 +6,6 @@ import MessageLayout from '@message/components/Layout/MessageLayout';
 import ConversationList from '@message/components/ConversationList/ConversationList';
 import ChatBox from '@message/components/ChatBox/ChatBox';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { setCurrentConversation } from '@message/redux/slices/messageSlice';
 import { toast } from 'react-toastify';
 import {
   PageContainer,
@@ -30,7 +29,7 @@ const MessageIndexPage = () => {
   const { loading, conversations } = useSelector(state => state.conversations);
   
   // Initialize WebSocket connection
-  useMessageSocket();
+  useMessageSocket(selectedConversation);
   
   // Auto-select first conversation for desktop
   useEffect(() => {
@@ -40,11 +39,9 @@ const MessageIndexPage = () => {
       console.log('Auto-selecting first conversation:', firstConversation);
       setTimeout(() => {
         setSelectedConversation(firstConversation);
-        // Cập nhật currentConversation trong Redux store
-        dispatch(setCurrentConversation(firstConversation));
       }, 500);
     }
-  }, [loading, conversations, selectedConversation, isMobile, dispatch]);
+  }, [loading, conversations, selectedConversation, isMobile]);
 
   // Reset view when screen size changes
   useEffect(() => {
@@ -80,9 +77,6 @@ const MessageIndexPage = () => {
     
     setSelectedConversation(conversation);
     
-    // Cập nhật currentConversation trong Redux store
-    dispatch(setCurrentConversation(conversation));
-    
     // In mobile, switch to chat view when selecting a conversation
     if (isMobile) {
       setMobileView('chat');
@@ -94,16 +88,12 @@ const MessageIndexPage = () => {
     // If the deleted conversation is currently selected, clear selection
     if (selectedConversation && selectedConversation._id === conversation._id) {
       setSelectedConversation(null);
-      dispatch(setCurrentConversation(null));
       
       // On mobile, go back to list view
       if (isMobile) {
         setMobileView('list');
       }
     }
-    
-    // Refresh conversations list
-    dispatch(fetchConversations());
   };
   
   // Handle back button on mobile
@@ -163,8 +153,8 @@ const MessageIndexPage = () => {
               
               {selectedConversation ? (
                 <ChatBox 
-                  conversation={selectedConversation} 
-                  onBack={handleBackToList}
+                  conversation={selectedConversation}
+                  currentConversation={selectedConversation}
                 />
               ) : (
                 <WelcomeContainer>
