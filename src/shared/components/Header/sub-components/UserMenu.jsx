@@ -1,17 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Divider from '@mui/material/Divider';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import LogoutIcon from '@mui/icons-material/Logout';
-import Typography from '@mui/material/Typography';
+import {
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Avatar,
+  Typography,
+  Box
+} from '@mui/material';
+import {
+  AccountCircle,
+  Settings,
+  Logout,
+  Person
+} from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../../../modules/auth/redux/slices/authSlice';
+import { logout } from '@auth/redux/slices/authSlice';
 import {
   userAvatarContainerStyle,
   userAvatarStyle,
@@ -124,14 +131,14 @@ const UserMenu = () => {
         
         <MenuItem onClick={handleProfileClick}>
           <ListItemIcon>
-            <PersonOutlineIcon fontSize="small" />
+            <Person fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="Trang cá nhân" />
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogoutClick}>
           <ListItemIcon>
-            <LogoutIcon fontSize="small" />
+            <Logout fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="Đăng xuất" />
         </MenuItem>

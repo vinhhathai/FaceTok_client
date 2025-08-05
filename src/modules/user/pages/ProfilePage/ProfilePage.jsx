@@ -1,42 +1,28 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { Box, Tab, Tabs, Typography, useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import PropTypes from "prop-types";
+import React, { useState, useEffect } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { Box, Tabs, Tab, CircularProgress, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { toast } from 'react-toastify';
 
 // Components
-import Header from "../../../../shared/components/Header/Header";
-import MainLayout from "../../../../shared/components/MainLayout/MainLayout";
-import WeatherBar from "../../../../shared/components/WeatherBar";
-import UserInfo from "../../components/UserInfo/UserInfo";
-import UserPosts from "../../components/UserPosts/UserPosts";
-import UserGallery from "../../components/UserGallery/UserGallery";
-import UserFriends from "../../components/UserFriends/UserFriends";
-import UserAbout from "../../components/UserAbout";
-import ProfileThumbnail from "../../components/ProfileThumbnail/ProfileThumbnail";
+import Header from '@components/Header/Header';
+import MainLayout from '@components/MainLayout/MainLayout';
+import { fetchUserProfile, selectUserProfile } from '@user/redux';
+import ProfileThumbnail from '@user/components/ProfileThumbnail/ProfileThumbnail';
+import UserInfo from '@user/components/UserInfo/UserInfo';
+import UserPosts from '@user/components/UserPosts/UserPosts';
+import UserAbout from '@user/components/UserAbout/UserAbout';
+import UserGallery from '@user/components/UserGallery/UserGallery';
+import UserFriends from '@user/components/UserFriends/UserFriends';
+import WeatherBar from '@components/WeatherBar/WeatherBar';
+import { 
+  ProfileContainer, 
+  LoadingContainer, 
+  TabsContainer, 
+  TabContentContainer 
+} from './ProfilePage.styles';
 
-// Styles
-import {
-  ProfileContainer,
-  LoadingContainer,
-  TabsContainer,
-  TabContentContainer,
-  TabPanelStyles,
-} from "./ProfilePage.styles";
-import {
-  fetchUserProfile,
-  selectUserProfile,
-  selectUserStatus,
-  selectUserError,
-} from "../../redux/slices/userSlice";
-
-// Default images
-const DEFAULT_AVATAR = "/assets/images/avatar_default.jpg";
-const DEFAULT_COVER =
-  "https://artmin96.github.io/argon-social/assets/images/users/cover/cover-1.gif";
-
-// Custom TabPanel
+// Tab Panel component
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -47,18 +33,15 @@ function TabPanel(props) {
       id={`profile-tabpanel-${index}`}
       aria-labelledby={`profile-tab-${index}`}
       {...other}
-      style={TabPanelStyles}
     >
-      {value === index && <Box>{children}</Box>}
+      {value === index && (
+        <Box sx={{ pt: 3 }}>
+          {children}
+        </Box>
+      )}
     </div>
   );
 }
-
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
 
 function a11yProps(index) {
   return {
@@ -74,11 +57,13 @@ const ProfilePage = () => {
   const location = useLocation();
   const userId = location.state?.userId; // Ưu tiên lấy từ URL, fallback lấy từ state
   const [tabValue, setTabValue] = useState(0);
+  
+  // Local states thay vì Redux loading states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Use Redux selectors to get profile data
   const userProfile = useSelector((state) => selectUserProfile(state));
-  const status = useSelector((state) => selectUserStatus(state));
-  const error = useSelector((state) => selectUserError(state));
 
   // Check if the current tab is the friends tab
   const isFriendsTab = isMobile ? tabValue === 2 : tabValue === 3;
@@ -86,7 +71,17 @@ const ProfilePage = () => {
   useEffect(() => {
     // Fetch user profile when component mounts or userId changes
     if (userId) {
-      dispatch(fetchUserProfile(userId));
+      setLoading(true);
+      setError(null);
+      
+      dispatch(fetchUserProfile(userId))
+        .unwrap()
+        .catch(error => {
+          console.error('Failed to fetch user profile:', error);
+          setError('Không thể tải thông tin người dùng');
+          toast.error('Không thể tải thông tin người dùng');
+        })
+        .finally(() => setLoading(false));
     }
   }, [userId, dispatch]);
 
@@ -101,13 +96,6 @@ const ProfilePage = () => {
       setTabValue(0);
     }
   }, [isMobile, tabValue]);
-
-  // Get the correct tab index based on mobile/desktop view
-  const getTabIndex = (desktopIndex) => {
-    if (!isMobile) return desktopIndex;
-    // On mobile, skip the "Giới thiệu" tab (index 1)
-    return desktopIndex < 1 ? desktopIndex : desktopIndex - 1;
-  };
 
   // Profile Content component
   const ProfileContent = () => (
@@ -151,38 +139,30 @@ const ProfilePage = () => {
   );
 
   // Loading state
-  if (status === "loading") {
+  if (loading) {
     return (
       <>
         <Header />
         <LoadingContainer>
-          <Typography>Đang tải thông tin người dùng...</Typography>
+          <CircularProgress />
+          <Typography sx={{ mt: 2 }}>Đang tải thông tin người dùng...</Typography>
         </LoadingContainer>
       </>
     );
   }
 
   // Error state
-  if (status === "failed") {
-    // Kiểm tra xem có phải lỗi cập nhật fullname không
-    // Nếu là lỗi fullname thì vẫn hiển thị trang bình thường
-    const isFullnameError = error && error.isFullnameError;
-
-    if (!isFullnameError) {
-      return (
-        <>
-          <Header />
-          <LoadingContainer>
-            <Typography color="error">
-              {typeof error === "object"
-                ? error.message || "Có lỗi xảy ra khi tải thông tin người dùng"
-                : error || "Có lỗi xảy ra khi tải thông tin người dùng"}
-            </Typography>
-          </LoadingContainer>
-        </>
-      );
-    }
-    // Nếu là lỗi fullname, tiếp tục hiển thị trang bình thường
+  if (error) {
+    return (
+      <>
+        <Header />
+        <LoadingContainer>
+          <Typography color="error">
+            {error}
+          </Typography>
+        </LoadingContainer>
+      </>
+    );
   }
 
   // Profile not found or no data

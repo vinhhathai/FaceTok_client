@@ -15,8 +15,8 @@ import {
   useMediaQuery,
   Alert
 } from '@mui/material';
-import { forgotPassword, verifyOTP, resetPassword } from '../../redux';
-import { createError, showSuccess, formatErrorMessage } from '../../../../shared/utils';
+import { forgotPassword, verifyOTP, resetPassword } from '@auth/redux';
+import { createError, showSuccess, formatErrorMessage } from '@utils';
 
 // Form steps
 const steps = ['Yêu cầu đặt lại', 'Xác nhận mã OTP', 'Đặt mật khẩu mới'];

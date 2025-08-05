@@ -17,8 +17,8 @@ import {
 } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { useNavigate } from 'react-router-dom';
-import Avatar from '../../../../shared/components/Avatar';
-import { FriendListContainer, FriendCard, FriendActionButtons } from '../FriendList/FriendList.styles';
+import Avatar from '@components/Avatar';
+import { FriendListContainer, FriendCard, FriendActionButtons } from '@friend/components/FriendList/FriendList.styles';
 import { CancelRequestButton } from './SentRequestsList.styles';
 
 function SentRequestsList({ requests, loading, error, onCancelRequest }) {

@@ -1,4 +1,4 @@
-import { apiClient } from '../../../shared/httpClient';
+import { apiClient } from '@httpClient';
 
 /**
  * Get all notifications for the current user

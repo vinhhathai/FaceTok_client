@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
-import { getCookie } from '../utils/cookieUtils';
-import { jwtDecode } from 'jwt-decode';
-import { useDispatch } from 'react-redux';
-import { addReceivedMessage, updateConversationLastMessage } from '../../modules/message/redux';
+import { getCookie } from '@utils/cookieUtils';
+import io from 'socket.io-client';
 import { toast } from 'react-toastify';
-import { store } from '../../core/config/store';
+import { addReceivedMessage, updateConversationLastMessage } from '@message/redux';
+import { useDispatch } from 'react-redux';
+import { store } from '@core/config/store';
+import { jwtDecode } from 'jwt-decode';
 
 const SOCKET_URL = 'http://localhost:3000/message';
 const TOKEN_COOKIE_NAME = 'auth_token';
@@ -15,14 +15,6 @@ const SocketContext = createContext(null);
 
 // Custom event để thông báo có tin nhắn mới
 export const MESSAGE_RECEIVED_EVENT = 'facetok_message_received';
-
-// Tạo component MessageNotification cho tin nhắn mới
-const MessageNotification = ({ senderName, content, onClick }) => (
-  <div onClick={onClick} style={{ cursor: 'pointer' }}>
-    <div><strong>{senderName}</strong></div>
-    <div>{content.length > 50 ? content.substring(0, 50) + '...' : content}</div>
-  </div>
-);
 
 // Provider component
 export const SocketProvider = ({ children }) => {
@@ -146,39 +138,18 @@ export const SocketProvider = ({ children }) => {
         message: messageData
       }));
       
+      // Import fetchConversations để refresh conversation list
+      import('../../modules/message/redux/slices/conversationSlice').then(({ fetchConversations }) => {
+        dispatch(fetchConversations());
+      });
+      
       // Phát sự kiện tin nhắn mới cho toàn bộ ứng dụng
       const messageEvent = new CustomEvent(MESSAGE_RECEIVED_EVENT, { 
         detail: messageData 
       });
       window.dispatchEvent(messageEvent);
       
-      // Bỏ qua toast thông báo cho tất cả tin nhắn
-      // Nếu muốn chỉ hiển thị thông báo cho tin nhắn từ người khác, bỏ comment dòng dưới
-      /*
-      if (!isFromCurrentUser) {
-        const senderName = messageData.sender?.fullName || 
-                          messageData.senderName || 
-                          'Tin nhắn mới';
-        
-        toast.info(
-          <MessageNotification 
-            senderName={senderName} 
-            content={messageData.content}
-            onClick={() => {
-              // Chuyển người dùng đến trang tin nhắn với roomId cụ thể
-              window.location.href = `/messages/${messageData.roomId}`;
-            }}
-          />,
-          {
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true
-          }
-        );
-      }
-      */
+      
     });
     
     // Lắng nghe xác nhận tin nhắn đã gửi
@@ -200,6 +171,11 @@ export const SocketProvider = ({ children }) => {
             conversationId: data.room?._id || data.message.roomId,
             message: messageData
           }));
+          
+          // Import fetchConversations để refresh conversation list
+          import('../../modules/message/redux/slices/conversationSlice').then(({ fetchConversations }) => {
+            dispatch(fetchConversations());
+          });
           
           // Phát sự kiện tin nhắn mới gửi thành công
           const messageEvent = new CustomEvent('MESSAGE_SENT_SUCCESS', {

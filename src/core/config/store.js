@@ -1,11 +1,10 @@
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "../../modules/auth/redux";
-import { postsReducer } from "../../modules/post/redux";
-import postDetailReducer from "../../modules/post/redux";
-import friendReducer from "../../modules/friend/redux";
-import messageReducer from "../../modules/message/redux";
-import notificationReducer from "../../modules/notification/redux";
-import { reducers as userReducers } from "../../modules/user/redux";
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from "@auth/redux";
+import { postsReducer } from "@post/redux";
+import postDetailReducer from "@post/redux";
+import friendReducer from "@friend/redux";
+import messageReducer from "@message/redux";
+import { reducers as userReducers } from "@user/redux";
 
 export const store = configureStore({
   reducer: {
@@ -13,7 +12,7 @@ export const store = configureStore({
     posts: postsReducer,
     friend: friendReducer,
     ...messageReducer,
-    notification: notificationReducer,
+
     post: postDetailReducer,
     ...userReducers,
   },

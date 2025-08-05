@@ -2,12 +2,12 @@ import React from "react";
 import { Provider } from "react-redux";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import { store } from "./core/config/store";
-import { routes } from "./core/config/routes";
-import theme from "./core/config/theme";
-import ToastContainer from "./shared/components/ToastMessage/ToastContainer";
-import AuthProvider from "./shared/components/AuthProvider/AuthProvider";
-import { SocketProvider } from "./shared/contexts/SocketContext";
+import { store } from "@core/config/store";
+import { routes } from "@core/config/routes";
+import theme from "@core/config/theme";
+import ToastContainer from "@components/ToastMessage/ToastContainer";
+import AuthProvider from "@components/AuthProvider/AuthProvider";
+import { SocketProvider } from "@contexts/SocketContext";
 
 // Phân tách auth routes và protected routes
 function App() {

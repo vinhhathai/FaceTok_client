@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as authAPI from '../../api/authAPI';
-import { setCookie, getCookie, removeCookie } from '../../../../shared/utils/cookieUtils';
+import * as authAPI from '@auth/api/authAPI';
+import { setCookie, getCookie, removeCookie } from '@utils/cookieUtils';
 
 // Cookie configuration
 const TOKEN_COOKIE_NAME = 'auth_token';
@@ -116,11 +116,7 @@ const initialState = {
   // Thông tin người dùng và token
   user: null,
   token: getCookie(TOKEN_COOKIE_NAME) || null,
-  isAuthenticated: !!getCookie(TOKEN_COOKIE_NAME),
-  
-  // Trạng thái tải và lỗi
-  loading: false,
-  error: null
+  isAuthenticated: !!getCookie(TOKEN_COOKIE_NAME)
 };
 
 /**
@@ -140,14 +136,6 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      state.error = null;
-    },
-    
-    /**
-     * Xóa lỗi: đặt state.error về null
-     */
-    clearError: (state) => {
-      state.error = null;
     }
   },
   
@@ -155,21 +143,14 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // ===== Các trường hợp lấy thông tin người dùng hiện tại =====
-      .addCase(fetchCurrentUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        state.loading = false;
         state.user = action.payload.data;
         state.isAuthenticated = true;
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
-        state.loading = false;
         if (action.payload === 'No token found') {
           state.isAuthenticated = false;
         } else {
-          state.error = action.payload;
           // Nếu lỗi 401, đặt isAuthenticated thành false
           if (action.payload?.status === 401) {
             state.isAuthenticated = false;
@@ -178,79 +159,39 @@ const authSlice = createSlice({
       })
       
       // ===== Các trường hợp đăng nhập =====
-      .addCase(login.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(login.fulfilled, (state, action) => {
-        state.loading = false;
         state.user = action.payload.data.user;
         state.token = action.payload.data.accessToken;
         state.isAuthenticated = true;
       })
-      .addCase(login.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(login.rejected, (state) => {
         state.isAuthenticated = false;
       })
       
       // ===== Các trường hợp đăng ký =====
-      .addCase(register.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(register.fulfilled, (state) => {
-        state.loading = false;
         // Không set authenticated vì cần đăng nhập sau khi đăng ký
-      })
-      .addCase(register.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
       })
       
       // ===== Các trường hợp quên mật khẩu =====
-      .addCase(forgotPassword.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(forgotPassword.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(forgotPassword.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        // Không cần thay đổi state
       })
       
       // ===== Các trường hợp xác thực OTP =====
-      .addCase(verifyOTP.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(verifyOTP.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(verifyOTP.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        // Không cần thay đổi state
       })
       
       // ===== Các trường hợp đặt lại mật khẩu =====
-      .addCase(resetPassword.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(resetPassword.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(resetPassword.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+        // Không cần thay đổi state
+      });
   }
 });
 
 // Export actions
-export const { logout, clearError } = authSlice.actions;
+export const { logout } = authSlice.actions;
 
 // Export reducer
 export default authSlice.reducer; 

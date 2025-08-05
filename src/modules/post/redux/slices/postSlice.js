@@ -25,21 +25,15 @@ export const fetchTimelinePosts = createAsyncThunk(
 const initialState = {
   timelinePosts: [],
   currentPage: 1,
-  totalPages: 1,
-  isLoading: false,
-  error: null,
-  createPostStatus: 'idle'
+  totalPages: 1
 };
 
 const postsSlice = createSlice({
   name: 'posts',
   initialState,
   reducers: {
-    clearPostsError: (state) => {
-      state.error = null;
-    },
     resetCreatePostStatus: (state) => {
-      state.createPostStatus = 'idle';
+      // Placeholder for future use
     },
     likePost: (state, action) => {
       const { postId, userId } = action.payload;
@@ -55,12 +49,7 @@ const postsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTimelinePosts.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
       .addCase(fetchTimelinePosts.fulfilled, (state, action) => {
-        state.isLoading = false;
         // Nếu là trang đầu tiên, thay thế toàn bộ, ngược lại thì thêm vào
         if (action.meta.arg.page === 1) {
           state.timelinePosts = action.payload.posts;
@@ -69,13 +58,9 @@ const postsSlice = createSlice({
         }
         state.currentPage = action.payload.currentPage;
         state.totalPages = action.payload.totalPages;
-      })
-      .addCase(fetchTimelinePosts.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
       });
   }
 });
 
-export const { clearPostsError, resetCreatePostStatus, likePost } = postsSlice.actions;
+export const { resetCreatePostStatus, likePost } = postsSlice.actions;
 export default postsSlice.reducer; 

@@ -5,16 +5,21 @@ import {
   Avatar, 
   ListItemText, 
   Typography, 
-  Badge
+  Badge,
+  IconButton,
+  Tooltip,
+  Box
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
   StyledConversationItem,
   ConversationHeader,
   ConversationInfo,
-  MessagePreview
+  MessagePreview,
+  DeleteButtonContainer
 } from './ConversationItem.styles';
 
-const ConversationItem = ({ conversation, isActive, onClick }) => {
+const ConversationItem = ({ conversation, isActive, onClick, onDelete }) => {
   // Format time for display
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
@@ -42,6 +47,14 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
     return message.content.length > 30 
       ? `${message.content.substring(0, 30)}...` 
       : message.content;
+  };
+
+  // Handle delete button click
+  const handleDeleteClick = (e) => {
+    e.stopPropagation(); // Ngăn không cho trigger onClick của conversation item
+    if (onDelete) {
+      onDelete(conversation);
+    }
   };
 
   return (
@@ -90,13 +103,31 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
               {getMessagePreview(conversation.lastMessage)}
             </MessagePreview>
             
-            {conversation.unreadCount > 0 && (
-              <Badge
-                badgeContent={conversation.unreadCount}
-                color="primary"
-                sx={{ ml: 1 }}
-              />
-            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {conversation.unreadCount > 0 && (
+                <Badge
+                  badgeContent={conversation.unreadCount}
+                  color="primary"
+                />
+              )}
+              
+              <DeleteButtonContainer className="delete-button-container">
+                <Tooltip title="Xóa cuộc trò chuyện" placement="top">
+                  <IconButton
+                    size="small"
+                    onClick={handleDeleteClick}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'error.main',
+                        color: 'error.contrastText'
+                      }
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </DeleteButtonContainer>
+            </Box>
           </ConversationInfo>
         }
       />
@@ -107,7 +138,8 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
 ConversationItem.propTypes = {
   conversation: PropTypes.object.isRequired,
   isActive: PropTypes.bool,
-  onClick: PropTypes.func.isRequired
+  onClick: PropTypes.func.isRequired,
+  onDelete: PropTypes.func
 };
 
 export default ConversationItem; 

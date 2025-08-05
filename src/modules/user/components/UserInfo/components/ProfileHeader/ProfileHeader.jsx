@@ -1,24 +1,19 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 
 // Components
 import { ProfileAvatar, ProfileName } from "./sub_components";
 import { ProfileContainer } from "./ProfileHeader.styles";
 
 // Hooks
-import useAvatarUpload from "./hooks/useAvatarUpload";
+import { useAvatarUpload } from "./hooks/useAvatarUpload";
 
 const ProfileHeader = ({ user, onEditName }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
   const {
-    avatarSrc,
+    currentImageSrc: avatarSrc,
     isUploading,
     uploadProgress,
-    handleAvatarChange
+    handleFileChange: handleAvatarChange
   } = useAvatarUpload(user);
   
   const isOwner = user?.isOwner || false;

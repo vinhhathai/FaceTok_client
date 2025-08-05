@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { List, ListItem, ListItemAvatar, ListItemText, Avatar, Box, Typography, CircularProgress } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { acceptRequest, rejectRequest } from '../../redux';
+import { acceptRequest, rejectRequest } from '@friend/redux';
 import { useNavigate } from 'react-router-dom';
 import { RequestContainer, RequestCard, RequestActionButton, RequestActionButtons } from './FriendRequests.styles';
 

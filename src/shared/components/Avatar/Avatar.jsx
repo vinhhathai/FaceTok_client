@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Avatar as MuiAvatar } from '@mui/material';
-import { getInitials } from '../../utils/stringUtils';
+import { getInitials } from '@utils/stringUtils';
 
 /**
  * Custom Avatar component với các tùy chọn kích thước

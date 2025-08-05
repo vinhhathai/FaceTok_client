@@ -27,6 +27,13 @@ const MessageList = ({ messages, currentUserId }) => {
     if (messages && messages.length !== previousMessagesLength.current) {
       previousMessagesLength.current = messages.length;
       console.log(`MessageList: Messages updated, count: ${messages.length}`);
+      
+      // Scroll to bottom khi có tin nhắn mới
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     }
   }, [messages]);
 
@@ -49,6 +56,7 @@ const MessageList = ({ messages, currentUserId }) => {
     if (typeof message.senderId === 'string') {
       return message.senderId;
     } else if (typeof message.senderId === 'object' && message.senderId !== null) {
+      // Backend populate senderId thành object, lấy _id
       return message.senderId._id || message.senderId.id || JSON.stringify(message.senderId);
     } else if (message.sender) {
       if (typeof message.sender === 'string') {
@@ -67,9 +75,21 @@ const MessageList = ({ messages, currentUserId }) => {
     const senderId = getSenderId(message);
     if (!senderId) return false;
     
-    // Either comparing directly or checking if senderId contains userId
-    return String(senderId) === String(userId) || 
-           (typeof senderId === 'string' && senderId.includes(userId));
+    // Debug: Log để kiểm tra
+    console.log('isSenderCurrentUser check:', {
+      messageId: message._id,
+      senderId: senderId,
+      senderIdType: typeof senderId,
+      userId: userId,
+      userIdType: typeof userId,
+      isMatch: String(senderId) === String(userId)
+    });
+    
+    // So sánh chính xác với nhiều cách khác nhau
+    const senderIdStr = String(senderId).trim();
+    const userIdStr = String(userId).trim();
+    
+    return senderIdStr === userIdStr;
   };
   
   // Kiểm tra tin nhắn rỗng
@@ -89,8 +109,19 @@ const MessageList = ({ messages, currentUserId }) => {
   const sortedMessages = [...messages].sort((a, b) => {
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
-    return dateA - dateB; // Ascending (oldest first)
+    return dateA - dateB; // Ascending (oldest first) - giữ nguyên để tin nhắn mới ở dưới
   });
+  
+  // Debug: Log thứ tự tin nhắn
+  console.log('MessageList: Sorted messages:', sortedMessages.map(m => ({
+    id: m._id,
+    content: m.content,
+    createdAt: m.createdAt,
+    time: new Date(m.createdAt).toLocaleTimeString(),
+    senderId: m.senderId,
+    sender: m.sender,
+    isFromCurrentUser: m.isFromCurrentUser
+  })));
   
   // Group messages by date
   const getMessageDate = (timestamp) => {
@@ -120,6 +151,10 @@ const MessageList = ({ messages, currentUserId }) => {
   
   // Kiểm tra xem currentUserId có đúng định dạng không
   const cleanCurrentUserId = String(currentUserId).trim();
+  
+  // Debug: Log currentUserId và logic isOwn
+  console.log('MessageList: currentUserId:', cleanCurrentUserId);
+  console.log('MessageList: messages count:', messages?.length);
   
   return (
     <MessageListContainer ref={containerRef}>

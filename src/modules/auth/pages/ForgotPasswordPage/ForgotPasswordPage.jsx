@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Container, Grid, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
-import ForgotPasswordForm from '../../components/ForgotPasswordForm/ForgotPasswordForm';
-import Logo from '../../../../shared/components/Logo/Logo';
+import ForgotPasswordForm from '@auth/components/ForgotPasswordForm/ForgotPasswordForm';
+import Logo from '@components/Logo/Logo';
 import styles from './ForgotPasswordPage.module.css';
 import { backgroundBoxStyles, desktopLogoBoxStyles, subtitleTypographyStyles } from './ForgotPasswordPage.styles';
 

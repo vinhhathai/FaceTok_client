@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Container, Grid, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
-import LoginForm from '../../components/LoginForm/LoginForm';
-import Logo from '../../../../shared/components/Logo/Logo';
+import LoginForm from '@auth/components/LoginForm/LoginForm';
+import Logo from '@components/Logo/Logo';
 import styles from './LoginPage.module.css';
 import { backgroundBoxStyles, desktopLogoBoxStyles, subtitleTypographyStyles } from './LoginPage.styles';
 

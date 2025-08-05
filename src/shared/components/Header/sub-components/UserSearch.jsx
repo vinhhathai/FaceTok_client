@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { TextField, Box, List, ListItem, ListItemText, Avatar, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import userApi from '../../../../modules/user/api/userApi';
+import userApi from '@user/api/userApi';
 import UserSearchResults from '../../UserSearchResults';
 import {
   SearchContainer,

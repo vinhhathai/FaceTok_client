@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import useMessageSocket from '../../hooks/useMessageSocket';
-import MessageLayout from '../../components/Layout/MessageLayout';
-import ConversationList from '../../components/ConversationList/ConversationList';
-import ChatBox from '../../components/ChatBox/ChatBox';
+import useMessageSocket from '@message/hooks/useMessageSocket';
+import MessageLayout from '@message/components/Layout/MessageLayout';
+import ConversationList from '@message/components/ConversationList/ConversationList';
+import ChatBox from '@message/components/ChatBox/ChatBox';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { setCurrentConversation } from '../../redux/slices/messageSlice';
+import { setCurrentConversation } from '@message/redux/slices/messageSlice';
+import { toast } from 'react-toastify';
 import {
   PageContainer,
   MessageGridContainer,
@@ -18,6 +19,7 @@ import {
   MobileBackBox,
   WelcomeContainer
 } from './MessageIndexPage.styles';
+import { fetchConversations } from '@message/redux/slices/conversationSlice';
 
 const MessageIndexPage = () => {
   const dispatch = useDispatch();
@@ -86,6 +88,23 @@ const MessageIndexPage = () => {
       setMobileView('chat');
     }
   };
+
+  // Handle delete conversation
+  const handleDeleteConversation = (conversation) => {
+    // If the deleted conversation is currently selected, clear selection
+    if (selectedConversation && selectedConversation._id === conversation._id) {
+      setSelectedConversation(null);
+      dispatch(setCurrentConversation(null));
+      
+      // On mobile, go back to list view
+      if (isMobile) {
+        setMobileView('list');
+      }
+    }
+    
+    // Refresh conversations list
+    dispatch(fetchConversations());
+  };
   
   // Handle back button on mobile
   const handleBackToList = () => {
@@ -120,6 +139,7 @@ const MessageIndexPage = () => {
                   <ConversationList 
                     onSelectConversation={handleSelectConversation}
                     currentConversationId={selectedConversation?._id}
+                    onDelete={handleDeleteConversation}
                   />
                 </ConversationsListContainer>
               </ConversationsPaper>

@@ -1,5 +1,5 @@
-import { apiClient } from '../../../shared/httpClient';
-import { getCookie } from '../../../shared/utils/cookieUtils';
+import { apiClient } from '@httpClient';
+import { getCookie } from '@utils/cookieUtils';
 
 // Get token from cookie
 const TOKEN_COOKIE_NAME = 'auth_token';
@@ -91,4 +91,14 @@ export const sendMessageToRoom = async (roomId, content) => {
     console.error('Error sending message to room:', error);
     throw error;
   }
+};
+
+export const deleteConversation = async (roomId) => {
+    try {
+      const response = await apiClient.delete(`/message/room/${roomId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      throw error;
+    }
 }; 

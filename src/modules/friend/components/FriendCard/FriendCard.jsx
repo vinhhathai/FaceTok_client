@@ -8,10 +8,10 @@ import MessageIcon from '@mui/icons-material/Message';
 import { useNavigate } from 'react-router-dom';
 
 // API functions
-import { acceptFriendRequest, rejectFriendRequest, removeFriend, cancelFriendRequest } from '../../api/friendAPI';
+import { acceptFriendRequest, rejectFriendRequest, removeFriend, cancelFriendRequest } from '@friend/api/friendAPI';
 
 // Utils
-import { getInitials } from '../../../../shared/utils/stringUtils';
+import { getInitials } from '@utils/stringUtils';
 
 // Styles
 import { FriendCardStyled, FriendCardHeader, CardMediaContainer, FriendNameWrapper, FriendCardActions } from './FriendCard.styles';

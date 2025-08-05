@@ -11,17 +11,18 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import Header from '../../../../shared/components/Header/Header';
-import MainLayout from '../../../../shared/components/MainLayout/MainLayout';
-import { fetchFriends, fetchReceivedFriendRequests, fetchSentFriendRequests } from '../../redux';
-import FriendList from '../../components/FriendList/FriendList';
-import FriendRequests from '../../components/FriendRequests/FriendRequests';
-import SentRequestsList from '../../components/SentRequestsList/SentRequestsList';
-import FriendSearch from '../../components/FriendSearch/FriendSearch';
-import Sidebar from '../../../post/components/Sidebar/Sidebar';
-import WeatherBar from '../../../../shared/components/WeatherBar';
+import Header from '@components/Header/Header';
+import MainLayout from '@components/MainLayout/MainLayout';
+import { fetchFriends, fetchReceivedFriendRequests, fetchSentFriendRequests } from '@friend/redux';
+import FriendList from '@friend/components/FriendList/FriendList';
+import FriendRequests from '@friend/components/FriendRequests/FriendRequests';
+import SentRequestsList from '@friend/components/SentRequestsList/SentRequestsList';
+import FriendSearch from '@friend/components/FriendSearch/FriendSearch';
+import Sidebar from '@post/components/Sidebar/Sidebar';
+import WeatherBar from '@components/WeatherBar';
 import { FriendPageContainer } from './FriendPage.styles';
-import { cancelFriendRequest } from '../../api/friendAPI';
+import { cancelFriendRequest } from '@friend/api/friendAPI';
+import { toast } from 'react-toastify';
 
 // Tab Panel component
 function TabPanel(props) {
@@ -55,14 +56,35 @@ function FriendPage() {
   const [tabValue, setTabValue] = useState(0);
   const dispatch = useDispatch();
   const { friends, receivedRequests, sentRequests } = useSelector((state) => state.friend);
+  
+  // Local states thay vì Redux loading states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
-    // Fetch friends and friend requests when component mounts
-    dispatch(fetchFriends());
-    dispatch(fetchReceivedFriendRequests());
-    dispatch(fetchSentFriendRequests());
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await Promise.all([
+          dispatch(fetchFriends()).unwrap(),
+          dispatch(fetchReceivedFriendRequests()).unwrap(),
+          dispatch(fetchSentFriendRequests()).unwrap()
+        ]);
+      } catch (error) {
+        console.error('Failed to fetch friend data:', error);
+        setError('Không thể tải dữ liệu bạn bè');
+        toast.error('Không thể tải dữ liệu bạn bè');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [dispatch]);
 
   const handleTabChange = (event, newValue) => {
@@ -75,11 +97,12 @@ function FriendPage() {
       if (response.success) {
         // Refresh the sent requests list
         dispatch(fetchSentFriendRequests());
+        toast.success('Đã hủy lời mời kết bạn');
       } else {
-        alert(response.error?.message || "Không thể hủy lời mời kết bạn");
+        toast.error(response.error?.message || "Không thể hủy lời mời kết bạn");
       }
     } catch (error) {
-      alert("Đã xảy ra lỗi, vui lòng thử lại sau");
+      toast.error("Đã xảy ra lỗi, vui lòng thử lại sau");
       console.error("Error cancelling friend request:", error);
     }
   };
@@ -102,15 +125,15 @@ function FriendPage() {
             textColor="primary"
             indicatorColor="primary"
           >
-            <Tab label={`BẠN BÈ (${friends.data.length || 0})`} {...a11yProps(0)} sx={{ 
+            <Tab label={`BẠN BÈ (${friends.length || 0})`} {...a11yProps(0)} sx={{ 
               fontWeight: tabValue === 0 ? 'bold' : 'normal',
               color: tabValue === 0 ? 'primary.main' : 'text.secondary',
             }} />
-            <Tab label={`LỜI MỜI (${receivedRequests.data.length || 0})`} {...a11yProps(1)} sx={{ 
+            <Tab label={`LỜI MỜI (${receivedRequests.length || 0})`} {...a11yProps(1)} sx={{ 
               fontWeight: tabValue === 1 ? 'bold' : 'normal',
               color: tabValue === 1 ? 'primary.main' : 'text.secondary',
             }} />
-            <Tab label={`ĐÃ GỬI (${sentRequests.data.length || 0})`} {...a11yProps(2)} sx={{ 
+            <Tab label={`ĐÃ GỬI (${sentRequests.length || 0})`} {...a11yProps(2)} sx={{ 
               fontWeight: tabValue === 2 ? 'bold' : 'normal',
               color: tabValue === 2 ? 'primary.main' : 'text.secondary',
             }} />
@@ -121,26 +144,26 @@ function FriendPage() {
           <FriendSearch />
           <Box sx={{ mt: 4 }}>
             <FriendList 
-              friends={friends.data} 
-              loading={friends.isLoading}
-              error={friends.error} 
+              friends={friends} 
+              loading={loading}
+              error={error} 
             />
           </Box>
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
           <FriendRequests 
-            requests={receivedRequests.data}
-            loading={receivedRequests.isLoading}
-            error={receivedRequests.error} 
+            requests={receivedRequests}
+            loading={loading}
+            error={error} 
           />
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
           <SentRequestsList
-            requests={sentRequests.data}
-            loading={sentRequests.isLoading}
-            error={sentRequests.error}
+            requests={sentRequests}
+            loading={loading}
+            error={error}
             onCancelRequest={handleCancelRequest}
           />
         </TabPanel>

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@shared/*": ["shared/*"],
+      "@core/*": ["core/*"],
+      "@common/*": ["common/*"],
+      "@modules/*": ["modules/*"],
+      "@auth/*": ["modules/auth/*"],
+      "@user/*": ["modules/user/*"],
+      "@message/*": ["modules/message/*"],
+      "@friend/*": ["modules/friend/*"],
+      "@post/*": ["modules/post/*"],
+      "@notification/*": ["modules/notification/*"],
+      "@components/*": ["shared/components/*"],
+      "@hooks/*": ["shared/hooks/*"],
+      "@utils/*": ["shared/utils/*"],
+      "@contexts/*": ["shared/contexts/*"],
+      "@httpClient/*": ["shared/httpClient/*"],
+      "@redux/*": ["core/config/*"],
+      "@store/*": ["core/config/store/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "build"]
+} 

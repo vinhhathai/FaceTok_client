@@ -18,7 +18,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import MessageIcon from '@mui/icons-material/Message';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
-import { searchFriendsThunk, deleteFriend, resetSearchResults } from '../../redux';
+import { searchFriendsThunk, deleteFriend, resetSearchResults } from '@friend/redux';
 import { SearchContainer, SearchResults, SearchResultCard, NoResults } from './FriendSearch.styles';
 
 // Thời gian debounce: 500ms

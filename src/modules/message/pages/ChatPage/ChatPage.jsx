@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, IconButton, useMediaQuery, useTheme, Alert } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { jwtDecode } from 'jwt-decode';
-import { getCookie } from '../../../../shared/utils/cookieUtils';
+import { getCookie } from '@utils/cookieUtils';
 
-import ConversationList from '../../components/ConversationList/ConversationList';
-import ChatBox from '../../components/ChatBox/ChatBox';
-import MessageLayout from '../../components/Layout/MessageLayout';
-import useMessageSocket from '../../hooks/useMessageSocket';
-import { setCurrentConversation, clearCurrentConversation } from '../../redux/slices/messageSlice';
-import { fetchConversations } from '../../redux/slices/conversationSlice';
-import { getOrCreateRoom } from '../../api/messageAPI';
+import ConversationList from '@message/components/ConversationList/ConversationList';
+import ChatBox from '@message/components/ChatBox/ChatBox';
+import MessageLayout from '@message/components/Layout/MessageLayout';
+import useMessageSocket from '@message/hooks/useMessageSocket';
+import { setCurrentConversation, clearCurrentConversation } from '@message/redux/slices/messageSlice';
+import { fetchConversations } from '@message/redux/slices/conversationSlice';
+import { getOrCreateRoom } from '@message/api/messageAPI';
 import { toast } from 'react-toastify';
 import {
   ChatPageContainer,
@@ -81,6 +81,23 @@ const ChatPage = () => {
       dispatch(fetchConversations());
     }
   }, [dispatch, conversations.length]);
+  
+  // Listen for new messages to refresh conversation list
+  useEffect(() => {
+    const handleNewMessage = () => {
+      // Refresh conversation list when new message is received
+      dispatch(fetchConversations());
+    };
+    
+    // Listen for message received event
+    window.addEventListener('facetok_message_received', handleNewMessage);
+    window.addEventListener('MESSAGE_SENT_SUCCESS', handleNewMessage);
+    
+    return () => {
+      window.removeEventListener('facetok_message_received', handleNewMessage);
+      window.removeEventListener('MESSAGE_SENT_SUCCESS', handleNewMessage);
+    };
+  }, [dispatch]);
   
   // Kiểm tra xem conversationId là userId hoặc roomId
   useEffect(() => {

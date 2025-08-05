@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // import { conversations } from '../../mock/mockData';
-import { getUserRooms } from '../../api/messageAPI';
-import { adaptRoomsToConversations } from '../../adapters/conversationAdapter';
+import { getUserRooms, deleteConversation } from '@message/api/messageAPI';
+import { adaptRoomsToConversations } from '@message/adapters/conversationAdapter';
 
 // Async thunk để lấy danh sách cuộc trò chuyện
 export const fetchConversations = createAsyncThunk(
@@ -46,10 +46,23 @@ export const fetchConversations = createAsyncThunk(
   }
 );
 
+// Async thunk để xóa cuộc trò chuyện
+export const deleteConversationAction = createAsyncThunk(
+  'conversation/deleteConversation',
+  async (roomId, { rejectWithValue }) => {
+    try {
+      const response = await deleteConversation(roomId);
+      console.log('Delete conversation response:', response);
+      return { roomId, response };
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      return rejectWithValue(error.message || "Failed to delete conversation");
+    }
+  }
+);
+
 const initialState = {
-  conversations: [],
-  loading: false,
-  error: null
+  conversations: []
 };
 
 const conversationSlice = createSlice({
@@ -73,6 +86,8 @@ const conversationSlice = createSlice({
         );
       } else {
         console.warn('Conversation not found for update:', conversationId);
+        // Nếu conversation không tồn tại, có thể đã bị xóa trước đó
+        // Sẽ được refresh từ API khi có tin nhắn mới
       }
     },
     markConversationAsRead(state, action) {
@@ -88,26 +103,52 @@ const conversationSlice = createSlice({
           existingConversation.lastMessage.isRead = true;
         }
       }
+    },
+    removeConversation(state, action) {
+      const { roomId } = action.payload;
+      state.conversations = state.conversations.filter(
+        conv => conv._id !== roomId
+      );
+    },
+    addConversation(state, action) {
+      const { conversation } = action.payload;
+      // Kiểm tra xem conversation đã tồn tại chưa
+      const existingIndex = state.conversations.findIndex(
+        conv => conv._id === conversation._id
+      );
+      
+      if (existingIndex >= 0) {
+        // Cập nhật conversation hiện tại
+        state.conversations[existingIndex] = conversation;
+      } else {
+        // Thêm conversation mới
+        state.conversations.unshift(conversation);
+      }
+      
+      // Sắp xếp lại theo thời gian cập nhật
+      state.conversations.sort((a, b) => 
+        new Date(b.updatedAt) - new Date(a.updatedAt)
+      );
     }
   },
   extraReducers: (builder) => {
     builder
       // fetchConversations
-      .addCase(fetchConversations.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(fetchConversations.fulfilled, (state, action) => {
-        state.loading = false;
         state.conversations = action.payload.data || [];
       })
-      .addCase(fetchConversations.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'Failed to fetch conversations';
+      
+      // deleteConversationAction
+      .addCase(deleteConversationAction.fulfilled, (state, action) => {
+        // Xóa conversation khỏi state
+        const { roomId } = action.payload;
+        state.conversations = state.conversations.filter(
+          conv => conv._id !== roomId
+        );
       })
   }
 });
 
-export const { updateConversationLastMessage, markConversationAsRead } = conversationSlice.actions;
+export const { updateConversationLastMessage, markConversationAsRead, removeConversation, addConversation } = conversationSlice.actions;
 
 export default conversationSlice.reducer; 

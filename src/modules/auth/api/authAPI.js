@@ -1,8 +1,8 @@
-import { apiClient } from '../../../shared/httpClient';
-import { ERROR_CODES } from '../../../common/constants';
-import { createError } from '../../../shared/utils/errorUtils';
-import { jwtDecode } from 'jwt-decode'; // Using named export instead of default import
-import { getCookie } from '../../../shared/utils/cookieUtils';
+import { apiClient } from '@httpClient';
+import { ERROR_CODES } from '@common/constants';
+import { createError } from '@utils/errorUtils';
+import { jwtDecode } from 'jwt-decode';
+import { getCookie } from '@utils/cookieUtils';
 
 /**
  * Fetch current user profile from token

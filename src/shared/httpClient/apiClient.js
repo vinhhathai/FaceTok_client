@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { ERROR_CODES } from '../../common/constants';
-import { getCookie, removeCookie } from '../utils/cookieUtils';
+import { ERROR_CODES } from '@common/constants';
+import { getCookie, removeCookie } from '@utils/cookieUtils';
 
 // Cookie name constant
 const TOKEN_COOKIE_NAME = 'auth_token';
@@ -8,9 +8,6 @@ const TOKEN_COOKIE_NAME = 'auth_token';
 // Tạo instance của axios với cấu hình mặc định
 const apiClient = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/',
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 10000, // 10 giây timeout
 });
 

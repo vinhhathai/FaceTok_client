@@ -1,4 +1,4 @@
-import { apiClient } from '../../../shared/httpClient';
+import { apiClient } from '@httpClient';
 
 // API endpoints
 const API_ENDPOINTS = {

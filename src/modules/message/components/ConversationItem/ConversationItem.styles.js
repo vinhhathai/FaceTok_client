@@ -9,6 +9,9 @@ export const StyledConversationItem = styled(ListItem)(({ theme, isActive }) => 
   borderColor: theme.palette.divider,
   '&:hover': {
     backgroundColor: isActive ? theme.palette.action.selected : theme.palette.action.hover,
+    '& .delete-button-container .MuiIconButton-root': {
+      opacity: 1,
+    },
   },
 }));
 
@@ -32,4 +35,14 @@ export const MessagePreview = styled(Typography)(({ theme, hasUnread }) => ({
   maxWidth: '80%',
   fontWeight: hasUnread ? 500 : 400,
   color: hasUnread ? theme.palette.text.primary : theme.palette.text.secondary
-})); 
+}));
+
+// Container cho nút xóa
+export const DeleteButtonContainer = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  '& .MuiIconButton-root': {
+    opacity: 0,
+    transition: 'opacity 0.2s ease-in-out',
+  },
+}); 

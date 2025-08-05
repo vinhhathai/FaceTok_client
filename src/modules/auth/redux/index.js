@@ -1,7 +1,6 @@
 import authReducer, {
   login,
   logout, 
-  clearError,
   register,
   forgotPassword,
   verifyOTP,
@@ -14,7 +13,6 @@ const resetPasswordState = () => ({ type: 'auth/resetPasswordState' });
 export {
   login,
   logout, 
-  clearError,
   register,
   forgotPassword,
   verifyOTP,

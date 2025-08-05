@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 
+// Loading component
 const Loading = () => (
   <Box
     sx={{
@@ -15,23 +16,15 @@ const Loading = () => (
   </Box>
 );
 
-// Auth pages
-const LoginPage = lazy(() => import('../../modules/auth/pages/LoginPage/LoginPage'));
-const RegisterPage = lazy(() => import('../../modules/auth/pages/RegisterPage/RegisterPage'));
-const ForgotPasswordPage = lazy(() => import('../../modules/auth/pages/ForgotPasswordPage/ForgotPasswordPage'));
-
-// Public pages
-const HomePage = lazy(() => import('../../modules/post/pages/HomePage/HomePage'));
-
-// User pages
-const ProfilePage = lazy(() => import('../../modules/user/pages/ProfilePage/ProfilePage'));
-
-// Friend pages
-const FriendPage = lazy(() => import('../../modules/friend/pages/FriendPage/FriendPage'));
-
-// Message pages
-const MessageIndexPage = lazy(() => import('../../modules/message/pages/MessageIndexPage/MessageIndexPage'));
-const ChatPage = lazy(() => import('../../modules/message/pages/ChatPage/ChatPage'));
+// Lazy load components
+const LoginPage = lazy(() => import('@auth/pages/LoginPage/LoginPage'));
+const RegisterPage = lazy(() => import('@auth/pages/RegisterPage/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('@auth/pages/ForgotPasswordPage/ForgotPasswordPage'));
+const HomePage = lazy(() => import('@post/pages/HomePage/HomePage'));
+const ProfilePage = lazy(() => import('@user/pages/ProfilePage/ProfilePage'));
+const ChatPage = lazy(() => import('@message/pages/ChatPage/ChatPage'));
+const FriendPage = lazy(() => import('@friend/pages/FriendPage/FriendPage'));
+const MessageIndexPage = lazy(() => import('@message/pages/MessageIndexPage/MessageIndexPage'));
 
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>

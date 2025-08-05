@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Container, Grid, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
-import RegisterForm from '../../components/RegisterForm/RegisterForm';
-import Logo from '../../../../shared/components/Logo/Logo';
+import RegisterForm from '@auth/components/RegisterForm/RegisterForm';
+import Logo from '@components/Logo/Logo';
 import styles from './RegisterPage.module.css';
 import { backgroundBoxStyles, desktopLogoBoxStyles, subtitleTypographyStyles } from './RegisterPage.styles';
 

@@ -14,7 +14,7 @@ import { NameEditModal, ProfileEditModal } from "./components/Modals";
 import { ProfileInfoContainer } from "./UserInfo.styles";
 
 // Redux
-import { fetchUserProfile } from '../../redux/slices/userSlice';
+import { fetchUserProfile } from '@user/redux/slices/userSlice';
 
 // Local storage keys
 const NAME_MODAL_STORAGE_KEY = 'name_modal_open';

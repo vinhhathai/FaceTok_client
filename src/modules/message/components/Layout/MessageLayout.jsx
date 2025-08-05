@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMediaQuery, useTheme } from '@mui/material';
-import Header from '../../../../shared/components/Header/Header';
+import Header from '@components/Header/Header';
 import {
   RootBox,
   MainContentBox,

@@ -1,4 +1,4 @@
-import { apiClient } from '../../../shared/httpClient';
+import { apiClient } from '@httpClient';
 
 /**
  * Get the current user's friends list

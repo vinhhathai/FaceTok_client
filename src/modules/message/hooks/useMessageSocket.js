@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { useSocket } from '../../../shared/contexts/SocketContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { useSocket } from '@contexts/SocketContext';
 
 /**
  * Hook để sử dụng socket connection cho trang tin nhắn

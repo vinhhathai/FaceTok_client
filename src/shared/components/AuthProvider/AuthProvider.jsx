@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCurrentUser } from '../../../modules/auth/redux/slices/authSlice';
+import { fetchCurrentUser } from '@auth/redux/slices/authSlice';
 
 /**
  * AuthProvider component that handles authentication state

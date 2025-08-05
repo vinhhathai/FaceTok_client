@@ -8,45 +8,75 @@ import {
 } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { ContentContainer, PostsContainer } from './Content.styles';
-import { fetchTimelinePosts } from "../../redux";
+import { fetchTimelinePosts } from "@post/redux";
+import { toast } from 'react-toastify';
 
 function Content() {
   const dispatch = useDispatch();
   const { 
     timelinePosts, 
     currentPage, 
-    totalPages, 
-    isLoading, 
-    error, 
-    createPostStatus 
+    totalPages
   } = useSelector(state => state.posts);
 
+  // Local states thay vì Redux loading states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
   // Fetch initial posts when component mounts
   useEffect(() => {
-    dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
-  }, [dispatch]);
+    const fetchPosts = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await dispatch(fetchTimelinePosts({ page: 1, limit: 10 })).unwrap();
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
+        setError('Không thể tải bài viết');
+        toast.error('Không thể tải bài viết');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Refresh timeline when a new post is created
-  useEffect(() => {
-    if (createPostStatus === 'succeeded') {
-      dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
-    }
-  }, [createPostStatus, dispatch]);
+    fetchPosts();
+  }, [dispatch]);
 
   // Handle loading more posts
   const handleLoadMore = async () => {
-    if (currentPage < totalPages && !isLoading && !loadingMore) {
+    if (currentPage < totalPages && !loading && !loadingMore) {
       setLoadingMore(true);
-      await dispatch(fetchTimelinePosts({ page: currentPage + 1, limit: 10 }));
-      setLoadingMore(false);
+      setError(null);
+      
+      try {
+        await dispatch(fetchTimelinePosts({ page: currentPage + 1, limit: 10 })).unwrap();
+      } catch (error) {
+        console.error('Failed to load more posts:', error);
+        setError('Không thể tải thêm bài viết');
+        toast.error('Không thể tải thêm bài viết');
+      } finally {
+        setLoadingMore(false);
+      }
     }
   };
 
   // Handle refresh
-  const handleRefresh = () => {
-    dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
+  const handleRefresh = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await dispatch(fetchTimelinePosts({ page: 1, limit: 10 })).unwrap();
+      toast.success('Đã làm mới trang');
+    } catch (error) {
+      console.error('Failed to refresh posts:', error);
+      setError('Không thể làm mới bài viết');
+      toast.error('Không thể làm mới bài viết');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,7 +92,7 @@ function Content() {
           variant="outlined" 
           startIcon={<RefreshIcon />} 
           onClick={handleRefresh}
-          disabled={isLoading}
+          disabled={loading}
           size="small"
         >
           Làm mới
@@ -88,14 +118,14 @@ function Content() {
       )}
       
       {/* Loading state (first load) */}
-      {isLoading && timelinePosts.length === 0 && (
+      {loading && timelinePosts.length === 0 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
       )}
       
       {/* Empty state */}
-      {!isLoading && timelinePosts.length === 0 && !error && (
+      {!loading && timelinePosts.length === 0 && !error && (
         <Box sx={{ textAlign: 'center', my: 4, p: 3, bgcolor: '#f8f9fa', borderRadius: 2 }}>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
             Không có bài viết nào để hiển thị.
@@ -117,7 +147,7 @@ function Content() {
       </PostsContainer>
       
       {/* Load more button */}
-      {!isLoading && timelinePosts.length > 0 && currentPage < totalPages && (
+      {!loading && timelinePosts.length > 0 && currentPage < totalPages && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Button 
             variant="outlined" 

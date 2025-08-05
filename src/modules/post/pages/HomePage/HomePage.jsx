@@ -1,9 +1,9 @@
 import React from 'react';
-import Content from "../../components/Content/Content";
-import Header from "../../../../shared/components/Header/Header";
-import Sidebar from "../../components/Sidebar/Sidebar";
-import WeatherBar from "../../../../shared/components/WeatherBar";
-import MainLayout from "../../../../shared/components/MainLayout/MainLayout";
+import Content from "@post/components/Content/Content";
+import Header from "@components/Header/Header";
+import Sidebar from "@post/components/Sidebar/Sidebar";
+import WeatherBar from "@components/WeatherBar";
+import MainLayout from "@components/MainLayout/MainLayout";
 import { HomeContainer } from './HomePage.styles';
 
 function HomePage() {
