@@ -47,6 +47,13 @@ const messageSlice = createSlice({
         state.messages.push(newMessage);
       }
     },
+    updateMessageAsRevoked(state, action) {
+      const { messageId } = action.payload;
+      const messageIndex = state.messages.findIndex(m => m._id === messageId);
+      if (messageIndex !== -1) {
+        state.messages[messageIndex].isRevoked = true;
+      }
+    },
     forceUpdateMessages(state) {
       // Chỉ trigger rerender mà không thay đổi state
     }
@@ -72,6 +79,6 @@ const messageSlice = createSlice({
   }
 });
 
-export const { addReceivedMessage, forceUpdateMessages } = messageSlice.actions;
+export const { addReceivedMessage, updateMessageAsRevoked, forceUpdateMessages } = messageSlice.actions;
 
 export default messageSlice.reducer; 

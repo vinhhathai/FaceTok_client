@@ -1,5 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSocket } from '@contexts/SocketContext';
+import { useDispatch } from 'react-redux';
+import { updateMessageAsRevoked } from '@message/redux/slices/messageSlice';
+import { Snackbar, Alert } from '@mui/material';
 
 /**
  * Hook để sử dụng socket connection cho trang tin nhắn
@@ -7,8 +10,61 @@ import { useSocket } from '@contexts/SocketContext';
  */
 const useMessageSocket = (currentConversation) => {
   const { socket, connected, emit, joinRoom, leaveRoom } = useSocket();
+  const dispatch = useDispatch();
   const previousRoomIdRef = useRef(null);
   const timerRef = useRef(null);
+  
+  // Toast state
+  const [toastInfo, setToastInfo] = useState({
+    open: false,
+    message: '',
+    severity: 'error'
+  });
+  
+  // Toast functions
+  const showToast = (message, severity = 'error') => {
+    setToastInfo({
+      open: true,
+      message,
+      severity
+    });
+  };
+  
+  const handleCloseToast = () => {
+    setToastInfo(prev => ({
+      ...prev,
+      open: false
+    }));
+  };
+  
+  // Lắng nghe sự kiện message_revoked từ socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMessageRevoked = (data) => {
+      console.log('Message revoked event received:', data);
+      // Cập nhật Redux store khi tin nhắn được thu hồi
+      if (data.messageId) {
+        dispatch(updateMessageAsRevoked({ messageId: data.messageId }));
+      }
+    };
+
+    const handleMessageError = (data) => {
+      console.log('Message error event received:', data);
+      // Hiển thị thông báo lỗi cho user
+      if (data.message) {
+        showToast(data.message, 'error');
+      }
+    };
+
+    socket.on('message_revoked', handleMessageRevoked);
+    socket.on('message_error', handleMessageError);
+
+    return () => {
+      socket.off('message_revoked', handleMessageRevoked);
+      socket.off('message_error', handleMessageError);
+    };
+  }, [socket, dispatch]);
   
   // Tự động join room khi conversation thay đổi
   useEffect(() => {
@@ -55,7 +111,15 @@ const useMessageSocket = (currentConversation) => {
     };
   }, [currentConversation, connected, joinRoom, leaveRoom]);
 
-  return { socket, connected, emit, joinRoom, leaveRoom };
+  return { 
+    socket, 
+    connected, 
+    emit, 
+    joinRoom, 
+    leaveRoom,
+    toastInfo,
+    handleCloseToast
+  };
 };
 
 export default useMessageSocket; 

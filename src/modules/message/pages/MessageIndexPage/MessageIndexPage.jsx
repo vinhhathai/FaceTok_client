@@ -139,22 +139,12 @@ const MessageIndexPage = () => {
           {/* Chat Area */}
           {(!isMobile || mobileView === 'chat') && (
             <ChatAreaGridItem item xs={12} md={8} lg={9}>
-              {/* Back button always visible on mobile when in chat view */}
-              {isMobile && mobileView === 'chat' && (
-                <MobileBackBox>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                    {selectedConversation?.participant?.fullName || 'Conversation'}
-                  </Typography>
-                  <IconButton onClick={handleBackToList} color="primary">
-                    <ArrowBackIcon />
-                  </IconButton>
-                </MobileBackBox>
-              )}
-              
               {selectedConversation ? (
                 <ChatBox 
                   conversation={selectedConversation}
                   currentConversation={selectedConversation}
+                  onBack={handleBackToList}
+                  sx={{ flex: 1 }}
                 />
               ) : (
                 <WelcomeContainer>

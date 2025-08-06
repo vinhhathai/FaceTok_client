@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { getCookie } from '@utils/cookieUtils';
 import io from 'socket.io-client';
-import { toast } from 'react-toastify';
 import { addReceivedMessage, updateConversationLastMessage } from '@message/redux';
 import { useDispatch } from 'react-redux';
 import { store } from '@core/config/store';
@@ -189,6 +188,11 @@ export const SocketProvider = ({ children }) => {
         console.warn('Received message_sent event without message data:', data);
       }
     });
+
+    // Lắng nghe lỗi từ socket
+    socket.on('message_error', (error) => {
+      console.error('Socket message error:', error);
+    });
     
     // Lưu trữ socket reference để có thể sử dụng sau này
     socketRef.current = socket;
@@ -207,13 +211,11 @@ export const SocketProvider = ({ children }) => {
     
     if (!socketRef.current) {
       console.error('Socket connection not established');
-      toast.error('Lỗi kết nối: Socket chưa được khởi tạo');
       return false;
     }
     
     if (!connected) {
       console.error('Socket not connected');
-      toast.error('Lỗi kết nối: Socket không kết nối');
       return false;
     }
     
@@ -221,7 +223,6 @@ export const SocketProvider = ({ children }) => {
     if (event === 'send-message') {
       if (!data.roomId) {
         console.error('Cannot send message: Missing roomId', data);
-        toast.error('Lỗi gửi tin nhắn: Thiếu roomId');
         return false;
       }
       
@@ -234,14 +235,8 @@ export const SocketProvider = ({ children }) => {
         // Log thành công
         console.log('Emit send_message successful');
         
-        // Listen for specific events to debug the send message flow
-        socketRef.current.once('message_error', (error) => {
-          console.error('Error sending message:', error);
-          toast.error(`Lỗi: ${error.message || 'Không thể gửi tin nhắn'}`);
-        });
       } catch (err) {
         console.error('Error emitting event:', err);
-        toast.error(`Lỗi khi gửi tin nhắn: ${err.message}`);
         return false;
       }
     } else {

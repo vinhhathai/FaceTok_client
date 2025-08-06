@@ -45,30 +45,10 @@ export const ConversationsListContainer = styled(Box)({
 
 // Grid item cho khu vực chat
 export const ChatAreaGridItem = styled(Grid)({
-  height: '100%'
-});
-
-// Box cho nút Back trên mobile
-export const MobileBackBox = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(1), 
-  borderBottom: '1px solid', 
-  borderColor: theme.palette.divider,
+  height: '100%',
   display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  backgroundColor: theme.palette.background.paper,
-  minHeight: '40px',
-  [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(0.5, 1),
-    minHeight: '36px'
-  },
-  '& .MuiTypography-subtitle1': {
-    fontSize: '0.95rem'
-  },
-  '& .MuiIconButton-root': {
-    padding: theme.spacing(0.5)
-  }
-}));
+  flexDirection: 'column'
+});
 
 // Box cho màn hình chào mừng khi không có cuộc trò chuyện nào được chọn
 export const WelcomeContainer = styled(Box)({

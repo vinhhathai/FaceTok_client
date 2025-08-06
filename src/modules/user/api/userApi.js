@@ -6,7 +6,10 @@ const API_ENDPOINTS = {
   UPLOAD_THUMBNAIL: '/user/upload-thumbnail',
   UPLOAD_AVATAR: '/user/upload-avatar',
   UPDATE_FULLNAME: '/user/update-fullname',
-  SEARCH: '/user/search'
+  SEARCH: '/user/search',
+  BLOCK_USER: '/user/block-user',
+  UNBLOCK_USER: '/user/unblock-user',
+  GET_BLOCKED_USERS: '/user/blocked-users'
 };
 
 const userApi = {
@@ -250,6 +253,47 @@ const userApi = {
       return response.data;
     } catch (error) {
       console.error('Search API error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Block a user
+   * @param {string} blockedUserId - ID of the user to block
+   * @returns {Promise} - Promise containing the result
+   */
+  blockUser: async (blockedUserId) => {
+    try {
+      const response = await apiClient.put(API_ENDPOINTS.BLOCK_USER, { blockedUserId });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Unblock a user
+   * @param {string} blockedUserId - ID of the user to unblock
+   * @returns {Promise} - Promise containing the result
+   */
+  unblockUser: async (blockedUserId) => {
+    try {
+      const response = await apiClient.put(API_ENDPOINTS.UNBLOCK_USER, { blockedUserId });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Get blocked users for the current user
+   * @returns {Promise} - Promise containing the list of blocked users
+   */
+  getBlockedUsers: async () => {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.GET_BLOCKED_USERS);
+      return response.data;
+    } catch (error) {
       throw error;
     }
   }

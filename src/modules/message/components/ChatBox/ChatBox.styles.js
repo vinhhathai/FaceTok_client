@@ -8,7 +8,8 @@ export const ChatBoxContainer = styled(Paper)({
   height: '100%',
   maxHeight: '100%',
   overflow: 'hidden',
-  borderRadius: 0
+  borderRadius: 0,
+  flex: 1
 });
 
 // Container cho placeholder khi không có cuộc trò chuyện
@@ -26,16 +27,20 @@ export const ChatHeader = styled(Box)(({ theme }) => ({
   padding: theme.spacing(1.5), 
   display: 'flex', 
   alignItems: 'center',
-  justifyContent: 'space-between',
   borderBottom: '1px solid',
   borderColor: theme.palette.divider,
-  flexShrink: 0
+  flexShrink: 0,
+  [theme.breakpoints.down('md')]: {
+    padding: theme.spacing(1)
+  }
 }));
 
 // Container thông tin người dùng
 export const UserInfoContainer = styled(Box)({
   display: 'flex', 
-  alignItems: 'center'
+  alignItems: 'center',
+  flex: 1,
+  minWidth: 0
 });
 
 // Avatar người dùng
@@ -65,5 +70,17 @@ export const InputContainer = styled(Box)(({ theme }) => ({
       minHeight: '40px',
       padding: theme.spacing(0.5, 1)
     }
+  }
+}));
+
+// Floating back button cho màn hình nhỏ
+export const FloatingBackButton = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  top: theme.spacing(2),
+  left: theme.spacing(2),
+  zIndex: 1000,
+  [theme.breakpoints.down('sm')]: {
+    top: theme.spacing(1),
+    left: theme.spacing(1)
   }
 })); 

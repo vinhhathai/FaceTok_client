@@ -52,4 +52,12 @@ export const ReadStatusContainer = styled(Box)({
   display: 'flex', 
   alignItems: 'center', 
   marginLeft: 4
+});
+
+// Container cho nút thu hồi tin nhắn
+export const RecallButtonContainer = styled(Box)({
+  position: 'absolute',
+  top: '4px',
+  right: '4px',
+  zIndex: 1
 }); 
