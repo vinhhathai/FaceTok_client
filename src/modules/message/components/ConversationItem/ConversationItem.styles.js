@@ -2,11 +2,12 @@ import { styled } from '@mui/material/styles';
 import { ListItem, Typography, Box } from '@mui/material';
 
 // Styled ListItem cho mỗi cuộc hội thoại
-export const StyledConversationItem = styled(ListItem)(({ theme, isActive }) => ({
+export const StyledConversationItem = styled(ListItem)(({ theme, isActive, isGroup }) => ({
   padding: `${theme.spacing(1.5)} ${theme.spacing(2)}`,
   backgroundColor: isActive ? theme.palette.action.selected : 'inherit',
   borderBottom: '1px solid',
-  borderColor: theme.palette.divider,
+  borderColor: isGroup ? theme.palette.primary.light : theme.palette.divider,
+  borderLeft: isGroup ? `3px solid ${theme.palette.primary.main}` : 'none',
   '&:hover': {
     backgroundColor: isActive ? theme.palette.action.selected : theme.palette.action.hover,
     '& .delete-button-container .MuiIconButton-root': {

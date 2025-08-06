@@ -6,6 +6,25 @@ const TOKEN_COOKIE_NAME = 'auth_token';
 const getToken = () => getCookie(TOKEN_COOKIE_NAME) || '';
 
 /**
+ * Tạo nhóm chat mới
+ * @param {string} name - Tên nhóm
+ * @param {Array} members - Danh sách ID thành viên
+ * @returns {Promise} Promise trả về thông tin nhóm đã tạo
+ */
+export const createGroup = async (name, members) => {
+  try {
+    const response = await apiClient.post('/message/group', {
+      name,
+      members
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating group:', error);
+    throw error;
+  }
+};
+
+/**
  * Lấy hoặc tạo phòng chat giữa hai người dùng
  * @param {string} targetUserId - ID của người dùng muốn chat cùng
  * @returns {Promise} Promise trả về thông tin phòng chat

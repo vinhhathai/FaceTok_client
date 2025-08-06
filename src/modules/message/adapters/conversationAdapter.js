@@ -11,8 +11,7 @@
 const normalizeParticipant = (participant) => {
   if (!participant) return null;
 
-  // Kiểm tra cấu trúc participant
-  console.log('Normalizing participant:', participant);
+
   
   return {
     _id: participant._id || participant.id || 'unknown', // Xử lý cả id và _id
@@ -31,26 +30,40 @@ const normalizeParticipant = (participant) => {
 export const adaptRoomToConversation = (room, currentUserId) => {
   if (!room) return null;
   
-  // Log dữ liệu raw để debug
-  console.log('Raw room data:', room);
+
   
-  // Tìm thông tin participant (người tham gia khác không phải user hiện tại)
+  // Kiểm tra xem có phải group không - dựa vào groupId
+  const isGroup = !!room.groupId;
+  
   let participantData = null;
   
-  if (room.members && Array.isArray(room.members)) {
-    // Lọc member không phải user hiện tại
-    const otherMembers = room.members.filter(
-      member => (member._id || member.id) !== currentUserId
-    );
-    
-    if (otherMembers.length > 0) {
-      participantData = otherMembers[0];
+  if (isGroup) {
+    // Xử lý group conversation - Sử dụng group info từ groupId
+    participantData = {
+      _id: room._id || room.id,
+      fullName: room.groupId?.name || 'Group Chat', // Lấy tên từ group
+      avatar: room.groupId?.avatar || null, // Lấy avatar từ group
+      isGroup: true,
+      members: room.members || [],
+      groupOwnerId: room.groupId?.ownerId || null // Thêm owner info
+    };
+  } else {
+    // Xử lý direct conversation (1-1)
+    if (room.members && Array.isArray(room.members)) {
+      // Lọc member không phải user hiện tại
+      const otherMembers = room.members.filter(
+        member => (member._id || member.id) !== currentUserId
+      );
+      
+      if (otherMembers.length > 0) {
+        participantData = otherMembers[0];
+      }
     }
-  }
-  
-  // Nếu không tìm thấy participant từ members, sử dụng trường participant nếu có
-  if (!participantData && room.participant) {
-    participantData = room.participant;
+    
+    // Nếu không tìm thấy participant từ members, sử dụng trường participant nếu có
+    if (!participantData && room.participant) {
+      participantData = room.participant;
+    }
   }
   
   // Chuẩn hóa participant
@@ -58,18 +71,23 @@ export const adaptRoomToConversation = (room, currentUserId) => {
   
   // Nếu vẫn không có participant, tạo một giá trị mặc định
   if (!participant) {
-    console.warn('No participant found in room:', room._id || room.id);
     return null;
   }
   
-  return {
+  const conversation = {
     _id: room._id || room.id || 'unknown',
     participant: participant,
+    members: room.members || [], // Thêm members vào conversation object
     lastMessage: room.lastMessage || null,
     unreadCount: room.unreadCount || 0,
     updatedAt: room.updatedAt || new Date().toISOString(),
     createdAt: room.createdAt || room.updatedAt || new Date().toISOString(),
+    isGroup: isGroup
   };
+  
+
+  
+  return conversation;
 };
 
 /**
@@ -80,7 +98,6 @@ export const adaptRoomToConversation = (room, currentUserId) => {
  */
 export const adaptRoomsToConversations = (rooms, currentUserId) => {
   if (!Array.isArray(rooms)) {
-    console.error('Expected array of rooms, received:', rooms);
     return [];
   }
   

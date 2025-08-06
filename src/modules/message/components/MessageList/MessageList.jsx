@@ -37,7 +37,7 @@ const MessageList = ({ messages, currentUserId }) => {
     // Kiểm tra nếu có tin nhắn mới thì mới log
     if (sortedMessages && sortedMessages.length !== previousMessagesLength.current) {
       previousMessagesLength.current = sortedMessages.length;
-      console.log(`MessageList: Messages updated, count: ${sortedMessages.length}`);
+  
       
       // Scroll to bottom khi có tin nhắn mới
       setTimeout(() => {
@@ -86,15 +86,7 @@ const MessageList = ({ messages, currentUserId }) => {
     const senderId = getSenderId(message);
     if (!senderId) return false;
     
-    // Debug: Log để kiểm tra
-    console.log('isSenderCurrentUser check:', {
-      messageId: message._id,
-      senderId: senderId,
-      senderIdType: typeof senderId,
-      userId: userId,
-      userIdType: typeof userId,
-      isMatch: String(senderId) === String(userId)
-    });
+
     
     // So sánh chính xác với nhiều cách khác nhau
     const senderIdStr = String(senderId).trim();
@@ -116,16 +108,7 @@ const MessageList = ({ messages, currentUserId }) => {
     );
   }
   
-  // Debug: Log thứ tự tin nhắn
-  console.log('MessageList: Sorted messages:', sortedMessages.map(m => ({
-    id: m._id,
-    content: m.content,
-    createdAt: m.createdAt,
-    time: new Date(m.createdAt).toLocaleTimeString(),
-    senderId: m.senderId,
-    sender: m.sender,
-    isFromCurrentUser: m.isFromCurrentUser
-  })));
+
   
   // Group messages by date
   const getMessageDate = (timestamp) => {
@@ -156,9 +139,7 @@ const MessageList = ({ messages, currentUserId }) => {
   // Kiểm tra xem currentUserId có đúng định dạng không
   const cleanCurrentUserId = String(currentUserId).trim();
   
-  // Debug: Log currentUserId và logic isOwn
-  console.log('MessageList: currentUserId:', cleanCurrentUserId);
-  console.log('MessageList: messages count:', messages?.length);
+
   
   return (
     <MessageListContainer ref={containerRef}>

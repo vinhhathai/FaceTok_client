@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress, Snackbar, Alert, Chip, Avatar } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import GroupIcon from '@mui/icons-material/Group';
+import PersonIcon from '@mui/icons-material/Person';
 import MessageList from '../MessageList/MessageList';
 import ChatInput from '../ChatInput/ChatInput';
 import { fetchMessages } from '@message/redux/slices/messageSlice';
@@ -34,11 +36,7 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   // Lấy ID người dùng từ localStorage
   const myChatId = localStorage.getItem('currentUserId');
   
-  // Debug: Log currentUserId và isMobile
-  console.log('ChatBox: currentUserId from localStorage:', myChatId);
-  console.log('ChatBox: isMobile:', isMobile);
-  console.log('ChatBox: isSmallScreen:', isSmallScreen);
-  console.log('ChatBox: onBack function:', onBack);
+
   
   // Sử dụng conversation từ props và currentConversation từ props
   const activeConversation = conversation || currentConversation;
@@ -144,19 +142,44 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
           <UserAvatar
             src={activeConversation.participant?.avatar || '/assets/images/avatar_default.webp'}
             alt={activeConversation.participant?.fullName || 'User'}
-          />
+            sx={{
+              backgroundColor: activeConversation.isGroup ? 'primary.main' : 'grey.300',
+              color: activeConversation.isGroup ? 'white' : 'grey.700'
+            }}
+          >
+            {activeConversation.isGroup ? <GroupIcon /> : <PersonIcon />}
+          </UserAvatar>
           <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography 
-              variant="subtitle1" 
-              fontWeight="bold"
-              noWrap
-              sx={{ maxWidth: '100%' }}
-            >
-              {activeConversation.participant?.fullName || 'Unknown User'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Typography 
+                variant="subtitle1" 
+                fontWeight="bold"
+                noWrap
+                sx={{ maxWidth: '100%' }}
+              >
+                {activeConversation.participant?.fullName || 'Unknown User'}
+              </Typography>
+              {activeConversation.isGroup && (
+                <Chip
+                  label="Nhóm"
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ 
+                    height: 20, 
+                    fontSize: '0.7rem',
+                    '& .MuiChip-label': { px: 1 }
+                  }}
+                />
+              )}
+            </Box>
             <Typography variant="caption" color="text.secondary">
-              {connected ? 'Online' : 'Offline'}
+              {activeConversation.isGroup 
+                ? `${activeConversation.members?.length || 0} thành viên`
+                : (connected ? 'Online' : 'Offline')
+              }
             </Typography>
+
           </Box>
         </UserInfoContainer>
       </ChatHeader>

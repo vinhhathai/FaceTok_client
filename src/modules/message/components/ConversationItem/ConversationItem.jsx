@@ -8,9 +8,12 @@ import {
   Badge,
   IconButton,
   Tooltip,
-  Box
+  Box,
+  Chip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import GroupIcon from '@mui/icons-material/Group';
+import PersonIcon from '@mui/icons-material/Person';
 import {
   StyledConversationItem,
   ConversationHeader,
@@ -63,13 +66,14 @@ const ConversationItem = ({ conversation, isActive, onClick, onDelete }) => {
       onClick={onClick}
       alignItems="flex-start"
       isActive={isActive}
+      isGroup={conversation.isGroup}
     >
       <ListItemAvatar>
         <Badge
           color="success"
           variant="dot"
           overlap="circular"
-          invisible={!conversation.participant?.online}
+          invisible={!conversation.participant?.online || conversation.isGroup}
           anchorOrigin={{
             vertical: 'bottom',
             horizontal: 'right',
@@ -78,16 +82,37 @@ const ConversationItem = ({ conversation, isActive, onClick, onDelete }) => {
           <Avatar 
             src={conversation.participant?.avatar} 
             alt={conversation.participant?.fullName || 'Người dùng'}
-          />
+            sx={{
+              backgroundColor: conversation.isGroup ? 'primary.main' : 'grey.300',
+              color: conversation.isGroup ? 'white' : 'grey.700'
+            }}
+          >
+            {conversation.isGroup ? <GroupIcon /> : <PersonIcon />}
+          </Avatar>
         </Badge>
       </ListItemAvatar>
       
       <ListItemText
         primary={
           <ConversationHeader>
-            <Typography variant="subtitle2" noWrap>
-              {conversation.participant?.fullName || 'Người dùng không xác định'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="subtitle2" noWrap>
+                {conversation.participant?.fullName || 'Người dùng không xác định'}
+              </Typography>
+              {conversation.isGroup && (
+                <Chip
+                  label="Nhóm"
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ 
+                    height: 20, 
+                    fontSize: '0.7rem',
+                    '& .MuiChip-label': { px: 1 }
+                  }}
+                />
+              )}
+            </Box>
             <Typography variant="caption" color="text.secondary">
               {formatTime(conversation.updatedAt)}
             </Typography>
