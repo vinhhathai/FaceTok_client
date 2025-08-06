@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSocket } from '@contexts/SocketContext';
 import { useDispatch } from 'react-redux';
 import { updateMessageAsRevoked } from '@message/redux/slices/messageSlice';
+import { updateGroupName } from '@message/redux/slices/conversationSlice';
 import { Snackbar, Alert } from '@mui/material';
 
 /**
@@ -57,12 +58,34 @@ const useMessageSocket = (currentConversation) => {
       }
     };
 
+    const handleGroupRenamed = (data) => {
+      console.log('Group renamed event received:', data);
+      // Cập nhật Redux store khi tên nhóm thay đổi
+      if (data.groupId && data.newName) {
+        console.log('Dispatching updateGroupName with:', { groupId: data.groupId, newName: data.newName });
+        dispatch(updateGroupName({ groupId: data.groupId, newName: data.newName }));
+      }
+      showToast(`Nhóm đã được đổi tên thành: ${data.newName}`, 'success');
+    };
+
+    const handleGroupError = (data) => {
+      console.log('Group error event received:', data);
+      // Hiển thị thông báo lỗi cho user
+      if (data.message) {
+        showToast(data.message, 'error');
+      }
+    };
+
     socket.on('message_revoked', handleMessageRevoked);
     socket.on('message_error', handleMessageError);
+    socket.on('group_renamed', handleGroupRenamed);
+    socket.on('group_error', handleGroupError);
 
     return () => {
       socket.off('message_revoked', handleMessageRevoked);
       socket.off('message_error', handleMessageError);
+      socket.off('group_renamed', handleGroupRenamed);
+      socket.off('group_error', handleGroupError);
     };
   }, [socket, dispatch]);
   
@@ -111,12 +134,24 @@ const useMessageSocket = (currentConversation) => {
     };
   }, [currentConversation, connected, joinRoom, leaveRoom]);
 
+  // Function để đổi tên nhóm qua socket
+  const renameGroup = (groupId, name) => {
+    if (!socket || !connected) {
+      showToast('Không thể kết nối với server', 'error');
+      return false;
+    }
+    
+    socket.emit('rename_group', { groupId, name });
+    return true;
+  };
+
   return { 
     socket, 
     connected, 
     emit, 
     joinRoom, 
     leaveRoom,
+    renameGroup,
     toastInfo,
     handleCloseToast
   };

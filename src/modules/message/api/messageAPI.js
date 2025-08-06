@@ -25,6 +25,25 @@ export const createGroup = async (name, members) => {
 };
 
 /**
+ * Đổi tên nhóm chat
+ * @param {string} groupId - ID của nhóm
+ * @param {string} name - Tên mới của nhóm
+ * @returns {Promise} Promise trả về thông tin nhóm đã cập nhật
+ */
+export const renameGroup = async (groupId, name) => {
+  try {
+    const response = await apiClient.put('/message/group/rename', {
+      id: groupId,
+      name
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error renaming group:', error);
+    throw error;
+  }
+};
+
+/**
  * Lấy hoặc tạo phòng chat giữa hai người dùng
  * @param {string} targetUserId - ID của người dùng muốn chat cùng
  * @returns {Promise} Promise trả về thông tin phòng chat

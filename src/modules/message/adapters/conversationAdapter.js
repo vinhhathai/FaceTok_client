@@ -45,7 +45,8 @@ export const adaptRoomToConversation = (room, currentUserId) => {
       avatar: room.groupId?.avatar || null, // Lấy avatar từ group
       isGroup: true,
       members: room.members || [],
-      groupOwnerId: room.groupId?.ownerId || null // Thêm owner info
+      groupOwnerId: room.groupId?.ownerId || null, // Thêm owner info
+      groupId: room.groupId?._id || room.groupId // Thêm groupId để có thể truy cập
     };
   } else {
     // Xử lý direct conversation (1-1)

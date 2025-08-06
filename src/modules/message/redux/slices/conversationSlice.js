@@ -114,6 +114,40 @@ const conversationSlice = createSlice({
       state.conversations.sort((a, b) => 
         new Date(b.updatedAt) - new Date(a.updatedAt)
       );
+    },
+    updateGroupName(state, action) {
+      const { groupId, newName } = action.payload;
+      console.log('updateGroupName reducer called with:', { groupId, newName });
+      console.log('Current conversations:', state.conversations);
+      
+      // Tìm conversation có groupId tương ứng
+      const conversation = state.conversations.find(
+        conv => conv.isGroup && conv.groupId?._id === groupId
+      );
+      
+      console.log('Found conversation:', conversation);
+      
+      if (conversation) {
+        console.log('Updating conversation group name');
+        // Cập nhật tên nhóm
+        if (conversation.participant) {
+          conversation.participant.fullName = newName;
+        }
+        if (conversation.groupId) {
+          conversation.groupId.name = newName;
+        }
+        
+        // Cập nhật thời gian
+        conversation.updatedAt = new Date().toISOString();
+        
+        // Sắp xếp lại theo thời gian cập nhật
+        state.conversations.sort((a, b) => 
+          new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+        console.log('Conversation updated successfully');
+      } else {
+        console.log('No conversation found with groupId:', groupId);
+      }
     }
   },
   extraReducers: (builder) => {
@@ -125,6 +159,6 @@ const conversationSlice = createSlice({
   }
 });
 
-export const { updateConversationLastMessage, markConversationAsRead, removeConversation, addConversation } = conversationSlice.actions;
+export const { updateConversationLastMessage, markConversationAsRead, removeConversation, addConversation, updateGroupName } = conversationSlice.actions;
 
 export default conversationSlice.reducer; 

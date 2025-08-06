@@ -5,8 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import InfoIcon from '@mui/icons-material/Info';
 import MessageList from '../MessageList/MessageList';
 import ChatInput from '../ChatInput/ChatInput';
+import GroupSidebar from '../GroupSidebar/GroupSidebar';
 import { fetchMessages } from '@message/redux/slices/messageSlice';
 import useMessageSocket from '@message/hooks/useMessageSocket';
 import {
@@ -35,6 +38,9 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   
   // Lấy ID người dùng từ localStorage
   const myChatId = localStorage.getItem('currentUserId');
+  
+  // State cho sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
 
   
@@ -179,8 +185,20 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
                 : (connected ? 'Online' : 'Offline')
               }
             </Typography>
-
           </Box>
+          
+          {/* Info button cho group */}
+          {activeConversation.isGroup && (
+            <IconButton 
+              onClick={() => setSidebarOpen(true)}
+              sx={{ 
+                color: 'text.secondary',
+                '&:hover': { backgroundColor: 'action.hover' }
+              }}
+            >
+              <InfoIcon />
+            </IconButton>
+          )}
         </UserInfoContainer>
       </ChatHeader>
 
@@ -215,6 +233,16 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
           {toastInfo.message}
         </Alert>
       </Snackbar>
+
+      {/* Group Sidebar */}
+      {activeConversation?.isGroup && (
+        <GroupSidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          conversation={activeConversation}
+          currentUserId={myChatId}
+        />
+      )}
     </ChatBoxContainer>
   );
 };
