@@ -26,7 +26,7 @@ export const SocketProvider = ({ children }) => {
     
     // Nếu không có token thì không kết nối socket
     if (!token) {
-      console.warn('No authentication token found, socket connection skipped');
+      // debug removed
       return;
     }
     
@@ -47,7 +47,7 @@ export const SocketProvider = ({ children }) => {
     
     // Socket connection events
     socket.on('connect', () => {
-      console.log(`Socket connected with ID: ${socket.id}`);
+    // debug removed
       setConnected(true);
       
       // Xác thực bằng token
@@ -83,7 +83,7 @@ export const SocketProvider = ({ children }) => {
         return;
       }
 
-      console.log('Received message_received event:', data);
+      // debug removed
       
       // Chuẩn hóa dữ liệu tin nhắn
       let messageData = data;
@@ -122,7 +122,7 @@ export const SocketProvider = ({ children }) => {
         );
         
         if (optimisticMessage) {
-          console.log('Replacing optimistic message with real message:', optimisticMessage._id, '->', messageData._id);
+          // debug removed
           // Thêm ID của tin nhắn optimistic vào tin nhắn thật để xử lý thay thế
           messageData.replaceOptimisticId = optimisticMessage._id;
         }
@@ -185,7 +185,7 @@ export const SocketProvider = ({ children }) => {
           console.error('Error processing message_sent event:', error);
         }
       } else {
-        console.warn('Received message_sent event without message data:', data);
+        // debug removed
       }
     });
 
@@ -207,7 +207,7 @@ export const SocketProvider = ({ children }) => {
   
   // Utility function để gửi tin nhắn qua socket
   const emit = (event, data) => {
-    console.log('Socket emit called:', { event, data });
+    // debug removed
     
     if (!socketRef.current) {
       console.error('Socket connection not established');
@@ -216,7 +216,22 @@ export const SocketProvider = ({ children }) => {
     
     if (!connected) {
       console.error('Socket not connected');
-      return false;
+      try {
+        // Thử kết nối lại và gửi sự kiện sau khi kết nối
+        socketRef.current.connect();
+        const serverEvent = event === 'send-message' ? 'send_message' : event.replace(/-/g, '_');
+        socketRef.current.once('connect', () => {
+          if (serverEvent === 'send_message') {
+            if (!data?.roomId) return;
+            socketRef.current.emit('send_message', { roomId: data.roomId, content: data.content });
+          } else {
+            socketRef.current.emit(serverEvent, data);
+          }
+        });
+        return false;
+      } catch (e) {
+        return false;
+      }
     }
     
     // Ánh xạ send-message sang send_message với cấu trúc dữ liệu đúng
@@ -233,7 +248,7 @@ export const SocketProvider = ({ children }) => {
         });
         
         // Log thành công
-        console.log('Emit send_message successful');
+        // debug removed
         
       } catch (err) {
         console.error('Error emitting event:', err);

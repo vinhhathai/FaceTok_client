@@ -22,7 +22,7 @@ const NavButtons = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleGroupsClick = () => {
-    console.log('Navigate to groups');
+  // debug removed
     // Implement navigation to groups page
     // navigate('/groups');
   };

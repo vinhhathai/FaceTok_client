@@ -1,76 +1,80 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // import { conversations } from '../../mock/mockData';
-import { getUserRooms } from '@message/api/messageAPI';
-import { adaptRoomsToConversations } from '@message/adapters/conversationAdapter';
+import { getUserRooms } from "@message/api/messageAPI";
+import { adaptRoomsToConversations } from "@message/adapters/conversationAdapter";
 
 // Async thunk để lấy danh sách cuộc trò chuyện
 export const fetchConversations = createAsyncThunk(
-  'conversation/fetchConversations',
+  "conversation/fetchConversations",
   async (_, { rejectWithValue }) => {
     try {
       const response = await getUserRooms();
-      console.log('API response for conversations:', response);
-      
+      // debug removed
+
       let rooms = [];
-      
+
       // Xử lý dữ liệu trả về từ API
       if (response.data && Array.isArray(response.data)) {
         rooms = response.data;
       } else if (response.data && Array.isArray(response.data.rooms)) {
         rooms = response.data.rooms;
-      } else if (response.data && response.data.data && Array.isArray(response.data.data.rooms)) {
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data.rooms)
+      ) {
         rooms = response.data.data.rooms;
       }
-      
-      console.log('Parsed rooms from API:', rooms);
-      
+
+      // debug removed
+
       // Lấy currentUserId từ localStorage
-      const currentUserId = localStorage.getItem('currentUserId');
-      
+      const currentUserId = localStorage.getItem("currentUserId");
+
       if (!currentUserId) {
-        console.error('No currentUserId found in localStorage');
+        console.error("No currentUserId found in localStorage");
       }
-      
+
       // Chuẩn hóa dữ liệu
       const conversations = adaptRoomsToConversations(rooms, currentUserId);
-      console.log('Normalized conversations:', conversations);
-      
+      // debug removed
+
       return {
         success: true,
-        data: conversations
+        data: conversations,
       };
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      console.error("Error fetching conversations:", error);
       return rejectWithValue(error.message || "Failed to fetch conversations");
     }
   }
 );
 
 const initialState = {
-  conversations: []
+  conversations: [],
 };
 
 const conversationSlice = createSlice({
-  name: 'conversation',
+  name: "conversation",
   initialState,
   reducers: {
     updateConversationLastMessage(state, action) {
       // Cập nhật cuộc trò chuyện sau khi tin nhắn được gửi hoặc nhận
       const { conversationId, message } = action.payload;
       const existingConversation = state.conversations.find(
-        conv => conv._id === conversationId
+        (conv) => conv._id === conversationId
       );
-      
+
       if (existingConversation) {
         existingConversation.lastMessage = message;
         existingConversation.updatedAt = new Date().toISOString();
-        
+
         // Sắp xếp lại cuộc trò chuyện theo thời gian cập nhật
-        state.conversations.sort((a, b) => 
-          new Date(b.updatedAt) - new Date(a.updatedAt)
+        state.conversations.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
         );
       } else {
-        console.warn('Conversation not found for update:', conversationId);
+        // debug removed
         // Nếu conversation không tồn tại, có thể đã bị xóa trước đó
         // Sẽ được refresh từ API khi có tin nhắn mới
       }
@@ -78,12 +82,12 @@ const conversationSlice = createSlice({
     markConversationAsRead(state, action) {
       const { conversationId } = action.payload;
       const existingConversation = state.conversations.find(
-        conv => conv._id === conversationId
+        (conv) => conv._id === conversationId
       );
-      
+
       if (existingConversation && existingConversation.unreadCount) {
         existingConversation.unreadCount = 0;
-        
+
         if (existingConversation.lastMessage) {
           existingConversation.lastMessage.isRead = true;
         }
@@ -92,16 +96,16 @@ const conversationSlice = createSlice({
     removeConversation(state, action) {
       const { roomId } = action.payload;
       state.conversations = state.conversations.filter(
-        conv => conv._id !== roomId
+        (conv) => conv._id !== roomId
       );
     },
     addConversation(state, action) {
       const { conversation } = action.payload;
       // Kiểm tra xem conversation đã tồn tại chưa
       const existingIndex = state.conversations.findIndex(
-        conv => conv._id === conversation._id
+        (conv) => conv._id === conversation._id
       );
-      
+
       if (existingIndex >= 0) {
         // Cập nhật conversation hiện tại
         state.conversations[existingIndex] = conversation;
@@ -109,26 +113,31 @@ const conversationSlice = createSlice({
         // Thêm conversation mới
         state.conversations.unshift(conversation);
       }
-      
+
       // Sắp xếp lại theo thời gian cập nhật
-      state.conversations.sort((a, b) => 
-        new Date(b.updatedAt) - new Date(a.updatedAt)
+      state.conversations.sort(
+        (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
       );
     },
     updateGroupName(state, action) {
-      const { groupId, newName } = action.payload;
-      console.log('updateGroupName reducer called with:', { groupId, newName });
-      console.log('Current conversations:', state.conversations);
-      
-      // Tìm conversation có groupId tương ứng
-      const conversation = state.conversations.find(
-        conv => conv.isGroup && conv.groupId?._id === groupId
-      );
-      
-      console.log('Found conversation:', conversation);
-      
+      const { groupId, roomId, newName } = action.payload;
+      // debug removed
+
+      // Tìm conversation theo groupId hoặc roomId
+      const conversation = state.conversations.find((conv) => {
+        const convGroupId =
+          conv.groupId?._id || conv.participant?.groupId || conv.groupId;
+        const convRoomId = conv._id;
+        return (
+          (roomId && convRoomId === roomId) ||
+          (groupId && convGroupId === groupId)
+        );
+      });
+
+      // debug removed
+
       if (conversation) {
-        console.log('Updating conversation group name');
+        // debug removed
         // Cập nhật tên nhóm
         if (conversation.participant) {
           conversation.participant.fullName = newName;
@@ -136,29 +145,35 @@ const conversationSlice = createSlice({
         if (conversation.groupId) {
           conversation.groupId.name = newName;
         }
-        
+
         // Cập nhật thời gian
         conversation.updatedAt = new Date().toISOString();
-        
+
         // Sắp xếp lại theo thời gian cập nhật
-        state.conversations.sort((a, b) => 
-          new Date(b.updatedAt) - new Date(a.updatedAt)
+        state.conversations.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
         );
-        console.log('Conversation updated successfully');
+        // debug removed
       } else {
-        console.log('No conversation found with groupId:', groupId);
+        // debug removed
       }
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
       // fetchConversations
       .addCase(fetchConversations.fulfilled, (state, action) => {
         state.conversations = action.payload.data || [];
-      })
-  }
+      });
+  },
 });
 
-export const { updateConversationLastMessage, markConversationAsRead, removeConversation, addConversation, updateGroupName } = conversationSlice.actions;
+export const {
+  updateConversationLastMessage,
+  markConversationAsRead,
+  removeConversation,
+  addConversation,
+  updateGroupName,
+} = conversationSlice.actions;
 
-export default conversationSlice.reducer; 
+export default conversationSlice.reducer;

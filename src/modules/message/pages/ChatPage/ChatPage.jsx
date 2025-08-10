@@ -62,17 +62,15 @@ const ChatPage = () => {
         const userId = decoded.userId;
         if (userId) {
           localStorage.setItem('currentUserId', userId);
-          console.log('Set currentUserId to:', userId);
         } else {
           console.error('Could not find userId in token. Token fields:', 
             Object.keys(decoded));
-          console.log('Token payload:', JSON.stringify(decoded, null, 2).substring(0, 200));
         }
       } catch (error) {
         console.error('Failed to decode token:', error);
       }
     } else {
-      console.warn('No auth token found in cookies');
+      // debug removed
     }
   }, []);
   

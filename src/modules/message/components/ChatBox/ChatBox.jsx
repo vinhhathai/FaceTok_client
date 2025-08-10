@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress, Snackbar, Alert, Chip, Avatar } from '@mui/material';
+import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress, Snackbar, Alert, Chip } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import InfoIcon from '@mui/icons-material/Info';
 import MessageList from '../MessageList/MessageList';
 import ChatInput from '../ChatInput/ChatInput';
@@ -42,10 +41,12 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   // State cho sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-
-  
-  // Sử dụng conversation từ props và currentConversation từ props
-  const activeConversation = conversation || currentConversation;
+  // Lấy conversation mới nhất từ Redux để header cập nhật ngay khi tên nhóm đổi
+  const conversationId = (conversation && conversation._id) || (currentConversation && currentConversation._id);
+  const storeConversation = useSelector(state => 
+    state.conversations?.conversations?.find(c => c._id === conversationId)
+  );
+  const activeConversation = storeConversation || conversation || currentConversation;
 
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
   useEffect(() => {

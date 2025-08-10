@@ -67,7 +67,7 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
 
   const handleSaveName = async () => {
     try {
-      console.log('handleSaveName called with:', newGroupName);
+      // debug removed
       
       // Validation
       if (!newGroupName.trim()) {
@@ -90,10 +90,7 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
                      conversation?.participant?.groupId || 
                      conversation?.groupId || // Thử conversation.groupId trực tiếp
                      conversation?._id; // Fallback: sử dụng conversation._id
-      console.log('Group ID:', groupId);
-      console.log('Conversation data:', conversation);
-      console.log('conversation.groupId:', conversation?.groupId);
-      console.log('conversation.participant.groupId:', conversation?.participant?.groupId);
+      // debug removed
       
       if (!groupId) {
         console.error('Group ID not found');
@@ -101,12 +98,12 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
       }
       
       // Sử dụng Socket.IO để đổi tên nhóm
-      console.log('Calling renameGroup with:', groupId, newGroupName.trim());
+      // debug removed
       const success = renameGroup(groupId, newGroupName.trim());
-      console.log('renameGroup result:', success);
+      // debug removed
       
       if (success) {
-        console.log('Group rename request sent via socket');
+        // debug removed
         setEditNameOpen(false);
       } else {
         console.error('Failed to send rename request');
@@ -154,12 +151,12 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
 
   const handleChangeAvatar = () => {
     // TODO: Implement avatar change
-    console.log('Change group avatar');
+    // debug removed
   };
 
   const handleDeleteGroup = () => {
     // TODO: Call API to delete group
-    console.log('Delete group');
+    // debug removed
   };
 
   const handleTransferOwnership = () => {
@@ -168,7 +165,7 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
 
   const handleShareGroup = () => {
     // TODO: Implement share group
-    console.log('Share group');
+    // debug removed
   };
 
   const handleRemoveMember = () => {
@@ -177,18 +174,18 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
 
   const handleLeaveGroup = () => {
     // TODO: Call API to leave group
-    console.log('Leave group');
+    // debug removed
   };
 
   const handleRemoveMemberFromGroup = (memberId) => {
     // TODO: Call API to remove member
-    console.log('Remove member:', memberId);
+    // debug removed
     setConfirmRemoveMember(null);
   };
 
   const handleTransferToMember = (memberId) => {
     // TODO: Call API to transfer ownership
-    console.log('Transfer ownership to:', memberId);
+    // debug removed
     setConfirmTransferOwnership(null);
   };
 

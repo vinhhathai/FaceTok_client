@@ -23,7 +23,7 @@ const Logo = ({ size = 'medium', showText = true, ...props }) => {
   };
 
   const handleImageError = () => {
-    console.log('Không thể tải hình logo, sử dụng ảnh thay thế');
+  // debug removed
     setImgError(true);
   };
 
