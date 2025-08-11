@@ -47,7 +47,6 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
     state.conversations?.conversations?.find(c => c._id === conversationId)
   );
   const activeConversation = storeConversation || conversation || currentConversation;
-
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
   useEffect(() => {
     if (activeConversation?._id) {
@@ -210,13 +209,19 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
         conversationId={activeConversation._id}
       />
 
-      {/* Input */}
+      {/* Input hoặc thông báo nhóm đã giải tán */}
       <InputContainer>
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          disabled={inputDisabled || !connected}
-          sending={sending}
-        />
+        {activeConversation?.groupId?.isDissolved || activeConversation?.isGroupDissolved ? (
+          <Typography variant="body2" color="text.secondary">
+            Nhóm đã bị giải tán. Bạn không thể gửi tin nhắn.
+          </Typography>
+        ) : (
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            disabled={inputDisabled || !connected}
+            sending={sending}
+          />
+        )}
       </InputContainer>
 
       {/* Toast */}

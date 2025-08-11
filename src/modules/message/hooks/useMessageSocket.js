@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { useSocket } from '@contexts/SocketContext';
-import { useDispatch } from 'react-redux';
-import { updateMessageAsRevoked } from '@message/redux/slices/messageSlice';
-import { updateGroupName } from '@message/redux/slices/conversationSlice';
-import { Snackbar, Alert } from '@mui/material';
+import { useEffect, useRef, useState } from "react";
+import { useSocket } from "@contexts/SocketContext";
+import { useDispatch } from "react-redux";
+import { updateMessageAsRevoked } from "@message/redux/slices/messageSlice";
+import {
+  updateGroupName,
+  markGroupDissolved,
+  updateGroupOwner,
+  removeConversation,
+} from "@message/redux/slices/conversationSlice";
+// UI toasts handled at component level
 
 /**
  * Hook để sử dụng socket connection cho trang tin nhắn
@@ -14,30 +19,30 @@ const useMessageSocket = (currentConversation) => {
   const dispatch = useDispatch();
   const previousRoomIdRef = useRef(null);
   const timerRef = useRef(null);
-  
+
   // Toast state
   const [toastInfo, setToastInfo] = useState({
     open: false,
-    message: '',
-    severity: 'error'
+    message: "",
+    severity: "error",
   });
-  
+
   // Toast functions
-  const showToast = (message, severity = 'error') => {
+  const showToast = (message, severity = "error") => {
     setToastInfo({
       open: true,
       message,
-      severity
+      severity,
     });
   };
-  
+
   const handleCloseToast = () => {
-    setToastInfo(prev => ({
+    setToastInfo((prev) => ({
       ...prev,
-      open: false
+      open: false,
     }));
   };
-  
+
   // Lắng nghe sự kiện message_revoked từ socket
   useEffect(() => {
     if (!socket) return;
@@ -54,7 +59,7 @@ const useMessageSocket = (currentConversation) => {
       // debug removed
       // Hiển thị thông báo lỗi cho user
       if (data.message) {
-        showToast(data.message, 'error');
+        showToast(data.message, "error");
       }
     };
 
@@ -63,7 +68,13 @@ const useMessageSocket = (currentConversation) => {
       // Cập nhật Redux store khi tên nhóm thay đổi, KHÔNG hiển thị toast
       if ((data.groupId || data.roomId) && data.newName) {
         // debug removed
-        dispatch(updateGroupName({ groupId: data.groupId, roomId: data.roomId, newName: data.newName }));
+        dispatch(
+          updateGroupName({
+            groupId: data.groupId,
+            roomId: data.roomId,
+            newName: data.newName,
+          })
+        );
       }
     };
 
@@ -71,59 +82,90 @@ const useMessageSocket = (currentConversation) => {
       // debug removed
       // Hiển thị thông báo lỗi cho user
       if (data.message) {
-        showToast(data.message, 'error');
+        showToast(data.message, "error");
       }
     };
 
-    socket.on('message_revoked', handleMessageRevoked);
-    socket.on('message_error', handleMessageError);
-    socket.on('group_renamed', handleGroupRenamed);
-    socket.on('group_error', handleGroupError);
+    const handleGroupDissolved = (data) => {
+      if (data?.roomId) {
+        dispatch(markGroupDissolved({ roomId: data.roomId }));
+      }
+    };
+
+    const handleOwnerChanged = (data) => {
+      if (data?.roomId && data?.newOwnerId) {
+        dispatch(updateGroupOwner({ roomId: data.roomId, newOwnerId: data.newOwnerId }));
+      }
+    };
+
+    socket.on("message_revoked", handleMessageRevoked);
+    socket.on("message_error", handleMessageError);
+    socket.on("group_renamed", handleGroupRenamed);
+    socket.on("group_error", handleGroupError);
+    socket.on("group_dissolved", handleGroupDissolved);
+    socket.on("group_owner_changed", handleOwnerChanged);
+    socket.on("group_left", (data) => {
+      const roomId = data?.roomId;
+      if (roomId) {
+        dispatch(removeConversation({ roomId }));
+        // Thông báo tới các trang/comp khác để đóng ChatBox hiện tại
+        window.dispatchEvent(
+          new CustomEvent("GROUP_LEFT", { detail: { roomId } })
+        );
+      }
+    });
+    socket.on("group_member_left", () => {
+      // optional: refresh members list UI nếu cần
+    });
 
     return () => {
-      socket.off('message_revoked', handleMessageRevoked);
-      socket.off('message_error', handleMessageError);
-      socket.off('group_renamed', handleGroupRenamed);
-      socket.off('group_error', handleGroupError);
+      socket.off("message_revoked", handleMessageRevoked);
+      socket.off("message_error", handleMessageError);
+      socket.off("group_renamed", handleGroupRenamed);
+      socket.off("group_error", handleGroupError);
+      socket.off("group_dissolved", handleGroupDissolved);
+      socket.off("group_owner_changed", handleOwnerChanged);
+      socket.off("group_left");
+      socket.off("group_member_left");
     };
   }, [socket, dispatch]);
-  
+
   // Tự động join room khi conversation thay đổi
   useEffect(() => {
     if (!connected || !currentConversation?._id) return;
-    
+
     const roomId = currentConversation._id;
-    
+
     // Xóa timer cũ nếu có
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
-    
+
     // Sử dụng timeout để debounce các cuộc gọi liên tiếp
     timerRef.current = setTimeout(() => {
       // Chỉ join room khi roomId thay đổi để tránh gọi nhiều lần
       if (previousRoomIdRef.current !== roomId) {
         // debug removed
-        
+
         // Nếu đã ở trong phòng khác, rời phòng đó trước
         if (previousRoomIdRef.current) {
           leaveRoom({ roomId: previousRoomIdRef.current });
         }
-        
+
         // Join phòng mới
         joinRoom({ roomId });
-        
+
         // Cập nhật ref
         previousRoomIdRef.current = roomId;
       }
     }, 300); // Debounce 300ms
-    
+
     return () => {
       // Xóa timer khi cleanup
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
-      
+
       // Cleanup chỉ khi component unmount, không phải khi roomId thay đổi
       if (roomId === previousRoomIdRef.current) {
         // debug removed
@@ -135,23 +177,51 @@ const useMessageSocket = (currentConversation) => {
 
   // Function để đổi tên nhóm qua socket (ưu tiên roomId và dùng emit wrapper để tránh lỗi ref)
   const renameGroup = (roomId, name) => {
-    const ok = emit('rename-group', { roomId, name });
+    const ok = emit("rename-group", { roomId, name });
     if (!ok) {
-      showToast('Không thể kết nối với server', 'error');
+      showToast("Không thể kết nối với server", "error");
     }
     return ok;
   };
 
-  return { 
-    socket, 
-    connected, 
-    emit, 
-    joinRoom, 
+  const changeGroupOwner = (roomId, newOwnerId) => {
+    const ok = emit("change_group_owner", { roomId, newOwnerId });
+    if (!ok) {
+      showToast("Không thể kết nối với server", "error");
+    }
+    return ok;
+  };
+
+  const leaveGroup = (roomId) => {
+    const ok = emit("leave_group", { roomId });
+    if (!ok) {
+      showToast("Không thể kết nối với server", "error");
+    }
+    return ok;
+  };
+
+  // Function để giải tán nhóm qua socket (owner-only)
+  const dissolveGroup = (roomId) => {
+    const ok = emit("dissolve_group", { roomId });
+    if (!ok) {
+      showToast("Không thể kết nối với server", "error");
+    }
+    return ok;
+  };
+
+  return {
+    socket,
+    connected,
+    emit,
+    joinRoom,
     leaveRoom,
     renameGroup,
+    changeGroupOwner,
+    leaveGroup,
+    dissolveGroup,
     toastInfo,
-    handleCloseToast
+    handleCloseToast,
   };
 };
 
-export default useMessageSocket; 
+export default useMessageSocket;

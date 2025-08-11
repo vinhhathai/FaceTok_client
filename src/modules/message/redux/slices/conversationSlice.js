@@ -158,6 +158,27 @@ const conversationSlice = createSlice({
         // debug removed
       }
     },
+    updateGroupOwner(state, action) {
+      const { roomId, newOwnerId } = action.payload;
+      const conv = state.conversations.find((c) => c._id === roomId);
+      if (conv) {
+        conv.groupOwnerId = newOwnerId;
+      }
+    },
+      markGroupDissolved(state, action) {
+        const { roomId } = action.payload;
+        const conv = state.conversations.find((c) => c._id === roomId);
+        if (conv) {
+          conv.isGroupDissolved = true;
+          const groupRef = conv.groupId;
+          if (groupRef && typeof groupRef === "object") {
+            groupRef.isDissolved = true;
+          } else if (typeof groupRef === "string") {
+            // Normalize string groupId to object with isDissolved flag
+            conv.groupId = { _id: groupRef, isDissolved: true };
+          }
+        }
+      },
   },
   extraReducers: (builder) => {
     builder
@@ -174,6 +195,8 @@ export const {
   removeConversation,
   addConversation,
   updateGroupName,
+  updateGroupOwner,
+  markGroupDissolved,
 } = conversationSlice.actions;
 
 export default conversationSlice.reducer;

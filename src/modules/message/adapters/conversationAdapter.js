@@ -11,14 +11,26 @@
 const normalizeParticipant = (participant) => {
   if (!participant) return null;
 
-
-  
-  return {
-    _id: participant._id || participant.id || 'unknown', // Xử lý cả id và _id
-    fullName: participant.fullName || participant.fullname || participant.name || 'Unknown User',
+  const normalized = {
+    _id: participant._id || participant.id || "unknown",
+    fullName:
+      participant.fullName ||
+      participant.fullname ||
+      participant.name ||
+      "Unknown User",
     avatar: participant.avatar || participant.avatarUrl || null,
-    online: participant.online || false
+    online: participant.online || false,
   };
+
+  // Preserve group-related fields if present (for group conversations)
+  if (participant.isGroup) normalized.isGroup = true;
+  if (participant.members) normalized.members = participant.members;
+  if (participant.groupOwnerId || participant.ownerId)
+    normalized.groupOwnerId = participant.groupOwnerId || participant.ownerId;
+  if (participant.groupId || (participant.group && participant.group._id))
+    normalized.groupId = participant.groupId || participant.group?._id;
+
+  return normalized;
 };
 
 /**
@@ -75,6 +87,7 @@ export const adaptRoomToConversation = (room, currentUserId) => {
     return null;
   }
   
+  // Derive group identifiers at top-level for easier access
   const conversation = {
     _id: room._id || room.id || 'unknown',
     participant: participant,
@@ -83,7 +96,10 @@ export const adaptRoomToConversation = (room, currentUserId) => {
     unreadCount: room.unreadCount || 0,
     updatedAt: room.updatedAt || new Date().toISOString(),
     createdAt: room.createdAt || room.updatedAt || new Date().toISOString(),
-    isGroup: isGroup
+    isGroup: isGroup,
+    groupOwnerId:
+      (room.groupId && room.groupId.ownerId) || participant?.groupOwnerId || null,
+    groupId: (room.groupId && (room.groupId._id || room.groupId)) || participant?.groupId || null,
   };
   
 

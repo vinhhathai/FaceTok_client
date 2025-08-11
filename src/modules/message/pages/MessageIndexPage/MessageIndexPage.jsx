@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, IconButton, useMediaQuery, useTheme, Box, Fab, Tooltip } from '@mui/material';
+import { Typography, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import { Group as GroupIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import useMessageSocket from '@message/hooks/useMessageSocket';
@@ -7,7 +7,6 @@ import MessageLayout from '@message/components/Layout/MessageLayout';
 import ConversationList from '@message/components/ConversationList/ConversationList';
 import ChatBox from '@message/components/ChatBox/ChatBox';
 import CreateGroupModal from '@message/components/CreateGroupModal/CreateGroupModal';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { toast } from 'react-toastify';
 import {
   PageContainer,
@@ -20,7 +19,9 @@ import {
   MobileBackBox,
   WelcomeContainer
 } from './MessageIndexPage.styles';
-import { fetchConversations } from '@message/redux/slices/conversationSlice';
+import { FabContainer, CreateGroupFab, MobileFabWrapper } from './MessageIndexPage.styles';
+import { fetchConversations, markGroupDissolved } from '@message/redux/slices/conversationSlice';
+import { getRoomById } from '@message/api/messageAPI';
 
 const MessageIndexPage = () => {
   const dispatch = useDispatch();
@@ -61,12 +62,41 @@ const MessageIndexPage = () => {
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
-    
+    // Hiển thị ngay để UI phản hồi nhanh
     setSelectedConversation(conversation);
-    
+
     // In mobile, switch to chat view when selecting a conversation
     if (isMobile) {
       setMobileView('chat');
+    }
+
+    // Tải chi tiết room để kiểm tra dissolved và cập nhật trạng thái input
+    if (conversation?._id) {
+      getRoomById(conversation._id)
+        .then((res) => {
+          const room = res?.data?.room || res?.data?.data || res?.data || null;
+          const group = room?.groupId || room?.group || null;
+          const isDissolved = !!(group && (group.isDissolved || group?.is_dissolved));
+          if (isDissolved) {
+            // Cập nhật Redux để ChatBox nhận đúng activeConversation từ store
+            dispatch(markGroupDissolved({ roomId: conversation._id }));
+            setSelectedConversation((prev) => {
+              if (!prev || prev._id !== conversation._id) return prev;
+              const prevGroup = prev.groupId;
+              let nextGroup = prevGroup;
+              if (prevGroup && typeof prevGroup === 'object') {
+                nextGroup = { ...prevGroup, isDissolved: true };
+              } else {
+                const id = (typeof prevGroup === 'string' && prevGroup) || group?._id || group || conversation.groupId;
+                nextGroup = id ? { _id: id, isDissolved: true } : { isDissolved: true };
+              }
+              return { ...prev, groupId: nextGroup, isGroupDissolved: true };
+            });
+          }
+        })
+        .catch(() => {
+          // ignore; không chặn luồng UI
+        });
     }
   };
 
@@ -89,6 +119,19 @@ const MessageIndexPage = () => {
       setMobileView('list');
     }
   };
+
+  // Khi rời nhóm, nếu conversation hiện tại bị xóa, quay về danh sách
+  useEffect(() => {
+    const handleGroupLeft = (e) => {
+      const roomId = e?.detail?.roomId;
+      if (roomId && selectedConversation?._id === roomId) {
+        setSelectedConversation(null);
+        if (isMobile) setMobileView('list');
+      }
+    };
+    window.addEventListener('GROUP_LEFT', handleGroupLeft);
+    return () => window.removeEventListener('GROUP_LEFT', handleGroupLeft);
+  }, [isMobile, selectedConversation]);
 
   // Handle create group
   const handleCreateGroup = (newGroup) => {
@@ -134,49 +177,18 @@ const MessageIndexPage = () => {
                 </ConversationsListContainer>
 
                 {/* Create Group Button - Fixed at bottom right */}
-                <Box sx={{ position: 'relative', height: 80 }}>
+                <FabContainer>
                   <Tooltip title="Tạo nhóm chat mới" placement="top">
-                    <Fab
+                    <CreateGroupFab
                       color="primary"
                       size="medium"
                       onClick={() => setShowCreateGroupModal(true)}
-                      sx={{
-                        position: 'absolute',
-                        bottom: 16,
-                        right: 16,
-                        zIndex: 1000,
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-                        '&:hover': {
-                          boxShadow: '0 6px 16px rgba(0, 0, 0, 0.2)',
-                          transform: 'scale(1.05)',
-                          background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)'
-                        },
-                        // Ensure button is visible on all screen sizes
-                        '@media (max-width: 600px)': {
-                          bottom: 12,
-                          right: 12,
-                          width: 48,
-                          height: 48,
-                          '& .MuiSvgIcon-root': {
-                            fontSize: 20
-                          }
-                        },
-                        '@media (min-width: 601px) and (max-width: 960px)': {
-                          bottom: 14,
-                          right: 14,
-                          width: 52,
-                          height: 52,
-                          '& .MuiSvgIcon-root': {
-                            fontSize: 22
-                          }
-                        }
-                      }}
+                      sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 1000 }}
                     >
                       <GroupIcon />
-                    </Fab>
+                    </CreateGroupFab>
                   </Tooltip>
-                </Box>
+                </FabContainer>
               </ConversationsPaper>
             </ConversationsGridItem>
           )}
@@ -206,39 +218,17 @@ const MessageIndexPage = () => {
 
           {/* Mobile Create Group Button - Only show when in chat view on mobile */}
           {isMobile && mobileView === 'chat' && (
-            <Box
-              sx={{
-                position: 'fixed',
-                bottom: 16,
-                right: 16,
-                zIndex: 1000,
-                display: { xs: 'block', sm: 'block', md: 'none' }
-              }}
-            >
+            <MobileFabWrapper>
               <Tooltip title="Tạo nhóm chat mới" placement="top">
-                <Fab
+                <CreateGroupFab
                   color="primary"
                   size="medium"
                   onClick={() => setShowCreateGroupModal(true)}
-                  sx={{
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                    background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-                    '&:hover': {
-                      boxShadow: '0 6px 16px rgba(0, 0, 0, 0.2)',
-                      transform: 'scale(1.05)',
-                      background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)'
-                    },
-                    width: 48,
-                    height: 48,
-                    '& .MuiSvgIcon-root': {
-                      fontSize: 20
-                    }
-                  }}
                 >
                   <GroupIcon />
-                </Fab>
+                </CreateGroupFab>
               </Tooltip>
-            </Box>
+            </MobileFabWrapper>
           )}
         </MessageGridContainer>
       </PageContainer>
