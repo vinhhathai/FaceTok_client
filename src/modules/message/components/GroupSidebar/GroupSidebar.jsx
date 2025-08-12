@@ -51,8 +51,7 @@ import ConfirmDialog from "./ConfirmDialog";
 const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
   const [editNameOpen, setEditNameOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
-  const [removeMemberOpen, setRemoveMemberOpen] = useState(false);
-  const [transferOwnershipOpen, setTransferOwnershipOpen] = useState(false);
+  // Các hành động kick/chuyển quyền chỉ hiển thị trong modal thành viên
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [confirmDissolveOpen, setConfirmDissolveOpen] = useState(false);
   const [searchMember, setSearchMember] = useState("");
@@ -61,7 +60,7 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
     useState(null);
 
   // Socket hook
-  const { renameGroup, dissolveGroup, changeGroupOwner, leaveGroup, toastInfo, handleCloseToast } =
+  const { renameGroup, dissolveGroup, changeGroupOwner, leaveGroup, kickMember, toastInfo, handleCloseToast } =
     useMessageSocket(conversation);
 
   // Xác định ownerId từ conversation đã được adapter chuẩn hóa
@@ -178,17 +177,9 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
     dissolveGroup(roomId);
   };
 
-  const handleTransferOwnership = () => {
-    setTransferOwnershipOpen(true);
-  };
-
   const handleShareGroup = () => {
     // TODO: Implement share group
     // debug removed
-  };
-
-  const handleRemoveMember = () => {
-    setRemoveMemberOpen(true);
   };
 
   const handleLeaveGroup = () => {
@@ -198,9 +189,12 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
   };
 
   const handleRemoveMemberFromGroup = (memberId) => {
-    // TODO: Call API to remove member
-    // debug removed
-    setConfirmRemoveMember(null);
+    const roomId = conversation?._id;
+    if (!roomId || !memberId) return;
+    const ok = kickMember(roomId, memberId);
+    if (ok) {
+      setConfirmRemoveMember(null);
+    }
   };
 
   const handleTransferToMember = (memberId) => {
@@ -209,7 +203,6 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
     // Gửi yêu cầu chuyển quyền qua socket
     const ok = changeGroupOwner(roomId, memberId);
     if (ok) {
-      setTransferOwnershipOpen(false);
       setConfirmTransferOwnership(null);
     }
   };
@@ -315,26 +308,6 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
               <>
                 <Button
                   variant="outlined"
-                  startIcon={<PersonRemoveIcon />}
-                  onClick={handleRemoveMember}
-                  fullWidth
-                  color="warning"
-                >
-                  Xóa thành viên
-                </Button>
-
-                <Button
-                  variant="outlined"
-                  startIcon={<CrownIcon />}
-                  onClick={handleTransferOwnership}
-                  fullWidth
-                  color="primary"
-                >
-                  Chuyển quyền trưởng nhóm
-                </Button>
-
-                <Button
-                  variant="outlined"
                   startIcon={<DeleteIcon />}
                   onClick={handleDeleteGroup}
                   fullWidth
@@ -399,86 +372,6 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
         onClose={() => setConfirmDissolveOpen(false)}
       />
 
-      {/* Remove Member Dialog */}
-      <Dialog
-        open={removeMemberOpen}
-        onClose={() => setRemoveMemberOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Xóa thành viên khỏi nhóm</DialogTitle>
-        <DialogContent>
-          <List>
-            {members
-              .filter((member) => member._id !== ownerId)
-              .map((member) => (
-                <ListItem key={member._id || member.id}>
-                  <ListItemAvatar>
-                    <Avatar src={member.avatar} />
-                  </ListItemAvatar>
-                  <ListItemText primary={member.fullName} />
-                  <ListItemSecondaryAction>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      onClick={() =>
-                        handleRemoveMemberFromGroup(member._id || member.id)
-                      }
-                    >
-                      Xóa
-                    </Button>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRemoveMemberOpen(false)}>Đóng</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Transfer Ownership Dialog */}
-      <Dialog
-        open={transferOwnershipOpen}
-        onClose={() => setTransferOwnershipOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Chuyển quyền trưởng nhóm</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Chọn thành viên để chuyển quyền trưởng nhóm:
-          </Typography>
-          <List>
-            {members
-              .filter((member) => member._id !== ownerId)
-              .map((member) => (
-                <ListItem key={member._id || member.id}>
-                  <ListItemAvatar>
-                    <Avatar src={member.avatar} />
-                  </ListItemAvatar>
-                  <ListItemText primary={member.fullName} />
-                  <ListItemSecondaryAction>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="small"
-                      onClick={() =>
-                        handleTransferToMember(member._id || member.id)
-                      }
-                    >
-                      Chọn
-                    </Button>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTransferOwnershipOpen(false)}>Hủy</Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Confirm Remove Member Dialog */}
       <Dialog
@@ -487,7 +380,7 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Xác nhận xóa thành viên</DialogTitle>
+            <DialogTitle>Xác nhận xóa thành viên</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
             Bạn có chắc chắn muốn xóa{" "}

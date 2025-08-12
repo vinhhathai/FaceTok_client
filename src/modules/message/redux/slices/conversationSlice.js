@@ -165,6 +165,16 @@ const conversationSlice = createSlice({
         conv.groupOwnerId = newOwnerId;
       }
     },
+    removeMemberFromConversation(state, action) {
+      const { roomId, userId } = action.payload;
+      const conv = state.conversations.find((c) => c._id === roomId);
+      if (conv && Array.isArray(conv.members)) {
+        conv.members = conv.members.filter(
+          (m) => (m._id || m.id) !== userId
+        );
+        conv.updatedAt = new Date().toISOString();
+      }
+    },
       markGroupDissolved(state, action) {
         const { roomId } = action.payload;
         const conv = state.conversations.find((c) => c._id === roomId);
@@ -196,6 +206,7 @@ export const {
   addConversation,
   updateGroupName,
   updateGroupOwner,
+  removeMemberFromConversation,
   markGroupDissolved,
 } = conversationSlice.actions;
 

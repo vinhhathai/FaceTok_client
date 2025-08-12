@@ -6,7 +6,8 @@ import {
   updateGroupName,
   markGroupDissolved,
   updateGroupOwner,
-  removeConversation,
+    removeConversation,
+    removeMemberFromConversation,
 } from "@message/redux/slices/conversationSlice";
 // UI toasts handled at component level
 
@@ -98,12 +99,32 @@ const useMessageSocket = (currentConversation) => {
       }
     };
 
+    const handleMemberKicked = (data) => {
+      const roomId = data?.roomId;
+      const kickedUserId = data?.userId;
+      if (!roomId || !kickedUserId) return;
+
+      const currentUserId = localStorage.getItem("currentUserId");
+      if (currentUserId && kickedUserId === currentUserId) {
+        // Nếu chính mình bị kick: xoá conversation và thông báo UI đóng chat
+        dispatch(removeConversation({ roomId }));
+        window.dispatchEvent(
+          new CustomEvent("GROUP_KICKED", { detail: { roomId } })
+        );
+        showToast("Bạn đã bị xoá khỏi nhóm", "warning");
+      } else {
+        // Thành viên khác bị kick: cập nhật danh sách thành viên trong state
+        dispatch(removeMemberFromConversation({ roomId, userId: kickedUserId }));
+      }
+    };
+
     socket.on("message_revoked", handleMessageRevoked);
     socket.on("message_error", handleMessageError);
     socket.on("group_renamed", handleGroupRenamed);
     socket.on("group_error", handleGroupError);
     socket.on("group_dissolved", handleGroupDissolved);
     socket.on("group_owner_changed", handleOwnerChanged);
+    socket.on("group_member_kicked", handleMemberKicked);
     socket.on("group_left", (data) => {
       const roomId = data?.roomId;
       if (roomId) {
@@ -114,8 +135,12 @@ const useMessageSocket = (currentConversation) => {
         );
       }
     });
-    socket.on("group_member_left", () => {
-      // optional: refresh members list UI nếu cần
+    socket.on("group_member_left", (data) => {
+      const roomId = data?.roomId;
+      const userId = data?.userId;
+      if (roomId && userId) {
+        dispatch(removeMemberFromConversation({ roomId, userId }));
+      }
     });
 
     return () => {
@@ -125,6 +150,7 @@ const useMessageSocket = (currentConversation) => {
       socket.off("group_error", handleGroupError);
       socket.off("group_dissolved", handleGroupDissolved);
       socket.off("group_owner_changed", handleOwnerChanged);
+      socket.off("group_member_kicked", handleMemberKicked);
       socket.off("group_left");
       socket.off("group_member_left");
     };
@@ -209,6 +235,14 @@ const useMessageSocket = (currentConversation) => {
     return ok;
   };
 
+  const kickMember = (roomId, userId) => {
+    const ok = emit("kick_member", { roomId, userId });
+    if (!ok) {
+      showToast("Không thể kết nối với server", "error");
+    }
+    return ok;
+  };
+
   return {
     socket,
     connected,
@@ -219,6 +253,7 @@ const useMessageSocket = (currentConversation) => {
     changeGroupOwner,
     leaveGroup,
     dissolveGroup,
+    kickMember,
     toastInfo,
     handleCloseToast,
   };
