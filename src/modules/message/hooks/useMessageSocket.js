@@ -243,6 +243,14 @@ const useMessageSocket = (currentConversation) => {
     return ok;
   };
 
+  const inviteMember = (roomId, userId) => {
+    const ok = emit("invite_member", { roomId, userId });
+    if (!ok) {
+      showToast("Không thể kết nối với server", "error");
+    }
+    return ok;
+  };
+
   return {
     socket,
     connected,
@@ -254,6 +262,7 @@ const useMessageSocket = (currentConversation) => {
     leaveGroup,
     dissolveGroup,
     kickMember,
+    inviteMember,
     toastInfo,
     handleCloseToast,
   };

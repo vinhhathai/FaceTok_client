@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ListItemText, Divider } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EmailIcon from '@mui/icons-material/Email';
-import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import HomeIcon from '@mui/icons-material/Home';
 import {
@@ -19,7 +18,6 @@ import {
 // Main navigation items with Material-UI icons
 const mainItems = [
   { text: 'Messages', icon: <EmailIcon color="primary" />, to: '/messages' },
-  { text: 'Groups', icon: <GroupsIcon color="secondary" />,  to: '/groups' },
   { text: 'Find Friends', icon: <PeopleAltIcon style={{ color: '#f0a04b' }} />, to: '/friends' },
 ];
 
@@ -36,7 +34,7 @@ function Sidebar() {
       <SidebarCard>
         <SidebarList>
           <ItemListItem disablePadding>
-            <ItemListItemButton component={Link} to="/">
+            <ItemListItemButton component={Link} to="/home">
               <ItemListItemIcon>
                 <HomeIcon color="primary" />
               </ItemListItemIcon>

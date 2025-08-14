@@ -7,7 +7,6 @@ import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
@@ -21,11 +20,7 @@ const NavButtons = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const handleGroupsClick = () => {
-  // debug removed
-    // Implement navigation to groups page
-    // navigate('/groups');
-  };
+  
 
   return (
     <>
@@ -51,17 +46,7 @@ const NavButtons = () => {
         </IconButton>
       </Tooltip>
       
-      <Tooltip title="Nhóm">
-        <IconButton
-          onClick={handleGroupsClick}
-          sx={iconButtonStyles(theme)}
-          aria-label="Nhóm"
-        >
-          <Badge badgeContent={2} color="error" sx={badgeStyle(isMobile)}>
-            <GroupsOutlinedIcon sx={iconStyles(theme)} />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+      
       
       <Tooltip title="Tin nhắn">
         <IconButton 
