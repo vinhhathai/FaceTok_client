@@ -80,7 +80,6 @@ export const StyledBadge = styled(Box)(({ theme }) => ({
   lineHeight: 1.2
 }));
 
-// Coming Soon Badge Styles - Đơn giản, không chói
 export const comingSoonBadgeStyles = {
   fontSize: '0.6rem',
   color: 'white',
@@ -89,15 +88,15 @@ export const comingSoonBadgeStyles = {
   backgroundColor: '#e74c3c',
   borderRadius: '12px',
   position: 'relative',
-  animation: 'pulse 2s ease-in-out infinite',
+  animation: 'pulse 0.8s ease-in-out infinite', // nhanh hơn
   '@keyframes pulse': {
     '0%, 100%': {
       opacity: 1,
       transform: 'scale(1)'
     },
     '50%': {
-      opacity: 0.8,
-      transform: 'scale(1.05)'
+      opacity: 0.85,
+      transform: 'scale(1.04)' // nhẹ nhàng hơn
     }
   }
-}; 
+};

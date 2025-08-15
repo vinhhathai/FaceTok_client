@@ -1,4 +1,7 @@
 import React, { useState, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import postAPI from '../../api/postAPI';
+import { toast } from 'react-toastify';
 import {
   Box,
   Card,
@@ -13,6 +16,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  CircularProgress,
   DialogActions,
   List,
   ListItem,
@@ -97,12 +101,14 @@ const CreatePost = () => {
   const [privacy, setPrivacy] = useState('public');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const mediaInputRef = useRef(null);
 
-  // Mock user data
-  const currentUser = {
-    name: 'Nguyễn Văn A',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+  // Get current user from Redux store
+  const currentUser = useSelector((state) => state.auth.user) || {
+    fullName: 'Loading...',
+    profilePicture: '/assets/images/avatar_default.jpg'
   };
 
   // Emoji list
@@ -153,12 +159,12 @@ const CreatePost = () => {
     const newVideos = newMediaFiles.filter(m => m.type === 'video').length;
 
     if (currentImages + newImages > 4) {
-      alert('Chỉ có thể upload tối đa 4 ảnh');
+      toast.error('Chỉ có thể upload tối đa 4 ảnh');
       return;
     }
 
     if (currentVideos + newVideos > 1) {
-      alert('Chỉ có thể upload tối đa 1 video');
+      toast.error('Chỉ có thể upload tối đa 1 video');
       return;
     }
 
@@ -175,30 +181,66 @@ const CreatePost = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!postText.trim() && mediaFiles.length === 0) {
-      alert('Vui lòng nhập nội dung hoặc chọn media');
+      toast.warning('Vui lòng nhập nội dung hoặc chọn media');
       return;
     }
 
-    // Mock submit
-    console.log('Creating post:', {
-      text: postText,
-      media: mediaFiles,
-      privacy
-    });
+    setIsSubmitting(true);
+    setUploadProgress(0);
 
-    // Reset form
-    setPostText('');
-    setMediaFiles([]);
-    setPrivacy('public');
-    
-    // Cleanup URLs
-    mediaFiles.forEach(media => {
-      URL.revokeObjectURL(media.url);
-    });
+    try {
+      const postData = {
+        content: postText.trim(),
+        privacy,
+        mediaFiles
+      };
 
-    alert('Đã tạo bài viết thành công!');
+      const result = await postAPI.createPost(postData, (progress) => {
+        setUploadProgress(progress);
+      });
+
+      if (result.success) {
+        // Reset form
+        setPostText('');
+        setMediaFiles([]);
+        setPrivacy('public');
+        setUploadProgress(0);
+        
+        // Cleanup URLs
+        mediaFiles.forEach(media => {
+          URL.revokeObjectURL(media.url);
+        });
+
+        toast.success('Đã tạo bài viết thành công!', {
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true
+        });
+        
+        // TODO: Refresh timeline or add to post list
+        console.log('New post created:', result.data);
+      } else {
+        throw new Error(result.message || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      
+      if (error.code === 'NETWORK_ERROR') {
+        toast.error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối.');
+      } else if (error.response?.status === 401) {
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data?.message || 'Dữ liệu không hợp lệ');
+      } else {
+        toast.error(error.message || 'Không thể tạo bài viết. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsSubmitting(false);
+      setUploadProgress(0);
+    }
   };
 
   const canSubmit = postText.trim().length > 0 || mediaFiles.length > 0;
@@ -209,32 +251,36 @@ const CreatePost = () => {
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Avatar 
-            src={currentUser.avatar} 
-            alt={currentUser.name}
+            src={currentUser.profilePicture} 
+            alt={currentUser.fullName}
             sx={{ width: 48, height: 48, mr: 2 }}
           >
-            {currentUser.name.charAt(0)}
+            {currentUser.fullName.charAt(0)}
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography variant="subtitle1" fontWeight="bold">
-              {currentUser.name}
+              {currentUser.fullName}
             </Typography>
                          <Button
                startIcon={
-                 <Typography variant="h6" sx={{ fontSize: '1.2rem', filter: 'contrast(1.2)' }}>
+                 <Typography variant="body2" sx={{ fontSize: '1rem', filter: 'contrast(1.2)' }}>
                    {privacyOptions.find(p => p.value === privacy)?.icon}
                  </Typography>
                }
-               endIcon={<KeyboardArrowDown sx={{ fontSize: '1rem', color: 'text.secondary' }} />}
+               endIcon={<KeyboardArrowDown sx={{ fontSize: '0.875rem', color: 'text.secondary' }} />}
                onClick={() => setShowPrivacyDialog(true)}
+               size="small"
                sx={{ 
                  textTransform: 'none', 
                  color: 'text.secondary',
-                 p: 1,
+                 p: 0.5,
+                 px: 1,
                  minWidth: 'auto',
+                 fontSize: '0.75rem',
+                 height: '28px',
                  border: '1px solid',
                  borderColor: 'divider',
-                 borderRadius: 2,
+                 borderRadius: 1.5,
                  '&:hover': {
                    backgroundColor: 'action.hover',
                    borderColor: 'primary.main'
@@ -336,14 +382,15 @@ const CreatePost = () => {
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
             sx={{ 
               textTransform: 'none',
               px: 3,
               py: 1
             }}
           >
-            Đăng bài
+            {isSubmitting ? 'Đang đăng...' : 'Đăng bài'}
           </Button>
         </Box>
 

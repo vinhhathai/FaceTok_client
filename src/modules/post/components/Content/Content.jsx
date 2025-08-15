@@ -261,7 +261,7 @@ function Content() {
       <PostsContainer>
         {timelinePosts.map(post => (
           <Post
-            key={post.id}
+            key={post._id}
             post={post}
             onLike={handleLike}
             onComment={handleComment}

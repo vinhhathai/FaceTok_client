@@ -3,8 +3,9 @@ import PropTypes from 'prop-types';
 import { Typography, CircularProgress, Box } from '@mui/material';
 import { toast } from 'react-toastify';
 
-// Import Post component
+// Import Post component and API
 import Post from '@post/components/Post';
+import postAPI from '@post/api/postAPI';
 
 // Styles
 import {
@@ -19,75 +20,58 @@ const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
 const UserPosts = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0
+  });
+  
+  // Fetch posts from API
+  const fetchUserPosts = async (page = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔍 Fetching posts for userId:', userId);
+      const response = await postAPI.getPostsByAuthor(userId, { page, limit: 10 });
+      
+      console.log('📡 API Response:', response);
+      console.log('📊 Response structure:', {
+        success: response.success,
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        dataLength: response.data?.length,
+        firstPost: response.data?.[0],
+        firstPostAuthor: response.data?.[0]?.author
+      });
+      
+      if (response.success) {
+        console.log('✅ Posts fetched successfully:', response.data);
+        console.log('📊 Pagination:', response.pagination);
+        setPosts(response.data);
+        setPagination(response.pagination);
+      } else {
+        throw new Error(response.message || 'Failed to fetch posts');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching user posts:', error);
+      setError(error.message);
+      toast.error('Không thể tải bài viết');
+      
+      // Set empty posts array instead of mock data
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   useEffect(() => {
-    // Giả lập việc tải bài viết
-    const timer = setTimeout(() => {
-      // Dữ liệu mẫu với cấu trúc giống Post component
-      setPosts([
-        {
-          id: '1',
-          content: 'Chào mừng đến với profile của tôi! 🎉 Đây là bài viết đầu tiên để demo giao diện với layout media linh hoạt. Hôm nay là một ngày tuyệt vời để chia sẻ những khoảnh khắc đẹp với bạn bè. Cảm ơn mọi người đã ghé thăm profile! 💙',
-          author: {
-            id: userId,
-            name: 'Nguyễn Văn A',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-          },
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          likeCount: 45,
-          commentCount: 12,
-          shareCount: 5,
-          isLiked: false,
-          media: [
-            {
-              type: 'image',
-              url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
-            },
-            {
-              type: 'image',
-              url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop'
-            }
-          ],
-          comments: [
-            {
-              id: 'comment-1',
-              content: 'Bài viết rất hay! Cảm ơn bạn đã chia sẻ 😊',
-              author: {
-                name: 'Trần Thị B',
-                avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face'
-              },
-              createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-              likeCount: 5,
-              replies: []
-            }
-          ]
-        },
-        {
-          id: '2',
-          content: 'Đây là bài viết thứ hai với nhiều nội dung hơn. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-          author: {
-            id: userId,
-            name: 'Nguyễn Văn A',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-          },
-          createdAt: new Date(Date.now() - 86400000).toISOString(), // Một ngày trước
-          likeCount: 23,
-          commentCount: 5,
-          shareCount: 2,
-          isLiked: true,
-          media: [
-            {
-              type: 'video',
-              url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
-            }
-          ],
-          comments: []
-        },
-      ]);
-      setLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
+    if (userId) {
+      fetchUserPosts(1);
+    }
   }, [userId]);
   
   if (loading) {
@@ -143,7 +127,7 @@ const UserPosts = ({ userId }) => {
     <PostsContainer>
       {posts.map(post => (
         <Post
-          key={post.id}
+          key={post._id}
           post={post}
           onLike={handleLike}
           onComment={handleComment}
