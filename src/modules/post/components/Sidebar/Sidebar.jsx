@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ListItemText, Divider } from '@mui/material';
+import { ListItemText, Divider, Box } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EmailIcon from '@mui/icons-material/Email';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import HomeIcon from '@mui/icons-material/Home';
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import {
   SidebarContainer,
   SidebarCard,
@@ -12,7 +13,8 @@ import {
   ItemListItem,
   ItemListItemButton,
   ItemListItemIcon,
-  StyledBadge
+  StyledBadge,
+  comingSoonBadgeStyles
 } from './Sidebar.styles';
 
 // Main navigation items with Material-UI icons
@@ -23,6 +25,12 @@ const mainItems = [
 
 // Additional items
 const additionalItems = [
+  { 
+    text: 'Game', 
+    icon: <SportsEsportsIcon style={{ color: '#8e44ad' }} />, 
+    to: '#', 
+    comingSoon: true 
+  },
   // { text: 'Saved', icon: <BookmarkBorderOutlinedIcon style={{ color: '#3f8cb8' }} />, to: '/saved' },
   // { text: 'Videos', icon: <VideoCameraBackOutlinedIcon style={{ color: '#e74c3c' }} />, to: '/videos' },
   // { text: 'Events', icon: <EventNoteOutlinedIcon style={{ color: '#9b59b6' }} />, to: '/events' },
@@ -65,13 +73,33 @@ function Sidebar() {
           {additionalItems.map((item, index) => (
             <ItemListItem key={index} disablePadding>
               <ItemListItemButton 
-                component={Link} 
-                to={item.to}
+                component={item.comingSoon ? 'div' : Link} 
+                to={item.comingSoon ? undefined : item.to}
+                sx={{ 
+                  cursor: item.comingSoon ? 'default' : 'pointer',
+                  '&:hover': item.comingSoon ? {} : undefined
+                }}
               >
                 <ItemListItemIcon>
                   {item.icon}
                 </ItemListItemIcon>
-                <ListItemText primary={item.text} sx={{ opacity: 1 }} />
+                <ListItemText 
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {item.text}
+                      {item.comingSoon && (
+                        <Box
+                          component="span"
+                          sx={comingSoonBadgeStyles}
+                        >
+                          Sắp ra mắt
+                        </Box>
+                      )}
+                    </Box>
+                  } 
+                  sx={{ opacity: 1 }} 
+                />
+                {!item.comingSoon && <ChevronRightIcon color="action" fontSize="small" />}
               </ItemListItemButton>
             </ItemListItem>
           ))}

@@ -1,11 +1,15 @@
 import { Box } from '@mui/material';
 
 export const containerStyles = (isTabletOrMobile) => ({
-  mt: isTabletOrMobile ? 0 : 3
+  mt: isTabletOrMobile ? 0 : 3,
+  position: 'relative',
+  minHeight: '100vh'
 });
 
 export const gridContainerStyles = (isTabletOrMobile) => ({
-  spacing: isTabletOrMobile ? 0 : 3
+  spacing: isTabletOrMobile ? 0 : 3,
+  alignItems: 'flex-start',
+  minHeight: '100vh'
 });
 
 export const leftSidebarStyles = (hideLeftSidebar) => ({
@@ -17,7 +21,5 @@ export const rightSidebarStyles = {
 };
 
 export const rightSidebarBoxStyles = {
-  position: 'sticky',
-  top: '16px',
-  height: 'auto'
+  // Styles sẽ được áp dụng inline trong component
 }; 

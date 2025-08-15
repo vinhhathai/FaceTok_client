@@ -11,10 +11,10 @@ import {
 function MainLayout({ thumbnail, leftSidebar, content, rightSidebar, isMobile, isFriendsTab }) {
   const theme = useTheme();
   const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  // Determine if the left sidebar should be hidden
-  // Hide it when: on mobile AND on the friends tab
-  const hideLeftSidebar = isMobile && isFriendsTab;
+  const isMobileScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Use passed isMobile prop or auto-detect
+  const shouldHideLeftSidebar = isMobile !== undefined ? isMobile : isMobileScreen;
 
   return (
     <Container maxWidth="xl" sx={containerStyles(isTabletOrMobile)}>
@@ -27,18 +27,51 @@ function MainLayout({ thumbnail, leftSidebar, content, rightSidebar, isMobile, i
         )}
 
         {/* Main Content Row */}
-        {/* Left Sidebar - Show on all devices except mobile friends page */}
-        <Grid item xs={12} md={3} lg={3} sx={{ ...leftSidebarStyles(hideLeftSidebar), pr: { md: 2, lg: 3 } }}>
+        {/* Left Sidebar - Hidden on mobile, shown on tablet/desktop */}
+        <Grid 
+          item 
+          xs={shouldHideLeftSidebar ? 0 : 12}
+          md={3} 
+          lg={3} 
+          sx={{ 
+            ...leftSidebarStyles(shouldHideLeftSidebar), 
+            pr: { md: 1, lg: 1.5 },
+            position: 'sticky',
+            top: '80px',
+            height: 'fit-content',
+            // Ensure no space is taken on mobile
+            width: shouldHideLeftSidebar ? 0 : 'auto',
+            overflow: shouldHideLeftSidebar ? 'hidden' : 'visible'
+          }}
+        >
           {leftSidebar}
         </Grid>
 
         {/* Main Content */}
-        <Grid item xs={12} md={6} lg={6} sx={{ px: { md: 1, lg: 2 } }}>
+        <Grid 
+          item 
+          xs={12} 
+          md={shouldHideLeftSidebar ? 9 : 6} 
+          lg={shouldHideLeftSidebar ? 9 : 6} 
+          sx={{ px: { md: 0.5, lg: 1 } }}
+        >
           {content}
         </Grid>
 
         {/* Right Sidebar - Desktop only */}
-        <Grid item xs={12} md={3} lg={3} sx={{ ...rightSidebarStyles, pl: { md: 2, lg: 3 } }}>
+        <Grid 
+          item 
+          xs={12} 
+          md={3} 
+          lg={3} 
+          sx={{ 
+            ...rightSidebarStyles, 
+            pl: { md: 1, lg: 1.5 },
+            position: 'sticky',
+            top: '80px',
+            height: 'fit-content'
+          }}
+        >
           <Box sx={rightSidebarBoxStyles}>
             {rightSidebar}
           </Box>

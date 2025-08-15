@@ -15,6 +15,7 @@ import UserAbout from '@user/components/UserAbout/UserAbout';
 import UserGallery from '@user/components/UserGallery/UserGallery';
 import UserFriends from '@user/components/UserFriends/UserFriends';
 import WeatherBar from '@components/WeatherBar/WeatherBar';
+import CreatePost from '@post/components/CreatePost';
 import { 
   ProfileContainer, 
   LoadingContainer, 
@@ -117,6 +118,7 @@ const ProfilePage = () => {
 
         <TabContentContainer>
           <TabPanel value={tabValue} index={0}>
+            <CreatePost />
             <UserPosts userId={userId} />
           </TabPanel>
 
