@@ -9,6 +9,7 @@ import {
     removeConversation,
     removeMemberFromConversation,
 } from "@message/redux/slices/conversationSlice";
+import { apiClient } from "@httpClient";
 // UI toasts handled at component level
 
 /**
@@ -201,54 +202,65 @@ const useMessageSocket = (currentConversation) => {
     };
   }, [currentConversation, connected, joinRoom, leaveRoom]);
 
-  // Function để đổi tên nhóm qua socket (ưu tiên roomId và dùng emit wrapper để tránh lỗi ref)
-  const renameGroup = (roomId, name) => {
-    const ok = emit("rename-group", { roomId, name });
-    if (!ok) {
-      showToast("Không thể kết nối với server", "error");
+  // REST commands + socket broadcast
+  const renameGroup = async (roomId, name) => {
+    try {
+      await apiClient.put("/message/group/rename", { id: roomId, name });
+      return true;
+    } catch (e) {
+      showToast(e?.response?.data?.error?.message || "Không thể đổi tên nhóm", "error");
+      return false;
     }
-    return ok;
   };
 
-  const changeGroupOwner = (roomId, newOwnerId) => {
-    const ok = emit("change_group_owner", { roomId, newOwnerId });
-    if (!ok) {
-      showToast("Không thể kết nối với server", "error");
+  const changeGroupOwner = async (roomId, newOwnerId) => {
+    try {
+      await apiClient.put("/message/group/change-owner", { id: roomId, newOwnerId });
+      return true;
+    } catch (e) {
+      showToast(e?.response?.data?.error?.message || "Không thể chuyển quyền", "error");
+      return false;
     }
-    return ok;
   };
 
-  const leaveGroup = (roomId) => {
-    const ok = emit("leave_group", { roomId });
-    if (!ok) {
-      showToast("Không thể kết nối với server", "error");
+  const leaveGroup = async (roomId) => {
+    try {
+      await apiClient.post("/message/room/leave", { id: roomId });
+      return true;
+    } catch (e) {
+      showToast(e?.response?.data?.error?.message || "Không thể rời nhóm", "error");
+      return false;
     }
-    return ok;
   };
 
-  // Function để giải tán nhóm qua socket (owner-only)
-  const dissolveGroup = (roomId) => {
-    const ok = emit("dissolve_group", { roomId });
-    if (!ok) {
-      showToast("Không thể kết nối với server", "error");
+  const dissolveGroup = async (roomId) => {
+    try {
+      await apiClient.post("/message/group/dissolve", { roomId });
+      return true;
+    } catch (e) {
+      showToast(e?.response?.data?.error?.message || "Không thể giải tán nhóm", "error");
+      return false;
     }
-    return ok;
   };
 
-  const kickMember = (roomId, userId) => {
-    const ok = emit("kick_member", { roomId, userId });
-    if (!ok) {
-      showToast("Không thể kết nối với server", "error");
+  const kickMember = async (roomId, userId) => {
+    try {
+      await apiClient.post("/message/room/kick-out", { roomId, kickOutUserId: userId });
+      return true;
+    } catch (e) {
+      showToast(e?.response?.data?.error?.message || "Không thể xoá thành viên", "error");
+      return false;
     }
-    return ok;
   };
 
-  const inviteMember = (roomId, userId) => {
-    const ok = emit("invite_member", { roomId, userId });
-    if (!ok) {
-      showToast("Không thể kết nối với server", "error");
+  const inviteMember = async (roomId, userId) => {
+    try {
+      await apiClient.post("/message/group/invite", { roomId, userId });
+      return true;
+    } catch (e) {
+      showToast(e?.response?.data?.error?.message || "Không thể mời thành viên", "error");
+      return false;
     }
-    return ok;
   };
 
   return {

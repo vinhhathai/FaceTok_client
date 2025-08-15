@@ -196,8 +196,7 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
       if (url) {
         setLocalAvatar(url);
         setInviteToast({ open: true, message: "Đã cập nhật ảnh nhóm", severity: "success" });
-        // Emit socket broadcast for realtime system message + avatar update
-        emit && emit("update_group_avatar", { roomId, avatarUrl: url });
+        // Server will broadcast real-time updates via SocketBus
       } else {
         setInviteToast({ open: true, message: "Cập nhật ảnh nhóm thành công", severity: "success" });
       }

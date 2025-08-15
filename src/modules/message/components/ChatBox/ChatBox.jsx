@@ -11,6 +11,7 @@ import ChatInput from '../ChatInput/ChatInput';
 import GroupSidebar from '../GroupSidebar/GroupSidebar';
 import { fetchMessages } from '@message/redux/slices/messageSlice';
 import useMessageSocket from '@message/hooks/useMessageSocket';
+import { sendMessageToRoom } from '@message/api/messageAPI';
 import {
   ChatBoxContainer,
   PlaceholderContainer,
@@ -71,16 +72,9 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
     setInputDisabled(true);
 
     try {
-      // Gửi tin nhắn qua socket
-      const success = emit('send-message', {
-        roomId: activeConversation._id,
-        content: content.trim()
-      });
-
-      if (!success) {
-        throw new Error('Không thể gửi tin nhắn');
-      }
-
+      // Gửi tin nhắn qua REST API
+      await sendMessageToRoom(activeConversation._id, content.trim());
+      
       // Reset input
       setInputDisabled(false);
     } catch (error) {
@@ -90,7 +84,7 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
     } finally {
       setSending(false);
     }
-  }, [activeConversation, emit, sending]);
+  }, [activeConversation, sending]);
 
   // Xử lý khi không có cuộc trò chuyện
   if (!activeConversation) {

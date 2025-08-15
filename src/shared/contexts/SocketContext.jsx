@@ -219,14 +219,9 @@ export const SocketProvider = ({ children }) => {
       try {
         // Thử kết nối lại và gửi sự kiện sau khi kết nối
         socketRef.current.connect();
-        const serverEvent = event === 'send-message' ? 'send_message' : event.replace(/-/g, '_');
+        const serverEvent = event.replace(/-/g, '_');
         socketRef.current.once('connect', () => {
-          if (serverEvent === 'send_message') {
-            if (!data?.roomId) return;
-            socketRef.current.emit('send_message', { roomId: data.roomId, content: data.content });
-          } else {
-            socketRef.current.emit(serverEvent, data);
-          }
+          socketRef.current.emit(serverEvent, data);
         });
         return false;
       } catch (e) {
@@ -234,26 +229,10 @@ export const SocketProvider = ({ children }) => {
       }
     }
     
-    // Ánh xạ send-message sang send_message với cấu trúc dữ liệu đúng
+    // NOTE: send-message via socket is deprecated, use REST API instead
     if (event === 'send-message') {
-      if (!data.roomId) {
-        console.error('Cannot send message: Missing roomId', data);
-        return false;
-      }
-      
-      try {
-        socketRef.current.emit('send_message', {
-          roomId: data.roomId,
-          content: data.content,
-        });
-        
-        // Log thành công
-        // debug removed
-        
-      } catch (err) {
-        console.error('Error emitting event:', err);
-        return false;
-      }
+      console.warn('send-message via socket is deprecated, use REST API instead');
+      return false;
     } else {
       // Các sự kiện khác chuyển đổi dấu gạch ngang sang gạch dưới
       const serverEvent = event.replace(/-/g, '_');

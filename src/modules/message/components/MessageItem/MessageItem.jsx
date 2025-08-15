@@ -18,6 +18,7 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import UndoIcon from "@mui/icons-material/Undo";
 import BlockIcon from "@mui/icons-material/Block";
 import { useSocket } from "@contexts/SocketContext";
+import { apiClient } from "@httpClient";
 import { useDispatch } from "react-redux";
 import { updateMessageAsRevoked } from "@message/redux/slices/messageSlice";
 import { toast } from "react-toastify";
@@ -99,48 +100,35 @@ const MessageItem = ({ message, isOwn }) => {
 
   // Handle confirm recall
   const handleConfirmRecall = async () => {
-    if (!connected || !socket) {
-      toast.error("Không thể kết nối đến server");
-      setShowConfirmDialog(false);
-      return;
-    }
-
     setIsRecalling(true);
-
     try {
-      // Emit revoke_message event
-      socket.emit("revoke_message", {
-        messageId: message._id,
-        senderId: message.senderId,
-      });
-
-      // Listen for response
-      socket.once("message_revoked", (data) => {
-        // Update Redux store to mark message as revoked
+      await apiClient.post("/message/revoke", { messageId: message._id });
+      // Đợi server broadcast socket 'message_revoked' rồi mới cập nhật store (để đồng bộ đa thiết bị)
+      const timeoutId = setTimeout(() => {
+        // Fallback: nếu vì lý do nào đó không nhận được socket, vẫn cập nhật UI
         dispatch(updateMessageAsRevoked({ messageId: message._id }));
-        toast.success("Đã thu hồi tin nhắn thành công");
+        toast.success("Đã thu hồi tin nhắn");
         setShowConfirmDialog(false);
         setIsRecalling(false);
-      });
+      }, 3500);
 
-      // Listen for error
-      socket.once("message_error", (data) => {
-        toast.error(data.message || "Không thể thu hồi tin nhắn");
-        setShowConfirmDialog(false);
-        setIsRecalling(false);
-      });
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        if (isRecalling) {
-          toast.error("Không thể thu hồi tin nhắn - timeout");
-          setShowConfirmDialog(false);
-          setIsRecalling(false);
-        }
-      }, 5000);
+      // Ưu tiên bắt socket event để clear timeout và cập nhật tức thì
+      if (socket) {
+        const onceHandler = (data) => {
+          if (data?.messageId === message._id) {
+            clearTimeout(timeoutId);
+            dispatch(updateMessageAsRevoked({ messageId: message._id }));
+            toast.success("Đã thu hồi tin nhắn");
+            setShowConfirmDialog(false);
+            setIsRecalling(false);
+            socket.off("message_revoked", onceHandler);
+          }
+        };
+        socket.on("message_revoked", onceHandler);
+      }
     } catch (error) {
       console.error("Error recalling message:", error);
-      toast.error("Không thể thu hồi tin nhắn");
+      toast.error(error?.response?.data?.error?.message || "Không thể thu hồi tin nhắn");
       setShowConfirmDialog(false);
       setIsRecalling(false);
     }
