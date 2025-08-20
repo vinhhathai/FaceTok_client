@@ -101,14 +101,41 @@ const postAPI = {
   },
 
   /**
-   * Cập nhật bài viết
-   * @param {string} postId - ID của bài viết
-   * @param {Object} updateData - Dữ liệu cập nhật
-   * @returns {Promise} - Promise chứa kết quả cập nhật
+   * Cập nhật bài viết (hỗ trợ thêm/xóa media)
+   * @param {string} postId
+   * @param {Object} updateData - { content?, privacy? }
+   * @param {Object} options - { mediaFiles?: File[], mediaRemove?: string[] }
    */
-  updatePost: async (postId, updateData) => {
+  updatePost: async (postId, updateData, options = {}) => {
     try {
-      const response = await apiClient.put(`${API_ENDPOINTS.UPDATE_POST}/${postId}`, updateData);
+      const hasFiles = Array.isArray(options.mediaFiles) && options.mediaFiles.length > 0;
+      const hasRemovals = Array.isArray(options.mediaRemove) && options.mediaRemove.length > 0;
+
+      if (!hasFiles && !hasRemovals) {
+        // Simple JSON update
+        const response = await apiClient.put(`${API_ENDPOINTS.UPDATE_POST}/${postId}`, updateData);
+        return response.data;
+      }
+
+      // Multipart update to handle files/removals
+      const formData = new FormData();
+      if (typeof updateData?.content === 'string') formData.append('content', updateData.content);
+      if (typeof updateData?.privacy === 'string') formData.append('privacy', updateData.privacy);
+
+      if (hasRemovals) {
+        // send as JSON string for server to parse
+        formData.append('mediaRemove', JSON.stringify(options.mediaRemove));
+      }
+
+      if (hasFiles) {
+        options.mediaFiles.forEach((file) => {
+          formData.append('media', file);
+        });
+      }
+
+      const response = await apiClient.put(`${API_ENDPOINTS.UPDATE_POST}/${postId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       return response.data;
     } catch (error) {
       throw error;

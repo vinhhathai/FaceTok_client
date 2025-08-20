@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from "@auth/redux";
-import { postsReducer } from "@post/redux";
-import postDetailReducer from "@post/redux";
+import postReducer from "@post/redux/slices/postSlice";
+import postDetailReducer from "@post/redux/slices/postDetailSlice";
 import friendReducer from "@friend/redux";
 import messageReducer from "@message/redux";
 import { reducers as userReducers } from "@user/redux";
@@ -9,11 +9,10 @@ import { reducers as userReducers } from "@user/redux";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    posts: postsReducer,
+    posts: postReducer,
+    postDetail: postDetailReducer,
     friend: friendReducer,
     ...messageReducer,
-
-    post: postDetailReducer,
     ...userReducers,
   },
   middleware: (getDefaultMiddleware) =>

@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
 import { Typography, CircularProgress, Box } from '@mui/material';
 import { toast } from 'react-toastify';
 
-// Import Post component and API
+// Import Post component and Redux actions
 import Post from '@post/components/Post';
-import postAPI from '@post/api/postAPI';
+import { fetchUserPosts } from '@post/redux/slices/postSlice';
 
 // Styles
 import {
@@ -14,71 +15,35 @@ import {
   PostsContainer
 } from './UserPosts.styles';
 
-// Default image
-const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
-
 const UserPosts = ({ userId }) => {
-  const [loading, setLoading] = useState(true);
-  const [posts, setPosts] = useState([]);
-  const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0
-  });
-  
-  // Fetch posts from API
-  const fetchUserPosts = async (page = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('🔍 Fetching posts for userId:', userId);
-      const response = await postAPI.getPostsByAuthor(userId, { page, limit: 10 });
-      
-      console.log('📡 API Response:', response);
-      console.log('📊 Response structure:', {
-        success: response.success,
-        hasData: !!response.data,
-        dataType: typeof response.data,
-        isArray: Array.isArray(response.data),
-        dataLength: response.data?.length,
-        firstPost: response.data?.[0],
-        firstPostAuthor: response.data?.[0]?.author
-      });
-      
-      if (response.success) {
-        console.log('✅ Posts fetched successfully:', response.data);
-        console.log('📊 Pagination:', response.pagination);
-        setPosts(response.data);
-        setPagination(response.pagination);
-      } else {
-        throw new Error(response.message || 'Failed to fetch posts');
-      }
-    } catch (error) {
-      console.error('❌ Error fetching user posts:', error);
-      setError(error.message);
-      toast.error('Không thể tải bài viết');
-      
-      // Set empty posts array instead of mock data
-      setPosts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dispatch = useDispatch();
+  const { userPosts, loading, error } = useSelector((state) => state.posts);
+  const posts = userPosts[userId] || [];
   
   useEffect(() => {
     if (userId) {
-      fetchUserPosts(1);
+      dispatch(fetchUserPosts({ userId, params: { page: 1, limit: 10 } }));
     }
-  }, [userId]);
+  }, [userId, dispatch]);
   
-  if (loading) {
+  if (loading && posts.length === 0) {
     return (
       <LoadingContainer>
         <CircularProgress />
       </LoadingContainer>
+    );
+  }
+  
+  if (error && posts.length === 0) {
+    return (
+      <EmptyContainer>
+        <Typography variant="body1" color="error" gutterBottom>
+          {error}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Không thể tải bài viết. Vui lòng thử lại.
+        </Typography>
+      </EmptyContainer>
     );
   }
   

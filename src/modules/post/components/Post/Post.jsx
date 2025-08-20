@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import postAPI from "@post/api/postAPI";
+import { updatePost as updatePostInStore } from "../../redux/slices/postSlice";
 import PropTypes from "prop-types";
 import {
   Card,
   CardHeader,
   CardContent,
-  CardActions,
   Avatar,
   Typography,
   IconButton,
@@ -21,6 +23,7 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from "@mui/material";
 import {
   Favorite,
@@ -35,7 +38,6 @@ import {
   Send,
   EmojiEmotions,
   AttachFile,
-  Image,
   Reply,
   Favorite as HeartIcon,
   FavoriteBorder as HeartBorderIcon,
@@ -47,7 +49,6 @@ import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
   PostContainer,
-  PostImage,
   PostActionsContainer,
   CommentSection,
   CommentInput,
@@ -55,20 +56,23 @@ import {
   PostStats,
   PostHeader,
   PostContent,
-  PostFooter,
   ActionButton,
   LikeButton,
   CommentButton,
   ShareButton,
-  MoreButton,
   TimeChip,
-  ImageGrid,
   ImageContainer,
   SingleImage,
   MultipleImageGrid,
 } from "./Post.styles";
 
 const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
+  const dispatch = useDispatch();
+  const currentUser = useSelector((state) => state.auth.user);
+  const currentUserId = currentUser?._id || currentUser?.id;
+  const isOwner =
+    (post.author?._id && post.author._id === currentUserId) ||
+    (post.author?.id && post.author.id === currentUserId);
   const [liked, setLiked] = useState(post.isLiked || false);
   const [likeCount, setLikeCount] = useState(post.likeCount || 0);
   const [commentCount, setCommentCount] = useState(post.commentCount || 0);
@@ -82,6 +86,13 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const [mediaViewerOpen, setMediaViewerOpen] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editContent, setEditContent] = useState(post.content || "");
+  const [editPrivacy, setEditPrivacy] = useState(post.privacy || "public");
+  const [editMedia, setEditMedia] = useState(Array.isArray(post.media) ? [...post.media] : []);
+  const [newMediaFiles, setNewMediaFiles] = useState([]);
+  const [mediaRemoveKeys, setMediaRemoveKeys] = useState(new Set());
 
   const handleLike = () => {
     setLiked(!liked);
@@ -121,8 +132,75 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   };
 
   const handleEdit = () => {
-    onEdit?.(post._id);
+    setEditContent(post.content || "");
+    setEditPrivacy(post.privacy || "public");
+    setEditMedia(Array.isArray(post.media) ? [...post.media] : []);
+    setNewMediaFiles([]);
+    setMediaRemoveKeys(new Set());
+    setEditOpen(true);
     handleMoreClose();
+  };
+
+  const handleSaveEdit = async () => {
+    if (!isOwner) return;
+    try {
+      setEditSaving(true);
+      const payload = { content: editContent, privacy: editPrivacy };
+      const mediaRemove = Array.from(mediaRemoveKeys);
+      const files = newMediaFiles.map((m) => m.file).filter(Boolean);
+      const res = await postAPI.updatePost(post._id, payload, {
+        mediaFiles: files,
+        mediaRemove
+      });
+      const updated = res?.data || res; // handle either wrapped or direct
+      dispatch(
+        updatePostInStore({
+          postId: post._id,
+          updates: {
+            content: updated?.content ?? editContent,
+            privacy: updated?.privacy ?? editPrivacy,
+            media: Array.isArray(updated?.media) ? updated.media : editMedia
+          }
+        })
+      );
+      setEditOpen(false);
+    } catch (e) {
+      // simple fallback: close but do not update
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const getMediaKey = (m) => m.publicId || m.url;
+
+  const handleRemoveExistingMedia = (m) => {
+    const key = getMediaKey(m);
+    const next = new Set(mediaRemoveKeys);
+    next.add(key);
+    setMediaRemoveKeys(next);
+    setEditMedia((prev) => prev.filter((x) => getMediaKey(x) !== key));
+  };
+
+  const handleAddNewMedia = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const items = files.map((file) => ({
+      id: `${Date.now()}_${Math.random()}`,
+      file,
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image'
+    }));
+    setNewMediaFiles((prev) => [...prev, ...items]);
+    // reset input value to allow re-uploading same file
+    e.target.value = "";
+  };
+
+  const handleRemoveNewMedia = (id) => {
+    setNewMediaFiles((prev) => {
+      const item = prev.find((x) => x.id === id);
+      if (item?.url) URL.revokeObjectURL(item.url);
+      return prev.filter((x) => x.id !== id);
+    });
   };
 
   const handleSubmitComment = () => {
@@ -946,7 +1024,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             sx: { minWidth: 200 },
           }}
         >
-          {post.author?._id === "current-user-id" || post.author?.id === "current-user-id" ? (
+          {isOwner ? (
             <>
               <MenuItem onClick={handleEdit}>
                 <ListItemIcon>
@@ -1100,6 +1178,90 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             </Box>
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Edit Post Dialog */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+        <DialogContent sx={{ p: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>Chỉnh sửa bài viết</Typography>
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+          />
+          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+            <Chip
+              label="Công khai"
+              color={editPrivacy === 'public' ? 'primary' : 'default'}
+              onClick={() => setEditPrivacy('public')}
+              size="small"
+            />
+            <Chip
+              label="Bạn bè"
+              color={editPrivacy === 'friends' ? 'primary' : 'default'}
+              onClick={() => setEditPrivacy('friends')}
+              size="small"
+            />
+            <Chip
+              label="Riêng tư"
+              color={editPrivacy === 'private' ? 'primary' : 'default'}
+              onClick={() => setEditPrivacy('private')}
+              size="small"
+            />
+          </Box>
+
+          {/* Existing media */}
+          {editMedia.length > 0 && (
+            <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+              {editMedia.map((m) => (
+                <Box key={getMediaKey(m)} sx={{ position: 'relative' }}>
+                  {m.type === 'video' ? (
+                    <video src={m.url} style={{ width: '100%', borderRadius: 8 }} controls />
+                  ) : (
+                    <img src={m.url} alt="media" style={{ width: '100%', borderRadius: 8 }} />
+                  )}
+                  <IconButton size="small" onClick={() => handleRemoveExistingMedia(m)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                    <Close fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          {/* New media */}
+          {newMediaFiles.length > 0 && (
+            <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+              {newMediaFiles.map((m) => (
+                <Box key={m.id} sx={{ position: 'relative' }}>
+                  {m.type === 'video' ? (
+                    <video src={m.url} style={{ width: '100%', borderRadius: 8 }} controls />
+                  ) : (
+                    <img src={m.url} alt="new" style={{ width: '100%', borderRadius: 8 }} />
+                  )}
+                  <IconButton size="small" onClick={() => handleRemoveNewMedia(m.id)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                    <Close fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          {/* Add media */}
+          <Box sx={{ mt: 2 }}>
+            <Button variant="outlined" component="label" sx={{ textTransform: 'none' }}>
+              Thêm ảnh/video
+              <input type="file" hidden multiple accept="image/*,video/*" onChange={handleAddNewMedia} />
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)}>Hủy</Button>
+          <Button onClick={handleSaveEdit} disabled={editSaving} variant="contained">
+            {editSaving ? <CircularProgress size={18} color="inherit" /> : 'Lưu'}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Comment Modal - Mobile Only */}
