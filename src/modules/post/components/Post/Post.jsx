@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import postAPI from "@post/api/postAPI";
 import { updatePost as updatePostInStore } from "../../redux/slices/postSlice";
@@ -33,6 +33,7 @@ import {
   MoreVert,
   Edit,
   Delete,
+  DeleteForever,
   Flag,
   AccessTime,
   Send,
@@ -70,14 +71,32 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth.user);
   const currentUserId = currentUser?._id || currentUser?.id;
+  const currentUserIdStr =
+    currentUserId && currentUserId.toString
+      ? currentUserId.toString()
+      : String(currentUserId || "");
+  const isPostOwnerUser =
+    String(post.author?._id || post.author?.id || "") === currentUserIdStr;
   const isOwner =
     (post.author?._id && post.author._id === currentUserId) ||
     (post.author?.id && post.author.id === currentUserId);
   const [liked, setLiked] = useState(post.isLiked || false);
-  const [likeCount, setLikeCount] = useState(post.likeCount || 0);
-  const [commentCount, setCommentCount] = useState(post.commentCount || 0);
+  const [likeCount, setLikeCount] = useState(
+    (typeof post.likesCount === "number" ? post.likesCount : post.likeCount) ||
+      0
+  );
+  const [commentCount, setCommentCount] = useState(
+    (typeof post.commentsCount === "number"
+      ? post.commentsCount
+      : post.commentCount) || 0
+  );
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState(
+    Array.isArray(post.comments) ? post.comments : []
+  );
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [expandedReplies, setExpandedReplies] = useState(new Set());
   const [anchorEl, setAnchorEl] = useState(null);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
@@ -90,13 +109,33 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const [editSaving, setEditSaving] = useState(false);
   const [editContent, setEditContent] = useState(post.content || "");
   const [editPrivacy, setEditPrivacy] = useState(post.privacy || "public");
-  const [editMedia, setEditMedia] = useState(Array.isArray(post.media) ? [...post.media] : []);
+  const [editMedia, setEditMedia] = useState(
+    Array.isArray(post.media) ? [...post.media] : []
+  );
   const [newMediaFiles, setNewMediaFiles] = useState([]);
   const [mediaRemoveKeys, setMediaRemoveKeys] = useState(new Set());
+  const getCommentId = (c) =>
+    c && (c._id || c.id) ? String(c._id || c.id) : undefined;
+
+  // Debug logs for owner checks
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line no-console
+      console.log('[DBG] owner check', {
+        postId: post?._id,
+        postAuthor: post?.author,
+        currentUserIdStr,
+        isPostOwnerUser,
+      });
+    } catch (_) {}
+  }, [post?._id, post?.author, currentUserIdStr, isPostOwnerUser]);
 
   const handleLike = () => {
     setLiked(!liked);
-    setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+    setLikeCount((prev) => {
+      const next = liked ? prev - 1 : prev + 1;
+      return next < 0 ? 0 : next;
+    });
     onLike?.(post._id, !liked);
   };
 
@@ -110,6 +149,24 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       setShowCommentInput(!showCommentInput);
       if (!showComments) {
         setShowComments(true);
+      }
+      // Lazy load comments when the section is first opened
+      if (!loadingComments && comments.length === 0) {
+        (async () => {
+          try {
+            setLoadingComments(true);
+            const res = await postAPI.getComments(post._id, {
+              page: 1,
+              limit: 50,
+            });
+            const items = res?.data || res;
+            if (Array.isArray(items)) {
+              setComments(items);
+            }
+          } finally {
+            setLoadingComments(false);
+          }
+        })();
       }
     }
   };
@@ -150,7 +207,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       const files = newMediaFiles.map((m) => m.file).filter(Boolean);
       const res = await postAPI.updatePost(post._id, payload, {
         mediaFiles: files,
-        mediaRemove
+        mediaRemove,
       });
       const updated = res?.data || res; // handle either wrapped or direct
       dispatch(
@@ -159,8 +216,8 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
           updates: {
             content: updated?.content ?? editContent,
             privacy: updated?.privacy ?? editPrivacy,
-            media: Array.isArray(updated?.media) ? updated.media : editMedia
-          }
+            media: Array.isArray(updated?.media) ? updated.media : editMedia,
+          },
         })
       );
       setEditOpen(false);
@@ -188,7 +245,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       id: `${Date.now()}_${Math.random()}`,
       file,
       url: URL.createObjectURL(file),
-      type: file.type.startsWith('video/') ? 'video' : 'image'
+      type: file.type.startsWith("video/") ? "video" : "image",
     }));
     setNewMediaFiles((prev) => [...prev, ...items]);
     // reset input value to allow re-uploading same file
@@ -203,17 +260,45 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
     });
   };
 
-  const handleSubmitComment = () => {
+  const handleSubmitComment = async () => {
     if (commentText.trim()) {
-      onComment?.(post._id, commentText);
-      setCommentText("");
-      setCommentCount(commentCount + 1);
+      try {
+        const res = await postAPI.createComment(post._id, {
+          content: commentText,
+        });
+        const created = res?.data || res;
+        if (created) {
+          setComments((prev) => [created, ...prev]);
+        }
+        setCommentText("");
+        setCommentCount((c) => c + 1);
+        onComment?.(post._id, commentText);
+      } catch (_) {}
     }
   };
 
-  const handleReplyComment = (commentId) => {
+  const handleReplyComment = async (commentId) => {
     setReplyingTo(commentId);
     setReplyText("");
+    // Lazy load replies for this comment if not present
+    const found = comments.find((c) => getCommentId(c) === String(commentId));
+    if (found && !Array.isArray(found.replies)) {
+      try {
+        const res = await postAPI.getReplies(String(commentId), {
+          page: 1,
+          limit: 20,
+        });
+        const items = res?.data || res;
+        setComments((prev) =>
+          prev.map((c) =>
+            getCommentId(c) === String(commentId)
+              ? { ...c, replies: Array.isArray(items) ? items : [] }
+              : c
+          )
+        );
+      } catch (_) {}
+    }
+    setExpandedReplies((prev) => new Set(prev).add(String(commentId)));
   };
 
   const handleCancelReply = () => {
@@ -221,12 +306,40 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
     setReplyText("");
   };
 
-  const handleSubmitReply = (commentId) => {
+  const handleSubmitReply = async (commentId) => {
     if (replyText.trim()) {
-      onComment?.(post._id, replyText, commentId);
-      setReplyText("");
-      setReplyingTo(null);
-      setCommentCount(commentCount + 1);
+      try {
+        const res = await postAPI.createComment(post._id, {
+          content: replyText,
+          parentId: String(commentId),
+        });
+        const created = res?.data || res;
+        if (created) {
+          setComments((prev) =>
+            prev.map((c) => {
+              if (getCommentId(c) === String(commentId)) {
+                const nextReplies = [created, ...(c.replies || [])];
+                const nextReplyCount =
+                  (typeof c.replyCount === "number"
+                    ? c.replyCount
+                    : c.replies?.length || 0) + 1;
+                return {
+                  ...c,
+                  replies: nextReplies,
+                  replyCount: nextReplyCount,
+                };
+              }
+              return c;
+            })
+          );
+          // ensure expanded to show new reply
+          setExpandedReplies((prev) => new Set(prev).add(String(commentId)));
+        }
+        setReplyText("");
+        setReplyingTo(null);
+        setCommentCount((c) => c + 1);
+        onComment?.(post._id, replyText, commentId);
+      } catch (_) {}
     }
   };
 
@@ -566,7 +679,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             >
               {commentCount} bình luận
             </Typography>
-            {post.shareCount > 0 && (
+            {(post.sharesCount ?? post.shareCount ?? 0) > 0 && (
               <>
                 <Typography
                   variant="body2"
@@ -588,7 +701,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                     },
                   }}
                 >
-                  {post.shareCount} lượt chia sẻ
+                  {post.sharesCount ?? post.shareCount ?? 0} lượt chia sẻ
                 </Typography>
               </>
             )}
@@ -647,6 +760,8 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                   }}
                 >
                   <Avatar
+                    src={currentUser?.profilePicture}
+                    alt={currentUser?.fullName || "User"}
                     sx={{
                       width: 32,
                       height: 32,
@@ -658,7 +773,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                       },
                     }}
                   >
-                    U
+                    {(currentUser?.fullName || "U").charAt(0)}
                   </Avatar>
                   <CommentInput
                     fullWidth
@@ -729,7 +844,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             )}
 
             {/* Comments List */}
-            {post.comments && post.comments.length > 0 && (
+            {comments && comments.length > 0 && (
               <Box
                 sx={{
                   maxHeight: 300,
@@ -739,10 +854,16 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                   },
                 }}
               >
-                {post.comments.map((comment, index) => (
+                {comments.map((comment, index) => (
                   <Box key={index}>
                     <CommentItem>
                       <Avatar
+                        src={comment.author?.profilePicture}
+                        alt={
+                          comment.author?.fullName ||
+                          comment.author?.name ||
+                          "User"
+                        }
                         sx={{
                           width: 28,
                           height: 28,
@@ -754,7 +875,11 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                           },
                         }}
                       >
-                        {(comment.author?.name || "U").charAt(0)}
+                        {(
+                          comment.author?.fullName ||
+                          comment.author?.name ||
+                          "U"
+                        ).charAt(0)}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
                         <Box
@@ -770,7 +895,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                           }}
                         >
                           <Typography variant="body2" fontWeight="bold">
-                            {comment.author?.name || "Unknown User"}
+                            {comment.author?.fullName ||
+                              comment.author?.name ||
+                              "Unknown User"}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             {formatDistanceToNow(new Date(comment.createdAt), {
@@ -840,7 +967,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                               color: "text.secondary",
                               "&:hover": { color: "primary.main" },
                             }}
-                            onClick={() => handleReplyComment(comment.id)}
+                            onClick={() =>
+                              handleReplyComment(getCommentId(comment))
+                            }
                           >
                             <Reply
                               sx={{
@@ -852,12 +981,28 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                             />
                             <Typography variant="caption">Trả lời</Typography>
                           </Box>
+                          {(String(comment.author?._id || comment.author?.id || "") === currentUserIdStr || isPostOwnerUser) && (
+                            <IconButton
+                              size="small"
+                              color="error"
+                              aria-label="delete comment"
+                              onClick={async () => {
+                                try {
+                                  await postAPI.deleteComment(getCommentId(comment));
+                                  setComments((prev) => prev.filter((c) => getCommentId(c) !== getCommentId(comment)));
+                                  setCommentCount((c) => Math.max(0, c - 1));
+                                } catch (_) {}
+                              }}
+                            >
+                              <DeleteForever fontSize="small" />
+                            </IconButton>
+                          )}
                         </Box>
                       </Box>
                     </CommentItem>
 
                     {/* Reply Input */}
-                    {replyingTo === comment.id && (
+                    {replyingTo === getCommentId(comment) && (
                       <Box sx={{ pl: 4, pr: 2, pb: 2, pt: 1 }}>
                         <Box
                           sx={{ display: "flex", gap: 1, alignItems: "center" }}
@@ -873,7 +1018,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                               multiline
                               maxRows={1}
                               placeholder={`Trả lời ${
-                                comment.author?.name || "Unknown User"
+                                comment.author?.fullName ||
+                                comment.author?.name ||
+                                "Unknown User"
                               }...`}
                               value={replyText}
                               onChange={(e) => setReplyText(e.target.value)}
@@ -898,16 +1045,12 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                                       size="small"
                                       color="primary"
                                       onClick={() =>
-                                        handleSubmitReply(comment.id)
+                                        handleSubmitReply(getCommentId(comment))
                                       }
                                       disabled={!replyText.trim()}
-                                      sx={{
-                                        width: 24,
-                                        height: 24,
-                                        "& .MuiSvgIcon-root": { fontSize: 14 },
-                                      }}
+                                      sx={{ width: 24, height: 24 }}
                                     >
-                                      <Send />
+                                      <Send sx={{ fontSize: 14 }} />
                                     </IconButton>
                                     <IconButton
                                       size="small"
@@ -935,76 +1078,123 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                     )}
 
                     {/* Replies */}
-                    {comment.replies && comment.replies.length > 0 && (
+                    {(comment.replyCount > 0 ||
+                      (comment.replies && comment.replies.length > 0)) && (
                       <Box sx={{ pl: 4 }}>
-                        {comment.replies.map((reply, replyIndex) => (
-                          <CommentItem key={replyIndex} sx={{ py: 0.5 }}>
-                            <Avatar sx={{ width: 24, height: 24, mr: 1 }}>
-                              {reply.author.name.charAt(0)}
-                            </Avatar>
-                            <Box sx={{ flex: 1 }}>
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                  mb: 0.5,
-                                }}
-                              >
-                                <Typography variant="body2" fontWeight="bold">
-                                  {reply.author?.name || 'Unknown User'}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {formatDistanceToNow(
-                                    new Date(reply.createdAt),
-                                    {
-                                      addSuffix: true,
-                                      locale: vi,
-                                    }
-                                  )}
-                                </Typography>
-                              </Box>
-                              <Typography variant="body2" sx={{ mb: 1 }}>
-                                {reply.content}
-                              </Typography>
+                        {/* Toggle show/hide replies */}
+                        {!expandedReplies.has(getCommentId(comment)) ? (
+                          <Button
+                            size="small"
+                            sx={{ textTransform: "none", mb: 1, pl: 0 }}
+                            onClick={() =>
+                              setExpandedReplies((prev) =>
+                                new Set(prev).add(getCommentId(comment))
+                              )
+                            }
+                          >
+                            Xem{" "}
+                            {comment.replyCount || comment.replies?.length || 0}{" "}
+                            trả lời
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            sx={{ textTransform: "none", mb: 1, pl: 0 }}
+                            onClick={() =>
+                              setExpandedReplies((prev) => {
+                                const s = new Set(prev);
+                                s.delete(getCommentId(comment));
+                                return s;
+                              })
+                            }
+                          >
+                            Ẩn trả lời
+                          </Button>
+                        )}
 
-                              {/* Reply Actions */}
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 2,
-                                }}
+                        {expandedReplies.has(getCommentId(comment)) &&
+                          (comment.replies || []).map((reply, replyIndex) => (
+                            <CommentItem key={replyIndex} sx={{ py: 0.5 }}>
+                              <Avatar
+                                src={reply.author?.profilePicture}
+                                alt={
+                                  reply.author?.fullName ||
+                                  reply.author?.name ||
+                                  "User"
+                                }
+                                sx={{ width: 24, height: 24, mr: 1 }}
                               >
+                                {(
+                                  reply.author?.fullName ||
+                                  reply.author?.name ||
+                                  "U"
+                                ).charAt(0)}
+                              </Avatar>
+                              <Box sx={{ flex: 1 }}>
                                 <Box
                                   sx={{
                                     display: "flex",
                                     alignItems: "center",
-                                    gap: 0.5,
-                                    cursor: "pointer",
-                                    color: likedComments.has(reply.id)
-                                      ? "error.main"
-                                      : "text.secondary",
-                                    "&:hover": { color: "error.main" },
+                                    gap: 1,
+                                    mb: 0.5,
                                   }}
-                                  onClick={() => handleLikeComment(reply.id)}
                                 >
-                                  {likedComments.has(reply.id) ? (
-                                    <HeartIcon sx={{ fontSize: 14 }} />
-                                  ) : (
-                                    <HeartBorderIcon sx={{ fontSize: 14 }} />
-                                  )}
-                                  <Typography variant="caption">
-                                    {reply.likeCount || 0}
+                                  <Typography variant="body2" fontWeight="bold">
+                                    {reply.author?.fullName ||
+                                      reply.author?.name ||
+                                      "Unknown User"}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    {formatDistanceToNow(
+                                      new Date(reply.createdAt),
+                                      {
+                                        addSuffix: true,
+                                        locale: vi,
+                                      }
+                                    )}
                                   </Typography>
                                 </Box>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                  {reply.content}
+                                </Typography>
+
+                                {/* Reply Actions */}
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 2,
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.5,
+                                      cursor: "pointer",
+                                      color: likedComments.has(reply.id)
+                                        ? "error.main"
+                                        : "text.secondary",
+                                      "&:hover": { color: "error.main" },
+                                    }}
+                                    onClick={() => handleLikeComment(reply.id)}
+                                  >
+                                    {likedComments.has(reply.id) ? (
+                                      <HeartIcon sx={{ fontSize: 14 }} />
+                                    ) : (
+                                      <HeartBorderIcon sx={{ fontSize: 14 }} />
+                                    )}
+                                    <Typography variant="caption">
+                                      {reply.likeCount || 0}
+                                    </Typography>
+                                  </Box>
+                                </Box>
                               </Box>
-                            </Box>
-                          </CommentItem>
-                        ))}
+                            </CommentItem>
+                          ))}
                       </Box>
                     )}
                   </Box>
@@ -1181,9 +1371,16 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       </Dialog>
 
       {/* Edit Post Dialog */}
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogContent sx={{ p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>Chỉnh sửa bài viết</Typography>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Chỉnh sửa bài viết
+          </Typography>
           <TextField
             fullWidth
             multiline
@@ -1191,38 +1388,63 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
           />
-          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
             <Chip
               label="Công khai"
-              color={editPrivacy === 'public' ? 'primary' : 'default'}
-              onClick={() => setEditPrivacy('public')}
+              color={editPrivacy === "public" ? "primary" : "default"}
+              onClick={() => setEditPrivacy("public")}
               size="small"
             />
             <Chip
               label="Bạn bè"
-              color={editPrivacy === 'friends' ? 'primary' : 'default'}
-              onClick={() => setEditPrivacy('friends')}
+              color={editPrivacy === "friends" ? "primary" : "default"}
+              onClick={() => setEditPrivacy("friends")}
               size="small"
             />
             <Chip
               label="Riêng tư"
-              color={editPrivacy === 'private' ? 'primary' : 'default'}
-              onClick={() => setEditPrivacy('private')}
+              color={editPrivacy === "private" ? "primary" : "default"}
+              onClick={() => setEditPrivacy("private")}
               size="small"
             />
           </Box>
 
           {/* Existing media */}
           {editMedia.length > 0 && (
-            <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+            <Box
+              sx={{
+                mt: 2,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 1,
+              }}
+            >
               {editMedia.map((m) => (
-                <Box key={getMediaKey(m)} sx={{ position: 'relative' }}>
-                  {m.type === 'video' ? (
-                    <video src={m.url} style={{ width: '100%', borderRadius: 8 }} controls />
+                <Box key={getMediaKey(m)} sx={{ position: "relative" }}>
+                  {m.type === "video" ? (
+                    <video
+                      src={m.url}
+                      style={{ width: "100%", borderRadius: 8 }}
+                      controls
+                    />
                   ) : (
-                    <img src={m.url} alt="media" style={{ width: '100%', borderRadius: 8 }} />
+                    <img
+                      src={m.url}
+                      alt="media"
+                      style={{ width: "100%", borderRadius: 8 }}
+                    />
                   )}
-                  <IconButton size="small" onClick={() => handleRemoveExistingMedia(m)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveExistingMedia(m)}
+                    sx={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      bgcolor: "rgba(0,0,0,0.6)",
+                      color: "#fff",
+                    }}
+                  >
                     <Close fontSize="small" />
                   </IconButton>
                 </Box>
@@ -1232,15 +1454,40 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
 
           {/* New media */}
           {newMediaFiles.length > 0 && (
-            <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+            <Box
+              sx={{
+                mt: 2,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 1,
+              }}
+            >
               {newMediaFiles.map((m) => (
-                <Box key={m.id} sx={{ position: 'relative' }}>
-                  {m.type === 'video' ? (
-                    <video src={m.url} style={{ width: '100%', borderRadius: 8 }} controls />
+                <Box key={m.id} sx={{ position: "relative" }}>
+                  {m.type === "video" ? (
+                    <video
+                      src={m.url}
+                      style={{ width: "100%", borderRadius: 8 }}
+                      controls
+                    />
                   ) : (
-                    <img src={m.url} alt="new" style={{ width: '100%', borderRadius: 8 }} />
+                    <img
+                      src={m.url}
+                      alt="new"
+                      style={{ width: "100%", borderRadius: 8 }}
+                    />
                   )}
-                  <IconButton size="small" onClick={() => handleRemoveNewMedia(m.id)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveNewMedia(m.id)}
+                    sx={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      bgcolor: "rgba(0,0,0,0.6)",
+                      color: "#fff",
+                    }}
+                  >
                     <Close fontSize="small" />
                   </IconButton>
                 </Box>
@@ -1250,16 +1497,34 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
 
           {/* Add media */}
           <Box sx={{ mt: 2 }}>
-            <Button variant="outlined" component="label" sx={{ textTransform: 'none' }}>
+            <Button
+              variant="outlined"
+              component="label"
+              sx={{ textTransform: "none" }}
+            >
               Thêm ảnh/video
-              <input type="file" hidden multiple accept="image/*,video/*" onChange={handleAddNewMedia} />
+              <input
+                type="file"
+                hidden
+                multiple
+                accept="image/*,video/*"
+                onChange={handleAddNewMedia}
+              />
             </Button>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditOpen(false)}>Hủy</Button>
-          <Button onClick={handleSaveEdit} disabled={editSaving} variant="contained">
-            {editSaving ? <CircularProgress size={18} color="inherit" /> : 'Lưu'}
+          <Button
+            onClick={handleSaveEdit}
+            disabled={editSaving}
+            variant="contained"
+          >
+            {editSaving ? (
+              <CircularProgress size={18} color="inherit" />
+            ) : (
+              "Lưu"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1306,7 +1571,13 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
           {/* Comment Input */}
           <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-              <Avatar sx={{ width: 40, height: 40, mr: 1 }}>U</Avatar>
+              <Avatar
+                src={currentUser?.profilePicture}
+                alt={currentUser?.fullName || "User"}
+                sx={{ width: 40, height: 40, mr: 1 }}
+              >
+                {(currentUser?.fullName || "U").charAt(0)}
+              </Avatar>
               <CommentInput
                 fullWidth
                 multiline
@@ -1348,12 +1619,24 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
 
           {/* Comments List */}
           <Box sx={{ flex: 1, overflow: "auto" }}>
-            {post.comments && post.comments.length > 0 ? (
-              post.comments.map((comment, index) => (
+            {comments && comments.length > 0 ? (
+              comments.map((comment, index) => (
                 <Box key={index}>
                   <CommentItem>
-                    <Avatar sx={{ width: 32, height: 32, mr: 1 }}>
-                      {(comment.author?.name || 'U').charAt(0)}
+                    <Avatar
+                      src={comment.author?.profilePicture}
+                      alt={
+                        comment.author?.fullName ||
+                        comment.author?.name ||
+                        "User"
+                      }
+                      sx={{ width: 32, height: 32, mr: 1 }}
+                    >
+                      {(
+                        comment.author?.fullName ||
+                        comment.author?.name ||
+                        "U"
+                      ).charAt(0)}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Box
@@ -1365,7 +1648,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                         }}
                       >
                         <Typography variant="body2" fontWeight="bold">
-                          {comment.author?.name || "Unknown User"}
+                          {comment.author?.fullName ||
+                            comment.author?.name ||
+                            "Unknown User"}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {formatDistanceToNow(new Date(comment.createdAt), {
@@ -1419,6 +1704,32 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                           <Reply sx={{ fontSize: 16 }} />
                           <Typography variant="caption">Trả lời</Typography>
                         </Box>
+                        {(String(
+                          comment.author?._id || comment.author?.id || ""
+                        ) === currentUserIdStr ||
+                          isPostOwnerUser) && (
+                          <IconButton
+                            size="small"
+                            color="error"
+                            aria-label="delete comment"
+                            onClick={async () => {
+                              try {
+                                await postAPI.deleteComment(
+                                  getCommentId(comment)
+                                );
+                                setComments((prev) =>
+                                  prev.filter(
+                                    (c) =>
+                                      getCommentId(c) !== getCommentId(comment)
+                                  )
+                                );
+                                setCommentCount((c) => Math.max(0, c - 1));
+                              } catch (_) {}
+                            }}
+                          >
+                            <DeleteForever fontSize="small" />
+                          </IconButton>
+                        )}
                       </Box>
                     </Box>
                   </CommentItem>
@@ -1430,9 +1741,11 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                         sx={{ display: "flex", gap: 1, alignItems: "center" }}
                       >
                         <Avatar
+                          src={currentUser?.profilePicture}
+                          alt={currentUser?.fullName || "User"}
                           sx={{ width: 28, height: 28, mr: 1, flexShrink: 0 }}
                         >
-                          U
+                          {(currentUser?.fullName || "U").charAt(0)}
                         </Avatar>
                         <Box sx={{ flex: 1 }}>
                           <CommentInput
@@ -1440,7 +1753,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                             multiline
                             maxRows={2}
                             placeholder={`Trả lời ${
-                              comment.author?.name || "Unknown User"
+                              comment.author?.fullName ||
+                              comment.author?.name ||
+                              "Unknown User"
                             }...`}
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
@@ -1503,7 +1818,11 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                       {comment.replies.map((reply, replyIndex) => (
                         <CommentItem key={replyIndex} sx={{ py: 0.5 }}>
                           <Avatar sx={{ width: 28, height: 24, mr: 1 }}>
-                            {(reply.author?.name || 'U').charAt(0)}
+                            {(
+                              reply.author?.fullName ||
+                              reply.author?.name ||
+                              "U"
+                            ).charAt(0)}
                           </Avatar>
                           <Box sx={{ flex: 1 }}>
                             <Box
@@ -1515,7 +1834,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                               }}
                             >
                               <Typography variant="body2" fontWeight="bold">
-                                {reply.author?.name || 'Unknown User'}
+                                {reply.author?.fullName ||
+                                  reply.author?.name ||
+                                  "Unknown User"}
                               </Typography>
                               <Typography
                                 variant="caption"

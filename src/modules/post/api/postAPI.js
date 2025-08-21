@@ -186,6 +186,42 @@ const postAPI = {
   },
 
   /**
+   * Lấy danh sách bình luận của một bài viết
+   */
+  getComments: async (postId, params = { page: 1, limit: 50 }) => {
+    try {
+      const response = await apiClient.get(`${API_ENDPOINTS.COMMENT_POST}/${postId}/comments`, { params });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Lấy danh sách replies của một comment
+   */
+  getReplies: async (commentId, params = { page: 1, limit: 20 }) => {
+    try {
+      const response = await apiClient.get(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}/replies`, { params });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Xóa bình luận (chỉ chủ sở hữu)
+   */
+  deleteComment: async (commentId) => {
+    try {
+      const response = await apiClient.delete(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Chia sẻ bài viết
    * @param {string} postId - ID của bài viết
    * @returns {Promise} - Promise chứa kết quả

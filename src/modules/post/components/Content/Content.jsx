@@ -32,19 +32,22 @@ const Content = () => {
   }, [dispatch]);
 
   // Post event handlers
-  const handleLike = (postId, isLiked) => {
-    console.log(`Post ${postId} ${isLiked ? 'liked' : 'unliked'}`);
-    toast.success(isLiked ? 'Đã thích bài viết' : 'Đã bỏ thích bài viết');
+  const handleLike = async (postId, isLiked) => {
+    try {
+      // Gọi API toggle like (server đã bật route)
+      await postAPI.toggleLike(postId);
+      toast.success(isLiked ? 'Đã thích bài viết' : 'Đã bỏ thích bài viết');
+    } catch (e) {
+      // Thông báo lỗi và refetch để đồng bộ nếu cần
+      toast.error('Thao tác thích/bỏ thích thất bại');
+      // Có thể refetch để đảm bảo đồng bộ số liệu
+      // dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
+    }
   };
 
+  // Post component tự gọi API tạo bình luận để cập nhật UI ngay; ở đây chỉ hiển thị thông báo
   const handleComment = (postId, comment, replyToId = null) => {
-    if (replyToId) {
-      console.log(`Reply to comment ${replyToId} on post ${postId}:`, comment);
-      toast.success('Đã trả lời bình luận');
-    } else {
-      console.log(`Comment on post ${postId}:`, comment);
-      toast.success('Đã bình luận bài viết');
-    }
+    toast.success(replyToId ? 'Đã trả lời bình luận' : 'Đã bình luận bài viết');
   };
 
   const handleShare = (postId) => {
