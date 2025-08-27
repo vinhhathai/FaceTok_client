@@ -25,6 +25,7 @@ const ProfilePage = lazy(() => import('@user/pages/ProfilePage/ProfilePage'));
 const ChatPage = lazy(() => import('@message/pages/ChatPage/ChatPage'));
 const FriendPage = lazy(() => import('@friend/pages/FriendPage/FriendPage'));
 const MessageIndexPage = lazy(() => import('@message/pages/MessageIndexPage/MessageIndexPage'));
+const PostDetailPage = lazy(() => import('@post/pages/PostDetailPage/PostDetailPage'));
 
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>
@@ -51,6 +52,10 @@ export const routes = [
   {
     path: '/home',
     element: withSuspense(HomePage),
+  },
+  {
+    path: '/post/:postId',
+    element: withSuspense(PostDetailPage),
   },
   
   // User Routes

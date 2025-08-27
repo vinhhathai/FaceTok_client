@@ -18,7 +18,7 @@ function App() {
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {/* <ToastContainer /> */}
+        <ToastContainer />
         <BrowserRouter>
           <AuthProvider>
             <Routes>

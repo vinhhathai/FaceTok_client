@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { showSuccess } from '@utils/toastMessageUtils';
 import { useDispatch, useSelector } from "react-redux";
 import postAPI from "@post/api/postAPI";
 import { updatePost as updatePostInStore } from "../../redux/slices/postSlice";
@@ -90,6 +91,11 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       ? post.commentsCount
       : post.commentCount) || 0
   );
+  const [shareCount, setShareCount] = useState(
+    typeof post.sharesCount === 'number'
+      ? post.sharesCount
+      : (typeof post.shareCount === 'number' ? post.shareCount : 0)
+  );
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState(
@@ -97,6 +103,11 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   );
   const [loadingComments, setLoadingComments] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState(new Set());
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingText, setEditingText] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDeleting, setConfirmDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
@@ -171,8 +182,19 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
     }
   };
 
-  const handleShare = () => {
-    onShare?.(post._id);
+  const handleShare = async () => {
+    const result = await onShare?.(post._id);
+    if (result && result.action === 'shared') {
+      setShareCount((c) => c + 1);
+    }
+    // Copy link and notify
+    try {
+      const url = `${window.location.origin}/post/${post._id}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+        showSuccess('Đã sao chép liên kết bài viết');
+      }
+    } catch (_) {}
   };
 
   const handleMoreClick = (event) => {
@@ -679,7 +701,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             >
               {commentCount} bình luận
             </Typography>
-            {(post.sharesCount ?? post.shareCount ?? 0) > 0 && (
+            {shareCount > 0 && (
               <>
                 <Typography
                   variant="body2"
@@ -701,7 +723,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                     },
                   }}
                 >
-                  {post.sharesCount ?? post.shareCount ?? 0} lượt chia sẻ
+                  {shareCount} lượt chia sẻ
                 </Typography>
               </>
             )}
@@ -730,7 +752,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             <ShareButton>
               <Share />
             </ShareButton>
-            <Typography variant="body2">Chia sẻ</Typography>
+            <Typography variant="body2">Copy link bài viết</Typography>
           </ActionButton>
         </PostActionsContainer>
 
@@ -906,9 +928,26 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                             })}
                           </Typography>
                         </Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          {comment.content}
-                        </Typography>
+                        {editingCommentId === getCommentId(comment) ? (
+                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1, width: '100%' }}>
+                            <TextField size="small" fullWidth value={editingText} onChange={(e) => setEditingText(e.target.value)} />
+                            <Button size="small" variant="contained" onClick={async () => {
+                              if (!editingText.trim()) return;
+                              try {
+                                const res = await postAPI.updateComment(getCommentId(comment), editingText.trim());
+                                const updated = res?.data || res;
+                                setComments(prev => prev.map(c => getCommentId(c) === getCommentId(comment) ? { ...c, content: updated?.content ?? editingText.trim() } : c));
+                                setEditingCommentId(null);
+                                setEditingText('');
+                              } catch (_) {}
+                            }}>Lưu</Button>
+                            <Button size="small" onClick={() => { setEditingCommentId(null); setEditingText(''); }}>Hủy</Button>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" sx={{ mb: 1 }}>
+                            {comment.content}
+                          </Typography>
+                        )}
 
                         {/* Comment Actions */}
                         <Box
@@ -986,16 +1025,16 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                               size="small"
                               color="error"
                               aria-label="delete comment"
-                              onClick={async () => {
-                                try {
-                                  await postAPI.deleteComment(getCommentId(comment));
-                                  setComments((prev) => prev.filter((c) => getCommentId(c) !== getCommentId(comment)));
-                                  setCommentCount((c) => Math.max(0, c - 1));
-                                } catch (_) {}
+                              onClick={() => {
+                                setDeleteTarget({ type: 'comment', commentId: getCommentId(comment) });
+                                setConfirmDeleteOpen(true);
                               }}
                             >
                               <DeleteForever fontSize="small" />
                             </IconButton>
+                          )}
+                          {(String(comment.author?._id || comment.author?.id || "") === currentUserIdStr) && editingCommentId !== getCommentId(comment) && (
+                            <Button size="small" sx={{ textTransform: 'none' }} onClick={() => { setEditingCommentId(getCommentId(comment)); setEditingText(comment.content || ''); }}>Sửa</Button>
                           )}
                         </Box>
                       </Box>
@@ -1191,6 +1230,14 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                                       {reply.likeCount || 0}
                                     </Typography>
                                   </Box>
+                                  {(String(reply.author?._id || reply.author?.id || "") === currentUserIdStr || isPostOwnerUser) && (
+                                    <IconButton size="small" color="error" aria-label="delete reply" onClick={() => {
+                                      setDeleteTarget({ type: 'reply', commentId: getCommentId(reply), parentId: getCommentId(comment) });
+                                      setConfirmDeleteOpen(true);
+                                    }}>
+                                      <DeleteForever fontSize="small" />
+                                    </IconButton>
+                                  )}
                                 </Box>
                               </Box>
                             </CommentItem>
@@ -1203,6 +1250,44 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             )}
           </CommentSection>
         </Collapse>
+
+        {/* Confirm Delete Comment/Reply */}
+        <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} maxWidth="xs" fullWidth>
+          <DialogContent sx={{ pt: 3 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>Xác nhận xóa</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {deleteTarget?.type === 'reply' ? 'Bạn có chắc muốn xóa trả lời này?' : 'Bạn có chắc muốn xóa bình luận này?'} Hành động này không thể hoàn tác.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmDeleteOpen(false)}>Hủy</Button>
+            <Button color="error" variant="contained" disabled={confirmDeleting} onClick={async () => {
+              if (!deleteTarget) return;
+              try {
+                setConfirmDeleting(true);
+                await postAPI.deleteComment(deleteTarget.commentId);
+                if (deleteTarget.type === 'comment') {
+                  setComments(prev => prev.filter(c => getCommentId(c) !== deleteTarget.commentId));
+                  setCommentCount(c => Math.max(0, c - 1));
+                } else {
+                  setComments(prev => prev.map(c => {
+                    if (getCommentId(c) !== deleteTarget.parentId) return c;
+                    const nextReplies = (c.replies || []).filter(r => getCommentId(r) !== deleteTarget.commentId);
+                    return { ...c, replies: nextReplies, replyCount: Math.max(0, (c.replyCount || nextReplies.length)) };
+                  }));
+                  setCommentCount(c => Math.max(0, c - 1));
+                }
+                setConfirmDeleteOpen(false);
+                setDeleteTarget(null);
+              } catch (_) {
+              } finally {
+                setConfirmDeleting(false);
+              }
+            }}>
+              {confirmDeleting ? <CircularProgress size={18} color="inherit" /> : 'Xóa'}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* More Options Menu */}
         <Menu

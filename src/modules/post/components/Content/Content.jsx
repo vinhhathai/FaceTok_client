@@ -50,9 +50,18 @@ const Content = () => {
     toast.success(replyToId ? 'Đã trả lời bình luận' : 'Đã bình luận bài viết');
   };
 
-  const handleShare = (postId) => {
-    console.log(`Share post ${postId}`);
-    toast.success('Đã chia sẻ bài viết');
+  const handleShare = async (postId) => {
+    try {
+      const res = await postAPI.toggleShare(postId);
+      const data = res?.data || res; // expect { action: 'shared' | 'exists' }
+      if (data?.action === 'shared') {
+        toast.success('Đã chia sẻ bài viết');
+      }
+      return data;
+    } catch (e) {
+      toast.error('Chia sẻ thất bại');
+      return null;
+    }
   };
 
   const handleRequestDelete = (postId) => {

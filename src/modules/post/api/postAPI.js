@@ -222,6 +222,18 @@ const postAPI = {
   },
 
   /**
+   * Cập nhật nội dung bình luận (chỉ chủ comment)
+   */
+  updateComment: async (commentId, content) => {
+    try {
+      const response = await apiClient.put(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}`, { content });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Chia sẻ bài viết
    * @param {string} postId - ID của bài viết
    * @returns {Promise} - Promise chứa kết quả
