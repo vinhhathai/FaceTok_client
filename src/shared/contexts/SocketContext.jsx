@@ -5,6 +5,7 @@ import { addReceivedMessage, updateConversationLastMessage } from '@message/redu
 import { useDispatch } from 'react-redux';
 import { store } from '@core/config/store';
 import { jwtDecode } from 'jwt-decode';
+import { addNotification } from '@notification/redux';
 
 const SOCKET_URL = 'http://localhost:3000/message';
 const TOKEN_COOKIE_NAME = 'auth_token';
@@ -192,6 +193,21 @@ export const SocketProvider = ({ children }) => {
     // Lắng nghe lỗi từ socket
     socket.on('message_error', (error) => {
       console.error('Socket message error:', error);
+    });
+    
+    // Lắng nghe notification realtime
+    socket.on('notification_received', (data) => {
+      if (!data) {
+        console.error('Received empty notification_received event');
+        return;
+      }
+      // Dispatch vào Redux store
+      dispatch(addNotification(data));
+      // Phát custom event cho toàn app nếu cần
+      const notificationEvent = new CustomEvent('FACETOK_NOTIFICATION_RECEIVED', {
+        detail: data
+      });
+      window.dispatchEvent(notificationEvent);
     });
     
     // Lưu trữ socket reference để có thể sử dụng sau này

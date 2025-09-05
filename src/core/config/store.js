@@ -4,6 +4,7 @@ import postReducer from "@post/redux/slices/postSlice";
 import postDetailReducer from "@post/redux/slices/postDetailSlice";
 import friendReducer from "@friend/redux";
 import messageReducer from "@message/redux";
+import notificationReducer from "@notification/redux";
 import { reducers as userReducers } from "@user/redux";
 
 export const store = configureStore({
@@ -13,6 +14,7 @@ export const store = configureStore({
     postDetail: postDetailReducer,
     friend: friendReducer,
     ...messageReducer,
+    notification: notificationReducer,
     ...userReducers,
   },
   middleware: (getDefaultMiddleware) =>
