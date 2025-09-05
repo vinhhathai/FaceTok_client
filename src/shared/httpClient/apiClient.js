@@ -7,7 +7,7 @@ const TOKEN_COOKIE_NAME = 'auth_token';
 
 // Tạo instance của axios với cấu hình mặc định
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/',
+  baseURL: process.env.REACT_APP_API_URL,
   timeout: 10000, // 10 giây timeout
 });
 
