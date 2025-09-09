@@ -36,7 +36,7 @@ const Content = () => {
     try {
       // Gọi API toggle like (server đã bật route)
       await postAPI.toggleLike(postId);
-      toast.success(isLiked ? 'Đã thích bài viết' : 'Đã bỏ thích bài viết');
+      // Không hiển thị toast cho like/unlike để tránh spam
     } catch (e) {
       // Thông báo lỗi và refetch để đồng bộ nếu cần
       toast.error('Thao tác thích/bỏ thích thất bại');

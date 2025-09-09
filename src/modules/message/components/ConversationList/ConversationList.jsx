@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import ConversationItem from "../ConversationItem/ConversationItem";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchConversations } from "../../redux/slices/conversationSlice";
+import { fetchConversations, removeConversation as removeConversationAction } from "../../redux/slices/conversationSlice";
 import { deleteConversation } from "../../api/messageAPI";
 import {
   StatusContainer,
@@ -31,35 +31,14 @@ const ConversationList = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  // Local state để quản lý conversation list thay vì Redux
-  const [localConversations, setLocalConversations] = useState([]);
-
-  // Sync Redux state với local state
-  useEffect(() => {
-    setLocalConversations(conversations);
-  }, [conversations]);
 
   // Fetch conversations on component mount
   useEffect(() => {
     dispatch(fetchConversations());
   }, [dispatch]);
   
-  // Listen for new messages to refresh conversation list
-  useEffect(() => {
-    const handleNewMessage = () => {
-      // Refresh conversation list when new message is received
-      dispatch(fetchConversations());
-    };
-    
-    // Listen for message received event
-    window.addEventListener('facetok_message_received', handleNewMessage);
-    window.addEventListener('MESSAGE_SENT_SUCCESS', handleNewMessage);
-    
-    return () => {
-      window.removeEventListener('facetok_message_received', handleNewMessage);
-      window.removeEventListener('MESSAGE_SENT_SUCCESS', handleNewMessage);
-    };
-  }, [dispatch]);
+  // ConversationList không cần listen events vì ChatPage đã handle
+  // Chỉ dùng local state để hiển thị
 
   // Handle delete conversation
   const handleDeleteConversation = (conversation) => {
@@ -75,10 +54,8 @@ const ConversationList = ({
         // Gọi API delete
         await deleteConversation(conversationToDelete._id);
         
-        // Xóa khỏi local state thay vì Redux
-        setLocalConversations(prev => 
-          prev.filter(conv => conv._id !== conversationToDelete._id)
-        );
+        // Xóa khỏi Redux state
+        dispatch(removeConversationAction({ roomId: conversationToDelete._id }));
         
         // Show success message
         toast.success(`Đã xóa cuộc trò chuyện với ${conversationToDelete.participant?.fullName || 'người dùng'}`);
@@ -123,7 +100,7 @@ const ConversationList = ({
     );
   }
 
-  if (localConversations.length === 0) {
+  if (conversations.length === 0) {
     return (
       <StatusContainer>
         <Typography color="text.secondary">
@@ -136,7 +113,7 @@ const ConversationList = ({
   return (
     <>
       <ConversationsListWrapper disablePadding>
-        {localConversations.map((conversation) => (
+        {conversations.map((conversation) => (
           <ConversationItem
             key={conversation._id}
             conversation={conversation}

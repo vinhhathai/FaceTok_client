@@ -18,7 +18,7 @@ const normalizeParticipant = (participant) => {
       participant.fullname ||
       participant.name ||
       "Unknown User",
-    avatar: participant.avatar || participant.avatarUrl || null,
+    avatar: participant.profilePicture || participant.avatar || participant.avatarUrl || null,
     online: participant.online || false,
   };
 
@@ -93,7 +93,7 @@ export const adaptRoomToConversation = (room, currentUserId) => {
     participant: participant,
     members: room.members || [], // Thêm members vào conversation object
     lastMessage: room.lastMessage || null,
-    unreadCount: room.unreadCount || 0,
+    unreadCount: typeof room.unreadCount === 'number' ? room.unreadCount : 0,
     updatedAt: room.updatedAt || new Date().toISOString(),
     createdAt: room.createdAt || room.updatedAt || new Date().toISOString(),
     isGroup: isGroup,

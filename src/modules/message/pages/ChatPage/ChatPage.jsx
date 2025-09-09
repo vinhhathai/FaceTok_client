@@ -10,7 +10,7 @@ import ConversationList from '@message/components/ConversationList/ConversationL
 import ChatBox from '@message/components/ChatBox/ChatBox';
 import MessageLayout from '@message/components/Layout/MessageLayout';
 import useMessageSocket from '@message/hooks/useMessageSocket';
-import { fetchConversations } from '@message/redux/slices/conversationSlice';
+import { fetchConversations, markConversationAsRead } from '@message/redux/slices/conversationSlice';
 import { getOrCreateRoom } from '@message/api/messageAPI';
 import { toast } from 'react-toastify';
 import {
@@ -84,17 +84,15 @@ const ChatPage = () => {
   // Listen for new messages to refresh conversation list
   useEffect(() => {
     const handleNewMessage = () => {
-      // Refresh conversation list when new message is received
+      // Chỉ refresh khi nhận tin nhắn từ người khác, không refresh khi gửi
       dispatch(fetchConversations());
     };
     
-    // Listen for message received event
+    // Chỉ listen for message received event, bỏ MESSAGE_SENT_SUCCESS
     window.addEventListener('facetok_message_received', handleNewMessage);
-    window.addEventListener('MESSAGE_SENT_SUCCESS', handleNewMessage);
     
     return () => {
       window.removeEventListener('facetok_message_received', handleNewMessage);
-      window.removeEventListener('MESSAGE_SENT_SUCCESS', handleNewMessage);
     };
   }, [dispatch]);
   
@@ -190,6 +188,11 @@ const ChatPage = () => {
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
+    // Mark conversation as read khi click
+    if (conversation.unreadCount > 0) {
+      dispatch(markConversationAsRead({ conversationId: conversation._id }));
+    }
+    
     // Ẩn roomId khỏi URL, truyền qua state
     navigate('/messages', { state: { roomId: conversation._id } });
 
@@ -290,4 +293,4 @@ const ChatPage = () => {
   );
 };
 
-export default ChatPage; 
+export default ChatPage;

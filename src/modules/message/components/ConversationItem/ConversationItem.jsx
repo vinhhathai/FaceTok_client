@@ -23,6 +23,7 @@ import {
 } from './ConversationItem.styles';
 
 const ConversationItem = ({ conversation, isActive, onClick, onDelete }) => {
+  
   // Format time for display
   const formatTime = (timestamp) => {
     if (!timestamp) return '';

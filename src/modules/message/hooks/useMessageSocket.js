@@ -10,6 +10,7 @@ import {
     removeMemberFromConversation,
 } from "@message/redux/slices/conversationSlice";
 import { apiClient } from "@httpClient";
+import { store } from "@core/config/store";
 // UI toasts handled at component level
 
 /**
@@ -201,6 +202,31 @@ const useMessageSocket = (currentConversation) => {
       }
     };
   }, [currentConversation, connected, joinRoom, leaveRoom]);
+
+  // Join tất cả conversations để nhận realtime updates
+  useEffect(() => {
+    if (!connected) return;
+
+    // Lấy danh sách conversations từ Redux store
+    const state = store.getState();
+    const conversations = state.conversations?.conversations || [];
+    
+    // Join tất cả conversations
+    conversations.forEach(conversation => {
+      if (conversation._id) {
+        joinRoom({ roomId: conversation._id });
+      }
+    });
+
+    // Cleanup: leave tất cả rooms khi component unmount
+    return () => {
+      conversations.forEach(conversation => {
+        if (conversation._id) {
+          leaveRoom({ roomId: conversation._id });
+        }
+      });
+    };
+  }, [connected, joinRoom, leaveRoom]);
 
   // REST commands + socket broadcast
   const renameGroup = async (roomId, name) => {

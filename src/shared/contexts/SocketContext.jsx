@@ -48,7 +48,6 @@ export const SocketProvider = ({ children }) => {
     
     // Socket connection events
     socket.on('connect', () => {
-    // debug removed
       setConnected(true);
       
       // Xác thực bằng token
@@ -83,8 +82,6 @@ export const SocketProvider = ({ children }) => {
         console.error('Received empty message_received event');
         return;
       }
-
-      // debug removed
       
       // Chuẩn hóa dữ liệu tin nhắn
       let messageData = data;
@@ -123,7 +120,6 @@ export const SocketProvider = ({ children }) => {
         );
         
         if (optimisticMessage) {
-          // debug removed
           // Thêm ID của tin nhắn optimistic vào tin nhắn thật để xử lý thay thế
           messageData.replaceOptimisticId = optimisticMessage._id;
         }
@@ -133,23 +129,17 @@ export const SocketProvider = ({ children }) => {
       dispatch(addReceivedMessage(messageData));
       
       // Cập nhật conversation trong danh sách
+      const conversationId = messageData.roomId?.toString?.() || messageData.roomId;
       dispatch(updateConversationLastMessage({
-        conversationId: messageData.roomId,
+        conversationId,
         message: messageData
       }));
-      
-      // Import fetchConversations để refresh conversation list
-      import('../../modules/message/redux/slices/conversationSlice').then(({ fetchConversations }) => {
-        dispatch(fetchConversations());
-      });
       
       // Phát sự kiện tin nhắn mới cho toàn bộ ứng dụng
       const messageEvent = new CustomEvent(MESSAGE_RECEIVED_EVENT, { 
         detail: messageData 
       });
       window.dispatchEvent(messageEvent);
-      
-      
     });
     
     // Lắng nghe xác nhận tin nhắn đã gửi
@@ -167,26 +157,14 @@ export const SocketProvider = ({ children }) => {
           dispatch(addReceivedMessage(messageData));
           
           // Cập nhật conversation trong danh sách
+          const conversationId = (data.room?._id || data.message.roomId)?.toString?.() || (data.room?._id || data.message.roomId);
           dispatch(updateConversationLastMessage({
-            conversationId: data.room?._id || data.message.roomId,
+            conversationId,
             message: messageData
           }));
-          
-          // Import fetchConversations để refresh conversation list
-          import('../../modules/message/redux/slices/conversationSlice').then(({ fetchConversations }) => {
-            dispatch(fetchConversations());
-          });
-          
-          // Phát sự kiện tin nhắn mới gửi thành công
-          const messageEvent = new CustomEvent('MESSAGE_SENT_SUCCESS', {
-            detail: messageData
-          });
-          window.dispatchEvent(messageEvent);
         } catch (error) {
           console.error('Error processing message_sent event:', error);
         }
-      } else {
-        // debug removed
       }
     });
 

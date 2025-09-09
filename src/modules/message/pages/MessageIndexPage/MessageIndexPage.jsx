@@ -20,7 +20,7 @@ import {
   WelcomeContainer
 } from './MessageIndexPage.styles';
 import { FabContainer, CreateGroupFab, MobileFabWrapper } from './MessageIndexPage.styles';
-import { fetchConversations, markGroupDissolved } from '@message/redux/slices/conversationSlice';
+import { fetchConversations, markGroupDissolved, markConversationAsRead } from '@message/redux/slices/conversationSlice';
 import { getRoomById } from '@message/api/messageAPI';
 
 const MessageIndexPage = () => {
@@ -62,6 +62,11 @@ const MessageIndexPage = () => {
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
+    // Mark conversation as read khi click
+    if (conversation.unreadCount > 0) {
+      dispatch(markConversationAsRead({ conversationId: conversation._id }));
+    }
+    
     // Hiển thị ngay để UI phản hồi nhanh
     setSelectedConversation(conversation);
 
@@ -243,4 +248,4 @@ const MessageIndexPage = () => {
   );
 };
 
-export default MessageIndexPage; 
+export default MessageIndexPage;

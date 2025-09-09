@@ -61,22 +61,37 @@ const conversationSlice = createSlice({
     updateConversationLastMessage(state, action) {
       // Cập nhật cuộc trò chuyện sau khi tin nhắn được gửi hoặc nhận
       const { conversationId, message } = action.payload;
-      const existingConversation = state.conversations.find(
-        (conv) => conv._id === conversationId
+      
+      const conversationIndex = state.conversations.findIndex(
+        (conv) => conv._id === conversationId || conv._id === conversationId?.toString?.() || conv._id?.toString?.() === conversationId
       );
 
-      if (existingConversation) {
-        existingConversation.lastMessage = message;
-        existingConversation.updatedAt = new Date().toISOString();
+      if (conversationIndex !== -1) {
+        const existingConversation = state.conversations[conversationIndex];
+        
+        // Tăng unreadCount nếu tin nhắn không phải từ user hiện tại
+        const currentUserId = localStorage.getItem('currentUserId');
+        const isFromCurrentUser = message.senderId === currentUserId || 
+                                 (message.sender && message.sender._id === currentUserId);
+        
+        const currentUnreadCount = typeof existingConversation.unreadCount === 'number' 
+          ? existingConversation.unreadCount 
+          : 0;
+        const newUnreadCount = !isFromCurrentUser 
+          ? currentUnreadCount + 1 
+          : currentUnreadCount;
 
-        // Sắp xếp lại cuộc trò chuyện theo thời gian cập nhật
-        state.conversations.sort(
-          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-        );
-      } else {
-        // debug removed
-        // Nếu conversation không tồn tại, có thể đã bị xóa trước đó
-        // Sẽ được refresh từ API khi có tin nhắn mới
+        // Cập nhật conversation tại chỗ với Immer
+        state.conversations[conversationIndex].lastMessage = message;
+        state.conversations[conversationIndex].updatedAt = new Date().toISOString();
+        state.conversations[conversationIndex].unreadCount = newUnreadCount;
+
+        // Di chuyển conversation lên đầu danh sách nếu cần
+        if (conversationIndex > 0) {
+          const updatedConversation = state.conversations[conversationIndex];
+          state.conversations.splice(conversationIndex, 1);
+          state.conversations.unshift(updatedConversation);
+        }
       }
     },
     markConversationAsRead(state, action) {

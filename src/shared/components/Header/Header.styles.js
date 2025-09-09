@@ -165,8 +165,13 @@ export const avatarStyles = {
 // Badge style
 export const badgeStyle = isMobile => ({
   '& .MuiBadge-badge': { 
-    fontSize: isMobile ? 8 : 11, 
-    padding: isMobile ? '0 3px' : undefined 
+    fontSize: isMobile ? 10 : 12, 
+    padding: isMobile ? '0 4px' : '0 6px',
+    minWidth: isMobile ? 16 : 20,
+    height: isMobile ? 16 : 20,
+    borderRadius: isMobile ? 8 : 10,
+    fontWeight: 600,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
   }
 });
 

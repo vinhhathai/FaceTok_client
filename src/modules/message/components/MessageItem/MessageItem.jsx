@@ -78,7 +78,32 @@ const MessageItem = ({ message, isOwn }) => {
 
   // Get sender information from the message
   const getSender = () => {
-    if (message.sender) return message.sender;
+    console.log('🔍 MessageItem - message data:', {
+      messageId: message._id,
+      sender: message.sender,
+      senderId: message.senderId,
+      hasSender: !!message.sender,
+      hasSenderId: !!message.senderId,
+      senderProfilePicture: message.sender?.profilePicture,
+      senderAvatar: message.sender?.avatar,
+      senderIdProfilePicture: message.senderId?.profilePicture,
+      senderIdAvatar: message.senderId?.avatar
+    });
+    
+    // Ưu tiên senderId (từ API populate) trước sender (từ socket)
+    if (message.senderId && typeof message.senderId === 'object') {
+      return {
+        fullName: message.senderId.fullName || "User",
+        avatar: message.senderId.profilePicture || message.senderId.avatar || null
+      };
+    }
+    
+    if (message.sender) {
+      return {
+        fullName: message.sender.fullName || "User",
+        avatar: message.sender.profilePicture || message.sender.avatar || null
+      };
+    }
     return { fullName: "User", avatar: null };
   };
 

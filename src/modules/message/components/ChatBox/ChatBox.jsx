@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress, Snackbar, Alert, Chip } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -42,17 +42,21 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   // State cho sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
+  // Memoize conversationId để tránh re-render không cần thiết
+  const conversationId = useMemo(() => {
+    return (conversation && conversation._id) || (currentConversation && currentConversation._id);
+  }, [conversation?._id, currentConversation?._id]);
+  
   // Lấy conversation mới nhất từ Redux để header cập nhật ngay khi tên nhóm đổi
-  const conversationId = (conversation && conversation._id) || (currentConversation && currentConversation._id);
   const storeConversation = useSelector(state => 
     state.conversations?.conversations?.find(c => c._id === conversationId)
   );
   const activeConversation = storeConversation || conversation || currentConversation;
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
   useEffect(() => {
-    if (activeConversation?._id) {
+    if (conversationId) {
       setLoading(true);
-      dispatch(fetchMessages(activeConversation._id))
+      dispatch(fetchMessages(conversationId))
         .unwrap()
         .catch(error => {
           console.error('Failed to fetch messages:', error);
@@ -60,7 +64,7 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
         })
         .finally(() => setLoading(false));
     }
-  }, [dispatch, activeConversation]);
+  }, [dispatch, conversationId]);
   
   // Xử lý gửi tin nhắn mới với Optimistic UI
   const handleSendMessage = useCallback(async (content) => {
