@@ -9,6 +9,9 @@ const TOKEN_COOKIE_NAME = 'auth_token';
 const apiClient = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   timeout: 10000, // 10 giây timeout
+  headers: {
+    'ngrok-skip-browser-warning': 'true'
+  }
 });
 
 
@@ -51,4 +54,4 @@ apiClient.interceptors.response.use(
   }
 );
 
-export default apiClient; 
+export default apiClient;
