@@ -26,6 +26,7 @@ const ChatPage = lazy(() => import('@message/pages/ChatPage/ChatPage'));
 const FriendPage = lazy(() => import('@friend/pages/FriendPage/FriendPage'));
 const MessageIndexPage = lazy(() => import('@message/pages/MessageIndexPage/MessageIndexPage'));
 const PostDetailPage = lazy(() => import('@post/pages/PostDetailPage/PostDetailPage'));
+const AdministratorPage = lazy(() => import('../../modules/administrator/pages/AdministratorPage/AdministratorPage'));
 
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>
@@ -84,6 +85,12 @@ export const routes = [
     element: withSuspense(ChatPage),
   },
   
+  // Administrator Routes
+  {
+    path: '/administrator/*',
+    element: withSuspense(AdministratorPage),
+  },
+  
   // Default redirect
   {
     path: '/',
@@ -95,4 +102,4 @@ export const routes = [
     path: '*',
     element: <Navigate to="/login" replace />,
   },
-]; 
+];

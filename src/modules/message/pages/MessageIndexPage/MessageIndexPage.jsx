@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import { Group as GroupIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import useMessageSocket from '@message/hooks/useMessageSocket';
 import MessageLayout from '@message/components/Layout/MessageLayout';
 import ConversationList from '@message/components/ConversationList/ConversationList';
@@ -27,25 +28,52 @@ const MessageIndexPage = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const location = useLocation();
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [mobileView, setMobileView] = useState('list'); // 'list' or 'chat'
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const { loading, conversations } = useSelector(state => state.conversations);
   
+  // Get friendId from navigation state
+  const friendId = location.state?.friendId;
+  const friendInfo = location.state?.friendInfo;
+  
   // Initialize WebSocket connection
   useMessageSocket(selectedConversation);
   
+  // Handle friendId from navigation state - auto-select conversation with friend
+  useEffect(() => {
+    if (friendId && !loading && conversations && conversations.length > 0) {
+      // Find existing conversation with this friend
+      const existingConversation = conversations.find(conv => {
+        // Check if this is a direct message conversation with the friend
+        return conv.participants && conv.participants.some(participant => 
+          participant._id === friendId || participant.id === friendId
+        ) && !conv.groupId; // Ensure it's not a group conversation
+      });
+      
+      if (existingConversation) {
+        // Select the existing conversation
+        handleSelectConversation(existingConversation);
+      } else {
+        // TODO: Create new conversation with friend
+        // This would require an API call to create a new conversation
+        console.log('Need to create new conversation with friend:', friendId, friendInfo);
+      }
+    }
+  }, [friendId, loading, conversations]);
+
   // Auto-select first conversation for desktop
   useEffect(() => {
     // Auto-select first conversation for desktop only
-    if (!loading && conversations && conversations.length > 0 && !selectedConversation && !isMobile) {
+    if (!loading && conversations && conversations.length > 0 && !selectedConversation && !isMobile && !friendId) {
       const firstConversation = conversations[0];
 
       setTimeout(() => {
         setSelectedConversation(firstConversation);
       }, 500);
     }
-  }, [loading, conversations, selectedConversation, isMobile]);
+  }, [loading, conversations, selectedConversation, isMobile, friendId]);
 
   // Reset view when screen size changes
   useEffect(() => {

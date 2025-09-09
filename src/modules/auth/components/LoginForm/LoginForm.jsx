@@ -86,7 +86,13 @@ const LoginForm = () => {
         // Success: Show message and redirect
         showSuccess("Đăng nhập thành công!");
 
-        navigate("/home", { replace: true });
+        // Check user role and redirect accordingly
+        const userRole = resultAction.payload.data.user.role;
+        if (userRole === 'admin') {
+          navigate("/administrator", { replace: true });
+        } else {
+          navigate("/home", { replace: true });
+        }
       } else if (login.rejected.match(resultAction)) {
         console.log('Login rejected:', resultAction.payload);
         const errorMessage = formatErrorMessage(resultAction.payload)

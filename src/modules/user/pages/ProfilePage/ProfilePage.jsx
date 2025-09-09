@@ -56,7 +56,9 @@ const ProfilePage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
   const location = useLocation();
-  const userId = location.state?.userId; // Ưu tiên lấy từ URL, fallback lấy từ state
+  const { userId: urlUserId } = useParams();
+  // Ưu tiên lấy từ state (bảo mật hơn), fallback lấy từ URL params để tương thích ngược
+  const userId = location.state?.userId || urlUserId;
   const [tabValue, setTabValue] = useState(0);
   
   // Local states thay vì Redux loading states
