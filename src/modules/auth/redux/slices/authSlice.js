@@ -3,7 +3,7 @@ import * as authAPI from '@auth/api/authAPI';
 import { setCookie, getCookie, removeCookie } from '@utils/cookieUtils';
 
 // Cookie configuration
-const TOKEN_COOKIE_NAME = 'auth_token';
+const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
 const TOKEN_COOKIE_EXPIRY = 7; // 7 days
 
 /**
@@ -194,4 +194,4 @@ const authSlice = createSlice({
 export const { logout } = authSlice.actions;
 
 // Export reducer
-export default authSlice.reducer; 
+export default authSlice.reducer;

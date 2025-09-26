@@ -5,7 +5,7 @@ import { getCookie } from './cookieUtils';
  * @returns {string|null} The authentication token or null if not found
  */
 export const getToken = () => {
-  const TOKEN_COOKIE_NAME = 'auth_token';
+  const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
   return getCookie(TOKEN_COOKIE_NAME);
 };
 

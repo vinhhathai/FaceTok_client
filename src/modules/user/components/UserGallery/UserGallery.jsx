@@ -5,9 +5,21 @@ import {
   CircularProgress, 
   ImageListItem, 
   ImageListItemBar, 
-  IconButton 
+  IconButton,
+  Box,
+  Chip,
+  Button
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ImageIcon from '@mui/icons-material/Image';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+
+// API
+import userApi from '../../api/userApi';
+
+// Components
+import MediaViewer from '../MediaViewer';
 
 // Styles
 import { 
@@ -15,70 +27,135 @@ import {
   EmptyContainer, 
   GalleryContainer, 
   StyledImageList,
-  ImageItemContainer 
+  ImageItemContainer,
+  FilterContainer,
+  LoadMoreContainer,
+  VideoOverlay
 } from './UserGallery.styles';
-
-// Default images for gallery
-const DEFAULT_GALLERY_IMAGES = [
-  '/assets/images/gallery_1.jpg',
-  '/assets/images/gallery_2.jpg',
-  '/assets/images/gallery_3.jpg',
-  '/assets/images/gallery_4.jpg',
-];
 
 const UserGallery = ({ userId }) => {
   const [loading, setLoading] = useState(true);
-  const [images, setImages] = useState([]);
+  const [media, setMedia] = useState([]);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState('all'); // 'all', 'image', 'video'
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   
-  useEffect(() => {
-    // Giả lập việc tải dữ liệu
-    const timer = setTimeout(() => {
-      // Dữ liệu mẫu
-      setImages([
-        {
-          id: '1',
-          img: DEFAULT_GALLERY_IMAGES[0] || '/assets/images/avatar_default.jpg',
-          title: 'Hình ảnh 1',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          img: DEFAULT_GALLERY_IMAGES[1] || '/assets/images/avatar_default.jpg',
-          title: 'Hình ảnh 2',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: '3',
-          img: DEFAULT_GALLERY_IMAGES[2] || '/assets/images/avatar_default.jpg',
-          title: 'Hình ảnh 3',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-        },
-        {
-          id: '4',
-          img: DEFAULT_GALLERY_IMAGES[3] || '/assets/images/avatar_default.jpg',
-          title: 'Hình ảnh 4',
-          createdAt: new Date(Date.now() - 259200000).toISOString(),
-        },
-      ]);
+  // MediaViewer state
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  
+  const fetchMedia = async (pageNum = 1, filterType = 'all', reset = false) => {
+    try {
+      if (pageNum === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      setError(null);
+
+      const params = {
+        page: pageNum,
+        limit: 20,
+        ...(filterType !== 'all' && { type: filterType })
+      };
+
+      const response = await userApi.getUserMedia(userId, params);
+      
+      if (response.success) {
+        const newMedia = response.data.media || [];
+        const pagination = response.data.pagination || {};
+        
+        if (reset || pageNum === 1) {
+          setMedia(newMedia);
+        } else {
+          setMedia(prev => [...prev, ...newMedia]);
+        }
+        
+        setHasMore(pageNum < pagination.pages);
+        setPage(pageNum);
+      } else {
+        throw new Error(response.message || 'Failed to fetch media');
+      }
+    } catch (err) {
+      console.error('Error fetching media:', err);
+      setError('Không thể tải media files. Vui lòng thử lại.');
+      if (pageNum === 1) {
+        setMedia([]);
+      }
+    } finally {
       setLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, [userId]);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      fetchMedia(1, filter, true);
+    }
+  }, [userId, filter]);
+
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+    setPage(1);
+    setHasMore(true);
+  };
+
+  const handleLoadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchMedia(page + 1, filter, false);
+    }
+  };
+
+  // MediaViewer handlers
+  const handleMediaClick = (index) => {
+    setCurrentMediaIndex(index);
+    setViewerOpen(true);
+  };
+
+  const handleViewerClose = () => {
+    setViewerOpen(false);
+  };
+
+  const handleIndexChange = (newIndex) => {
+    setCurrentMediaIndex(newIndex);
+  };
   
   if (loading) {
     return (
       <LoadingContainer>
         <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Đang tải media files...</Typography>
       </LoadingContainer>
     );
   }
+
+  if (error) {
+    return (
+      <EmptyContainer>
+        <Typography variant="body1" color="error">
+          {error}
+        </Typography>
+        <Button 
+          variant="outlined" 
+          onClick={() => fetchMedia(1, filter, true)}
+          sx={{ mt: 2 }}
+        >
+          Thử lại
+        </Button>
+      </EmptyContainer>
+    );
+  }
   
-  if (images.length === 0) {
+  if (media.length === 0) {
     return (
       <EmptyContainer>
         <Typography variant="body1" color="text.secondary">
-          Người dùng chưa có hình ảnh nào.
+          {filter === 'all' 
+            ? 'Người dùng chưa có media files nào.' 
+            : `Người dùng chưa có ${filter === 'image' ? 'hình ảnh' : 'video'} nào.`
+          }
         </Typography>
       </EmptyContainer>
     );
@@ -86,23 +163,65 @@ const UserGallery = ({ userId }) => {
   
   return (
     <GalleryContainer>
-      <StyledImageList cols={4} gap={12}>
-        {images.map((item) => (
+      {/* Filter Chips */}
+      <FilterContainer>
+        <Chip
+          icon={<ImageIcon />}
+          label="Tất cả"
+          onClick={() => handleFilterChange('all')}
+          color={filter === 'all' ? 'primary' : 'default'}
+          variant={filter === 'all' ? 'filled' : 'outlined'}
+          size="small"
+        />
+        <Chip
+          icon={<ImageIcon />}
+          label="Hình ảnh"
+          onClick={() => handleFilterChange('image')}
+          color={filter === 'image' ? 'primary' : 'default'}
+          variant={filter === 'image' ? 'filled' : 'outlined'}
+          size="small"
+        />
+        <Chip
+          icon={<VideoLibraryIcon />}
+          label="Video"
+          onClick={() => handleFilterChange('video')}
+          color={filter === 'video' ? 'primary' : 'default'}
+          variant={filter === 'video' ? 'filled' : 'outlined'}
+          size="small"
+        />
+      </FilterContainer>
+
+      <StyledImageList>
+        {media.map((item, index) => (
           <ImageListItem key={item.id}>
-            <ImageItemContainer>
-              <img
-                src={item.img}
-                alt={item.title}
-                loading="lazy"
-                style={{ width: '100%', height: 'auto' }}
-              />
+            <ImageItemContainer
+              onClick={() => handleMediaClick(index)}
+            >
+              {item.type === 'video' ? (
+                <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <video
+                    src={item.url}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    muted
+                  />
+                  <VideoOverlay>
+                    <PlayArrowIcon sx={{ color: 'white', fontSize: { xs: 24, sm: 32 } }} />
+                  </VideoOverlay>
+                </Box>
+              ) : (
+                <img
+                  src={item.url}
+                  alt={item.postContent || 'Media'}
+                  loading="lazy"
+                />
+              )}
               <ImageListItemBar
-                title={item.title}
+                title={item.type === 'video' ? 'Video' : 'Hình ảnh'}
                 subtitle={new Date(item.createdAt).toLocaleDateString('vi-VN')}
                 actionIcon={
                   <IconButton
                     sx={{ color: 'rgba(255, 255, 255, 0.54)' }}
-                    aria-label={`info about ${item.title}`}
+                    aria-label={`info about ${item.type}`}
                   >
                     <InfoIcon />
                   </IconButton>
@@ -113,6 +232,31 @@ const UserGallery = ({ userId }) => {
           </ImageListItem>
         ))}
       </StyledImageList>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <LoadMoreContainer>
+          <Button
+            variant="outlined"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            startIcon={loadingMore ? <CircularProgress size={20} /> : null}
+            size="large"
+            sx={{ minWidth: { xs: '120px', sm: '140px' } }}
+          >
+            {loadingMore ? 'Đang tải...' : 'Tải thêm'}
+          </Button>
+        </LoadMoreContainer>
+      )}
+
+      {/* Media Viewer Modal */}
+      <MediaViewer
+        open={viewerOpen}
+        onClose={handleViewerClose}
+        mediaList={media}
+        currentIndex={currentMediaIndex}
+        onIndexChange={handleIndexChange}
+      />
     </GalleryContainer>
   );
 };
@@ -121,4 +265,4 @@ UserGallery.propTypes = {
   userId: PropTypes.string.isRequired,
 };
 
-export default UserGallery; 
+export default UserGallery;

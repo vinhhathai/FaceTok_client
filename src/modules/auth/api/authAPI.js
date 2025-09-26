@@ -10,7 +10,7 @@ import { getCookie } from '@utils/cookieUtils';
 export const getCurrentUser = async () => {
   try {
     // Extract user ID from token in cookie
-    const TOKEN_COOKIE_NAME = 'auth_token';
+    const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
     const token = getCookie(TOKEN_COOKIE_NAME);
     
     if (!token) {
@@ -333,4 +333,4 @@ export const resetPassword = async (data) => {
       'Đã xảy ra lỗi không xác định. Vui lòng thử lại.'
     );
   }
-}; 
+};

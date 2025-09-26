@@ -9,7 +9,8 @@ const API_ENDPOINTS = {
   SEARCH: '/user/search',
   BLOCK_USER: '/user/block-user',
   UNBLOCK_USER: '/user/unblock-user',
-  GET_BLOCKED_USERS: '/user/blocked-users'
+  GET_BLOCKED_USERS: '/user/blocked-users',
+  MEDIA: '/user/media'
 };
 
 const userApi = {
@@ -296,7 +297,31 @@ const userApi = {
     } catch (error) {
       throw error;
     }
+  },
+
+  /**
+   * Lấy tất cả media files (ảnh, video) của user
+   * @param {string} userId - ID của người dùng
+   * @param {Object} params - Parameters for pagination and filtering
+   * @param {number} params.page - Trang hiện tại
+   * @param {number} params.limit - Số lượng items per page
+   * @param {string} params.type - Loại media ('image', 'video', hoặc undefined cho tất cả)
+   * @returns {Promise} - Promise chứa dữ liệu media files
+   */
+  getUserMedia: async (userId, params = { page: 1, limit: 20 }) => {
+    try {
+      const queryParams = new URLSearchParams({
+        page: params.page.toString(),
+        limit: params.limit.toString(),
+        ...(params.type && { type: params.type })
+      });
+      
+      const response = await apiClient.get(`${API_ENDPOINTS.MEDIA}/${userId}?${queryParams}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 
-export default userApi; 
+export default userApi;

@@ -3,7 +3,7 @@ import { ERROR_CODES } from '@common/constants';
 import { getCookie, removeCookie } from '@utils/cookieUtils';
 
 // Cookie name constant
-const TOKEN_COOKIE_NAME = 'auth_token';
+const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
 
 // Tạo instance của axios với cấu hình mặc định
 const apiClient = axios.create({

@@ -7,8 +7,9 @@ import { store } from '@core/config/store';
 import { jwtDecode } from 'jwt-decode';
 import { addNotification } from '@notification/redux';
 
-const SOCKET_URL = 'http://localhost:3000/message';
-const TOKEN_COOKIE_NAME = 'auth_token';
+const SOCKET_URL = `${process.env.REACT_APP_SOCKET_URL}/message`;
+
+const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
 
 // Tạo context
 const SocketContext = createContext(null);
@@ -288,4 +289,4 @@ export const useSocket = () => {
   }
   
   return context;
-}; 
+};

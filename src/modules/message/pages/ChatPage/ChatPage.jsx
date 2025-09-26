@@ -25,7 +25,7 @@ import {
   MobileBackButtonBox
 } from './ChatPage.styles';
 
-const TOKEN_COOKIE_NAME = 'auth_token';
+const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
 
 const ChatPage = () => {
   const theme = useTheme();

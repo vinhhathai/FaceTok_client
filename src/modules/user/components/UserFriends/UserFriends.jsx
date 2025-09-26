@@ -255,14 +255,25 @@ const UserFriends = ({ userId }) => {
                   <Typography 
                     variant="h6" 
                     component="div" 
-                    sx={{ fontWeight: 'bold', cursor: 'pointer' }}
+                    sx={{ 
+                      fontWeight: 'bold', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      minHeight: '56px' // Đảm bảo chiều cao tối thiểu để cân đối với avatar
+                    }}
                     onClick={() => handleViewProfile(friend)}
                   >
                     {friend.fullName}
                   </Typography>
                 }
-                secondary={friend.bio || 'Chưa có thông tin'}
-                sx={{ marginLeft: 2 }}
+                secondary={friend.bio || null}
+                sx={{ 
+                  marginLeft: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center' // Căn giữa theo chiều dọc
+                }}
               />
             {/* Ẩn tất cả các nút action trong tab bạn bè */}
             {/* <ListItemSecondaryAction>
