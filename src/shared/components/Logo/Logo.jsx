@@ -6,7 +6,7 @@ import styles from './Logo.module.css';
 const Logo = ({ size = 'medium', showText = true, ...props }) => {
   const [imgError, setImgError] = useState(false);
   const logoPath = '/logo.webp'; // Logo is in the public root directory
-  const fallbackLogoPath = '/logo192.png'; // Fallback to React default logo if main logo fails
+  const fallbackLogoPath = '/logo.webp'; // Fallback to React default logo if main logo fails
   
   const sizeClassMap = {
     extraSmall: styles.logoImageExtraSmall,
