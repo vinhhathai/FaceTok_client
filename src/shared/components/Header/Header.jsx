@@ -13,7 +13,7 @@ import {
   LeftSectionContainer,
   logoStyles
 } from './Header.styles';
-import Logo from '../Logo/Logo';
+import Logo from '@components/Logo/Logo';
 import { UserSearch, NavButtons, UserMenu } from './sub-components/index';
 
 function Header() {

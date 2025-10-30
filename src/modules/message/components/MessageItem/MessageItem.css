@@ -1,0 +1,130 @@
+/* MessageItem Component Styles */
+
+/* Revoked Message Styles */
+.message-revoked {
+  opacity: 0.8;
+  font-style: italic;
+  position: relative;
+}
+
+.message-revoked-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-revoked-icon {
+  font-size: 0.8rem;
+}
+
+.message-revoked-text {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.message-revoked-timestamp {
+  opacity: 0.7;
+  font-size: 0.65rem;
+}
+
+/* Recall Button Styles */
+.recall-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #d32f2f;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.recall-button:hover {
+  background-color: rgba(255, 255, 255, 1);
+  color: #b71c1c;
+  transform: scale(1.05);
+}
+
+.recall-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recall-button-icon {
+  font-size: 0.8rem;
+}
+
+/* Message Bubble Hover Effects */
+.message-bubble {
+  transition: opacity 0.3s ease;
+}
+
+.message-bubble.optimistic {
+  opacity: 0.7;
+}
+
+/* Dialog Styles */
+.recall-dialog-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.recall-dialog-content {
+  color: #666;
+  line-height: 1.5;
+}
+
+.recall-dialog-actions {
+  padding: 16px 24px;
+}
+
+.recall-confirm-button {
+  background-color: #d32f2f;
+  color: white;
+  font-weight: 500;
+}
+
+.recall-confirm-button:hover {
+  background-color: #b71c1c;
+}
+
+.recall-confirm-button:disabled {
+  background-color: #ccc;
+  color: #666;
+}
+
+.recall-cancel-button {
+  color: #666;
+}
+
+.recall-cancel-button:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .message-revoked-text {
+    font-size: 0.8rem;
+  }
+  
+  .recall-button {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .recall-button-icon {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .message-revoked-content {
+    gap: 6px;
+  }
+  
+  .message-revoked-text {
+    font-size: 0.75rem;
+  }
+} 

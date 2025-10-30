@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { updateUserProfile } from '../../../../../redux/slices/userSlice';
-import { showSuccess, handleApiError } from '../../../../../../../shared/utils/toastMessageUtils';
+import { updateUserProfile } from '@user/redux/slices/userSlice';
+import { showSuccess, handleApiError } from '@utils';
 
 // Utils
 const formatDateForInput = (dateString) => {

@@ -8,7 +8,7 @@ import {
   rejectFriendRequest,
   removeFriend,
   searchFriends
-} from '../../api/friendAPI';
+} from '@friend/api/friendAPI';
 
 // Create async thunks
 export const fetchFriends = createAsyncThunk(
@@ -107,37 +107,18 @@ export const deleteFriend = createAsyncThunk(
   }
 );
 
-// Initialize state
+// Initialize state - chỉ giữ data states
 const initialState = {
-  friends: {
-    data: [],
-    isLoading: false,
-    error: null
-  },
-  receivedRequests: {
-    data: [],
-    isLoading: false, 
-    error: null
-  },
-  sentRequests: {
-    data: [],
-    isLoading: false,
-    error: null
-  },
+  friends: [],
+  receivedRequests: [],
+  sentRequests: [],
   searchResults: {
     data: [],
     pagination: {
       page: 1,
       totalPages: 1,
       totalCount: 0
-    },
-    isLoading: false,
-    error: null
-  },
-  operations: {
-    isLoading: false,
-    success: false,
-    error: null
+    }
   }
 };
 
@@ -146,11 +127,6 @@ const friendSlice = createSlice({
   name: 'friend',
   initialState,
   reducers: {
-    resetOperationStatus: (state) => {
-      state.operations.isLoading = false;
-      state.operations.success = false;
-      state.operations.error = null;
-    },
     resetSearchResults: (state) => {
       state.searchResults.data = [];
       state.searchResults.pagination = {
@@ -158,102 +134,44 @@ const friendSlice = createSlice({
         totalPages: 1,
         totalCount: 0
       };
-      state.searchResults.error = null;
     }
   },
   extraReducers: (builder) => {
     builder
       // Fetch Friends
-      .addCase(fetchFriends.pending, (state) => {
-        state.friends.isLoading = true;
-        state.friends.error = null;
-      })
       .addCase(fetchFriends.fulfilled, (state, action) => {
-        state.friends.isLoading = false;
-        state.friends.data = action.payload?.friends || [];
-        state.friends.error = null;
-      })
-      .addCase(fetchFriends.rejected, (state, action) => {
-        state.friends.isLoading = false;
-        state.friends.error = action.payload;
+        state.friends = action.payload?.friends || [];
       })
       
       // Fetch Received Friend Requests
-      .addCase(fetchReceivedFriendRequests.pending, (state) => {
-        state.receivedRequests.isLoading = true;
-        state.receivedRequests.error = null;
-      })
       .addCase(fetchReceivedFriendRequests.fulfilled, (state, action) => {
-        state.receivedRequests.isLoading = false;
-        state.receivedRequests.data = action.payload?.requests || [];
-        state.receivedRequests.error = null;
-      })
-      .addCase(fetchReceivedFriendRequests.rejected, (state, action) => {
-        state.receivedRequests.isLoading = false;
-        state.receivedRequests.error = action.payload;
+        state.receivedRequests = action.payload?.requests || [];
       })
       
       // Fetch Sent Friend Requests
-      .addCase(fetchSentFriendRequests.pending, (state) => {
-        state.sentRequests.isLoading = true;
-        state.sentRequests.error = null;
-      })
       .addCase(fetchSentFriendRequests.fulfilled, (state, action) => {
-        state.sentRequests.isLoading = false;
-        state.sentRequests.data = action.payload?.requests || [];
-        state.sentRequests.error = null;
-      })
-      .addCase(fetchSentFriendRequests.rejected, (state, action) => {
-        state.sentRequests.isLoading = false;
-        state.sentRequests.error = action.payload;
+        state.sentRequests = action.payload?.requests || [];
       })
       
       // Search Friends
-      .addCase(searchFriendsThunk.pending, (state) => {
-        state.searchResults.isLoading = true;
-        state.searchResults.error = null;
-      })
       .addCase(searchFriendsThunk.fulfilled, (state, action) => {
-        state.searchResults.isLoading = false;
         state.searchResults.data = action.payload?.data?.friends || [];
         
         // Update pagination data
         if (action.payload?.data?.pagination) {
           state.searchResults.pagination = action.payload.data.pagination;
         }
-        
-        state.searchResults.error = null;
-      })
-      .addCase(searchFriendsThunk.rejected, (state, action) => {
-        state.searchResults.isLoading = false;
-        state.searchResults.error = action.payload;
       })
       
       // Send Friend Request
-      .addCase(sendNewFriendRequest.pending, (state) => {
-        state.operations.isLoading = true;
-        state.operations.error = null;
-      })
       .addCase(sendNewFriendRequest.fulfilled, (state) => {
-        state.operations.isLoading = false;
-        state.operations.success = true;
-      })
-      .addCase(sendNewFriendRequest.rejected, (state, action) => {
-        state.operations.isLoading = false;
-        state.operations.error = action.payload;
+        // Không cần thay đổi state, chỉ cần toast success
       })
       
       // Accept Request
-      .addCase(acceptRequest.pending, (state) => {
-        state.operations.isLoading = true;
-        state.operations.error = null;
-      })
       .addCase(acceptRequest.fulfilled, (state, action) => {
-        state.operations.isLoading = false;
-        state.operations.success = true;
-        
         // Update receivedRequests list by removing the accepted request
-        state.receivedRequests.data = state.receivedRequests.data.filter(
+        state.receivedRequests = state.receivedRequests.filter(
           request => request.id !== action.meta.arg
         );
         
@@ -265,54 +183,28 @@ const friendSlice = createSlice({
             profilePicture: action.payload.data.friendRequest.sender.profilePicture,
             bio: action.payload.data.friendRequest.sender.bio || ''
           };
-          state.friends.data.push(newFriend);
+          state.friends.push(newFriend);
         }
-      })
-      .addCase(acceptRequest.rejected, (state, action) => {
-        state.operations.isLoading = false;
-        state.operations.error = action.payload;
       })
       
       // Reject Request
-      .addCase(rejectRequest.pending, (state) => {
-        state.operations.isLoading = true;
-        state.operations.error = null;
-      })
       .addCase(rejectRequest.fulfilled, (state, action) => {
-        state.operations.isLoading = false;
-        state.operations.success = true;
-        
         // Update receivedRequests list by removing the rejected request
-        state.receivedRequests.data = state.receivedRequests.data.filter(
+        state.receivedRequests = state.receivedRequests.filter(
           request => request.id !== action.meta.arg
         );
       })
-      .addCase(rejectRequest.rejected, (state, action) => {
-        state.operations.isLoading = false;
-        state.operations.error = action.payload;
-      })
       
       // Remove Friend
-      .addCase(deleteFriend.pending, (state) => {
-        state.operations.isLoading = true;
-        state.operations.error = null;
-      })
       .addCase(deleteFriend.fulfilled, (state, action) => {
-        state.operations.isLoading = false;
-        state.operations.success = true;
-        
         // Update friends list by removing the deleted friend
-        state.friends.data = state.friends.data.filter(
+        state.friends = state.friends.filter(
           friend => friend.id !== action.meta.arg
         );
-      })
-      .addCase(deleteFriend.rejected, (state, action) => {
-        state.operations.isLoading = false;
-        state.operations.error = action.payload;
       });
   }
 });
 
-export const { resetOperationStatus, resetSearchResults } = friendSlice.actions;
+export const { resetSearchResults } = friendSlice.actions;
 
 export default friendSlice.reducer; 

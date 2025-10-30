@@ -2,13 +2,17 @@ import { styled } from '@mui/material/styles';
 import { ListItem, Typography, Box } from '@mui/material';
 
 // Styled ListItem cho mỗi cuộc hội thoại
-export const StyledConversationItem = styled(ListItem)(({ theme, isActive }) => ({
+export const StyledConversationItem = styled(ListItem)(({ theme, isActive, isGroup }) => ({
   padding: `${theme.spacing(1.5)} ${theme.spacing(2)}`,
   backgroundColor: isActive ? theme.palette.action.selected : 'inherit',
   borderBottom: '1px solid',
-  borderColor: theme.palette.divider,
+  borderColor: isGroup ? theme.palette.primary.light : theme.palette.divider,
+  borderLeft: isGroup ? `3px solid ${theme.palette.primary.main}` : 'none',
   '&:hover': {
     backgroundColor: isActive ? theme.palette.action.selected : theme.palette.action.hover,
+    '& .delete-button-container .MuiIconButton-root': {
+      opacity: 1,
+    },
   },
 }));
 
@@ -32,4 +36,14 @@ export const MessagePreview = styled(Typography)(({ theme, hasUnread }) => ({
   maxWidth: '80%',
   fontWeight: hasUnread ? 500 : 400,
   color: hasUnread ? theme.palette.text.primary : theme.palette.text.secondary
-})); 
+}));
+
+// Container cho nút xóa
+export const DeleteButtonContainer = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  '& .MuiIconButton-root': {
+    opacity: 0,
+    transition: 'opacity 0.2s ease-in-out',
+  },
+}); 

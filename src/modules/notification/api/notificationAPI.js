@@ -1,4 +1,4 @@
-import { apiClient } from '../../../shared/httpClient';
+import { apiClient } from '@httpClient';
 
 /**
  * Get all notifications for the current user
@@ -7,7 +7,7 @@ import { apiClient } from '../../../shared/httpClient';
  */
 export const getNotifications = async (params = {}) => {
   try {
-    const response = await apiClient.get('/api/notifications', { params });
+    const response = await apiClient.get('/notification/notifications', { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -21,7 +21,7 @@ export const getNotifications = async (params = {}) => {
  */
 export const markNotificationAsRead = async (notificationId) => {
   try {
-    const response = await apiClient.put(`/api/notifications/${notificationId}/read`);
+    const response = await apiClient.put(`/notification/${notificationId}/read`);
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -34,7 +34,7 @@ export const markNotificationAsRead = async (notificationId) => {
  */
 export const markAllNotificationsAsRead = async () => {
   try {
-    const response = await apiClient.put('/api/notifications/read-all');
+    const response = await apiClient.put('/notification/read-all');
     return response.data;
   } catch (error) {
     throw error.response?.data || error;

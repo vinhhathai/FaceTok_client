@@ -1,8 +1,8 @@
-import { apiClient } from '../../../shared/httpClient';
-import { ERROR_CODES } from '../../../common/constants';
-import { createError } from '../../../shared/utils/errorUtils';
-import { jwtDecode } from 'jwt-decode'; // Using named export instead of default import
-import { getCookie } from '../../../shared/utils/cookieUtils';
+import { apiClient } from '@httpClient';
+import { ERROR_CODES } from '@common/constants';
+import { createError } from '@utils/errorUtils';
+import { jwtDecode } from 'jwt-decode';
+import { getCookie } from '@utils/cookieUtils';
 
 /**
  * Fetch current user profile from token
@@ -10,7 +10,7 @@ import { getCookie } from '../../../shared/utils/cookieUtils';
 export const getCurrentUser = async () => {
   try {
     // Extract user ID from token in cookie
-    const TOKEN_COOKIE_NAME = 'auth_token';
+    const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
     const token = getCookie(TOKEN_COOKIE_NAME);
     
     if (!token) {
@@ -333,4 +333,4 @@ export const resetPassword = async (data) => {
       'Đã xảy ra lỗi không xác định. Vui lòng thử lại.'
     );
   }
-}; 
+};

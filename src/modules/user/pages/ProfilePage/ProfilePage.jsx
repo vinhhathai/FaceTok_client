@@ -1,36 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Tab, Tabs, Typography, useMediaQuery } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import PropTypes from 'prop-types';
+import { Box, Tabs, Tab, CircularProgress, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { toast } from 'react-toastify';
 
 // Components
-import Header from "../../../../shared/components/Header/Header";
-import MainLayout from "../../../../shared/components/MainLayout/MainLayout";
-import WeatherBar from "../../../../shared/components/WeatherBar";
-import UserInfo from '../../components/UserInfo/UserInfo';
-import UserPosts from '../../components/UserPosts/UserPosts';
-import UserGallery from '../../components/UserGallery/UserGallery';
-import UserFriends from '../../components/UserFriends/UserFriends';
-import UserAbout from '../../components/UserAbout';
-import ProfileThumbnail from '../../components/ProfileThumbnail/ProfileThumbnail';
-
-// Styles
+import Header from '@components/Header/Header';
+import MainLayout from '@components/MainLayout/MainLayout';
+import { fetchUserProfile, selectUserProfile } from '@user/redux';
+import ProfileThumbnail from '@user/components/ProfileThumbnail/ProfileThumbnail';
+import UserInfo from '@user/components/UserInfo/UserInfo';
+import UserPosts from '@user/components/UserPosts/UserPosts';
+import UserAbout from '@user/components/UserAbout/UserAbout';
+import UserGallery from '@user/components/UserGallery/UserGallery';
+import UserFriends from '@user/components/UserFriends/UserFriends';
+import WeatherBar from '@components/WeatherBar/WeatherBar';
+import CreatePost from '@post/components/CreatePost';
 import { 
   ProfileContainer, 
   LoadingContainer, 
   TabsContainer, 
-  TabContentContainer, 
-  TabPanelStyles 
+  TabContentContainer 
 } from './ProfilePage.styles';
-import { fetchUserProfile, selectUserProfile, selectUserStatus, selectUserError } from '../../redux/slices/userSlice';
 
-// Default images
-const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
-const DEFAULT_COVER = 'https://artmin96.github.io/argon-social/assets/images/users/cover/cover-1.gif';
-
-// Custom TabPanel
+// Tab Panel component
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -41,10 +34,9 @@ function TabPanel(props) {
       id={`profile-tabpanel-${index}`}
       aria-labelledby={`profile-tab-${index}`}
       {...other}
-      style={TabPanelStyles}
     >
       {value === index && (
-        <Box>
+        <Box sx={{ pt: 3 }}>
           {children}
         </Box>
       )}
@@ -52,30 +44,29 @@ function TabPanel(props) {
   );
 }
 
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
 function a11yProps(index) {
   return {
     id: `profile-tab-${index}`,
-    'aria-controls': `profile-tabpanel-${index}`,
+    "aria-controls": `profile-tabpanel-${index}`,
   };
 }
 
 const ProfilePage = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
-  const { userId } = useParams(); // Lấy userId từ URL
+  const location = useLocation();
+  const { userId: urlUserId } = useParams();
+  // Ưu tiên lấy từ state (bảo mật hơn), fallback lấy từ URL params để tương thích ngược
+  const userId = location.state?.userId || urlUserId;
   const [tabValue, setTabValue] = useState(0);
   
+  // Local states thay vì Redux loading states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   // Use Redux selectors to get profile data
-  const userProfile = useSelector(state => selectUserProfile(state));
-  const status = useSelector(state => selectUserStatus(state));
-  const error = useSelector(state => selectUserError(state));
+  const userProfile = useSelector((state) => selectUserProfile(state));
 
   // Check if the current tab is the friends tab
   const isFriendsTab = isMobile ? tabValue === 2 : tabValue === 3;
@@ -83,7 +74,17 @@ const ProfilePage = () => {
   useEffect(() => {
     // Fetch user profile when component mounts or userId changes
     if (userId) {
-      dispatch(fetchUserProfile(userId));
+      setLoading(true);
+      setError(null);
+      
+      dispatch(fetchUserProfile(userId))
+        .unwrap()
+        .catch(error => {
+          console.error('Failed to fetch user profile:', error);
+          setError('Không thể tải thông tin người dùng');
+          toast.error('Không thể tải thông tin người dùng');
+        })
+        .finally(() => setLoading(false));
     }
   }, [userId, dispatch]);
 
@@ -99,21 +100,14 @@ const ProfilePage = () => {
     }
   }, [isMobile, tabValue]);
 
-  // Get the correct tab index based on mobile/desktop view
-  const getTabIndex = (desktopIndex) => {
-    if (!isMobile) return desktopIndex;
-    // On mobile, skip the "Giới thiệu" tab (index 1)
-    return desktopIndex < 1 ? desktopIndex : desktopIndex - 1;
-  };
-
   // Profile Content component
   const ProfileContent = () => (
     <Box>
       <TabsContainer>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange} 
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
             aria-label="profile tabs"
             variant="fullWidth"
           >
@@ -123,22 +117,23 @@ const ProfilePage = () => {
             <Tab label="Bạn bè" {...a11yProps(isMobile ? 2 : 3)} />
           </Tabs>
         </Box>
-        
+
         <TabContentContainer>
           <TabPanel value={tabValue} index={0}>
+            <CreatePost />
             <UserPosts userId={userId} />
           </TabPanel>
-          
+
           {!isMobile && (
             <TabPanel value={tabValue} index={1}>
               <UserAbout user={userProfile} />
             </TabPanel>
           )}
-          
+
           <TabPanel value={tabValue} index={isMobile ? 1 : 2}>
             <UserGallery userId={userId} />
           </TabPanel>
-          
+
           <TabPanel value={tabValue} index={isMobile ? 2 : 3}>
             <UserFriends userId={userId} />
           </TabPanel>
@@ -148,36 +143,30 @@ const ProfilePage = () => {
   );
 
   // Loading state
-  if (status === 'loading') {
+  if (loading) {
     return (
       <>
         <Header />
         <LoadingContainer>
-          <Typography>Đang tải thông tin người dùng...</Typography>
+          <CircularProgress />
+          <Typography sx={{ mt: 2 }}>Đang tải thông tin người dùng...</Typography>
         </LoadingContainer>
       </>
     );
   }
 
   // Error state
-  if (status === 'failed') {
-    // Kiểm tra xem có phải lỗi cập nhật fullname không
-    // Nếu là lỗi fullname thì vẫn hiển thị trang bình thường
-    const isFullnameError = error && error.isFullnameError;
-    
-    if (!isFullnameError) {
-      return (
-        <>
-          <Header />
-          <LoadingContainer>
-            <Typography color="error">
-              {typeof error === 'object' ? (error.message || 'Có lỗi xảy ra khi tải thông tin người dùng') : error || 'Có lỗi xảy ra khi tải thông tin người dùng'}
-            </Typography>
-          </LoadingContainer>
-        </>
-      );
-    }
-    // Nếu là lỗi fullname, tiếp tục hiển thị trang bình thường
+  if (error) {
+    return (
+      <>
+        <Header />
+        <LoadingContainer>
+          <Typography color="error">
+            {error}
+          </Typography>
+        </LoadingContainer>
+      </>
+    );
   }
 
   // Profile not found or no data
@@ -207,4 +196,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

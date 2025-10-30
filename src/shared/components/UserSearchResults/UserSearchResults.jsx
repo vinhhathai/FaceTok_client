@@ -56,7 +56,7 @@ const UserSearchResults = ({
       onSelectUser();
     }
     // Navigate to user profile
-    navigate(`/profile/${userId}`);
+    navigate(`/profile/`, { state: { userId } });
   };
 
   // Common styling for the dropdown container

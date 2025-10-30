@@ -7,7 +7,6 @@ import friendReducer, {
   acceptRequest,
   rejectRequest,
   deleteFriend,
-  resetOperationStatus,
   resetSearchResults
 } from './slices/friendSlice';
 
@@ -24,7 +23,6 @@ export const actions = {
   acceptRequest,
   rejectRequest,
   deleteFriend,
-  resetOperationStatus,
   resetSearchResults
 };
 
@@ -38,7 +36,6 @@ export {
   acceptRequest,
   rejectRequest,
   deleteFriend,
-  resetOperationStatus,
   resetSearchResults
 };
 

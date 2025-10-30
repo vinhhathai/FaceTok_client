@@ -1,26 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
-import { 
-  uploadThumbnail, 
-  selectUploadStatus, 
-  selectUploadError, 
-  resetUploadStatus,
-  fetchUserProfile
-} from '../../../redux/slices/userSlice';
-import { showSuccess, showError } from '../../../../../shared/utils/toastMessageUtils';
+import { uploadCoverPhoto, fetchUserProfile } from '@user/redux/slices/userSlice';
+import { showSuccess, showError } from '@utils';
 
-// Default placeholder images
-const DEFAULT_COVER_IMAGE = '/assets/images/cover_default.svg';
+// Default cover image
+const DEFAULT_COVER_IMAGE = 'https://artmin96.github.io/argon-social/assets/images/users/cover/cover-1.gif';
 
 // Define constant toast ID to prevent duplicate toasts
 const THUMBNAIL_UPDATE_TOAST_ID = 'thumbnail-update-toast';
 
 export const useThumbnailUpload = (user) => {
   const dispatch = useDispatch();
-  const uploadStatus = useSelector(selectUploadStatus);
-  const uploadError = useSelector(selectUploadError);
   
+  // Local states thay vì Redux selectors
+  const [uploadStatus, setUploadStatus] = useState('idle');
+  const [uploadError, setUploadError] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [imgError, setImgError] = useState(false);
@@ -68,7 +63,7 @@ export const useThumbnailUpload = (user) => {
     
     originalImageRef.current = isValidThumbnail ? user.thumbnail : null;
     forceRerender();
-  }, [user?.id, user?.thumbnail, forceRerender]);
+  }, [user?.id, user?.thumbnail, forceRerender, optimisticImage]);
   
   // Clean up URL objects when component unmounts
   useEffect(() => {
@@ -79,7 +74,7 @@ export const useThumbnailUpload = (user) => {
     };
   }, [optimisticImage]);
   
-  // Monitor upload status from Redux
+  // Monitor upload status from local state
   useEffect(() => {
     if (uploadStatus === 'succeeded' && !processedUploadRef.current) {
       // Mark this upload as processed
@@ -113,50 +108,38 @@ export const useThumbnailUpload = (user) => {
       // Clean up the optimistic image
       if (optimisticImage) {
         URL.revokeObjectURL(optimisticImage);
-        setOptimisticImage(null); 
+        setOptimisticImage(null);
       }
       
-      // Reset upload status to prevent repeated handling
+      // Reset status after processing
       setTimeout(() => {
-        dispatch(resetUploadStatus());
-        
-        // Allow for future upload notifications, but with a delay
-        setTimeout(() => {
-          setHasShownSuccessToast(false);
-          processedUploadRef.current = false;
-        }, 6000); // Wait until after toast is gone (5s display + 1s buffer)
-      }, 100);
-    } else if (uploadStatus === 'failed') {
-      // Only show error if we haven't shown success
-      if (!hasShownSuccessToast) {
-        // Fixed: Using toast ID to prevent duplicates
-        toast.dismiss(THUMBNAIL_UPDATE_TOAST_ID); // Dismiss any existing toast with this ID
-        showError(uploadError?.message || "Lỗi khi cập nhật ảnh bìa!", {
-          toastId: THUMBNAIL_UPDATE_TOAST_ID
-        });
-      }
-      
+        setUploadStatus('idle');
+        processedUploadRef.current = false;
+      }, 1000);
+    }
+    
+    if (uploadStatus === 'failed') {
       setIsUploading(false);
       setUploadProgress(0);
-      processedUploadRef.current = false;
       
-      // Clean up and roll back to original image
+      // Show error notification
+      if (uploadError) {
+        showError(uploadError);
+      }
+      
+      // Clean up the optimistic image
       if (optimisticImage) {
         URL.revokeObjectURL(optimisticImage);
         setOptimisticImage(null);
       }
       
-      // Restore original image
-      setCurrentImageSrc(originalImageRef.current || DEFAULT_COVER_IMAGE);
-      forceRerender();
-      
-      // Reset upload status on failure
+      // Reset status after processing
       setTimeout(() => {
-        dispatch(resetUploadStatus());
-        setHasShownSuccessToast(false);
-      }, 100);
+        setUploadStatus('idle');
+        setUploadError(null);
+      }, 1000);
     }
-  }, [uploadStatus, uploadError, dispatch, optimisticImage, forceRerender, hasShownSuccessToast, user]);
+  }, [uploadStatus, uploadError, optimisticImage, hasShownSuccessToast, user?.id, dispatch]);
   
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -183,14 +166,22 @@ export const useThumbnailUpload = (user) => {
     // Reset the processed flag when starting a new upload
     processedUploadRef.current = false;
     setIsUploading(true);
+    setUploadStatus('loading');
+    setUploadError(null);
     
-    // Use the uploadThumbnail action from Redux
-    dispatch(uploadThumbnail({
-      file,
-      onProgress: (progress) => {
-        setUploadProgress(progress);
-      }
-    }));
+    try {
+      // Use the uploadCoverPhoto action from Redux
+      await dispatch(uploadCoverPhoto(file)).unwrap();
+      setUploadStatus('succeeded');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setUploadStatus('failed');
+      setUploadError(error.message || 'Failed to upload cover photo');
+      
+      // Restore original image
+      setCurrentImageSrc(originalImageRef.current || DEFAULT_COVER_IMAGE);
+      forceRerender();
+    }
   };
 
   const handleImageError = () => {

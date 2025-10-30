@@ -1,13 +1,17 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress } from '@mui/material';
+import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress, Snackbar, Alert, Chip } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import GroupIcon from '@mui/icons-material/Group';
+import PersonIcon from '@mui/icons-material/Person';
+import InfoIcon from '@mui/icons-material/Info';
 import MessageList from '../MessageList/MessageList';
 import ChatInput from '../ChatInput/ChatInput';
-import { fetchMessages, addReceivedMessage } from '../../redux/slices/messageSlice';
-import useMessageSocket from '../../hooks/useMessageSocket';
-import { toast } from 'react-toastify';
+import GroupSidebar from '../GroupSidebar/GroupSidebar';
+import { fetchMessages } from '@message/redux/slices/messageSlice';
+import useMessageSocket from '@message/hooks/useMessageSocket';
+import { sendMessageToRoom } from '@message/api/messageAPI';
 import {
   ChatBoxContainer,
   PlaceholderContainer,
@@ -15,147 +19,242 @@ import {
   UserInfoContainer,
   UserAvatar,
   LoadingContainer,
-  InputContainer
+  InputContainer,
+  FloatingBackButton
 } from './ChatBox.styles';
 
-const ChatBox = ({ conversation, onBack }) => {
+const ChatBox = ({ conversation, onBack, currentConversation }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { messages, loading, sending, currentConversation } = useSelector(state => state.messages);
-  const { emit, connected } = useMessageSocket();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const { messages } = useSelector(state => state.messages);
+  const { emit, connected, toastInfo, handleCloseToast } = useMessageSocket(currentConversation);
+  
+  // Local states thay vì Redux loading states
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [inputDisabled, setInputDisabled] = useState(false);
   
   // Lấy ID người dùng từ localStorage
   const myChatId = localStorage.getItem('currentUserId');
   
-  // Sử dụng conversation từ props và currentConversation từ Redux
-  const activeConversation = conversation || currentConversation;
-
+  // State cho sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Memoize conversationId để tránh re-render không cần thiết
+  const conversationId = useMemo(() => {
+    return (conversation && conversation._id) || (currentConversation && currentConversation._id);
+  }, [conversation?._id, currentConversation?._id]);
+  
+  // Lấy conversation mới nhất từ Redux để header cập nhật ngay khi tên nhóm đổi
+  const storeConversation = useSelector(state => 
+    state.conversations?.conversations?.find(c => c._id === conversationId)
+  );
+  const activeConversation = storeConversation || conversation || currentConversation;
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
   useEffect(() => {
-    if (activeConversation?._id) {
-      dispatch(fetchMessages(activeConversation._id));
+    if (conversationId) {
+      setLoading(true);
+      dispatch(fetchMessages(conversationId))
+        .unwrap()
+        .catch(error => {
+          console.error('Failed to fetch messages:', error);
+          // Toast sẽ được hiển thị qua socket error
+        })
+        .finally(() => setLoading(false));
     }
-  }, [dispatch, activeConversation]);
+  }, [dispatch, conversationId]);
   
   // Xử lý gửi tin nhắn mới với Optimistic UI
   const handleSendMessage = useCallback(async (content) => {
-    if (!content.trim() || !activeConversation) return;
-    
-    try {
-      setInputDisabled(true);
-      
-      // Kiểm tra roomId có tồn tại không
-      if (!activeConversation._id) {
-        toast.error('Lỗi: Không thể xác định phòng chat');
-        return;
-      }
-      
-      // Tạo tin nhắn tạm thời để hiển thị ngay lập tức (Optimistic UI)
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage = {
-        _id: tempId,
-        content,
-        senderId: myChatId,
-        roomId: activeConversation._id,
-        createdAt: new Date().toISOString(),
-        isFromCurrentUser: true,
-        isOptimistic: true // Đánh dấu là tin nhắn optimistic
-      };
-      
-      // Thêm tin nhắn tạm thời vào Redux store
-      dispatch(addReceivedMessage(optimisticMessage));
-      
-      // Sử dụng socket để gửi tin nhắn
-      if (connected) {
-        const emitData = {
-          roomId: activeConversation._id,
-          content
-        };
-        
-        const sent = emit('send-message', emitData);
-        
-        if (!sent) {
-          toast.error('Không thể gửi tin nhắn. Lỗi kết nối đến server.');
-        }
-      } else {
-        toast.error('Không thể gửi tin nhắn. Đang mất kết nối đến server.');
-      }
-    } catch (error) {
-      console.error('Không thể gửi tin nhắn. Vui lòng thử lại.', error);
-      toast.error('Không thể gửi tin nhắn. Vui lòng thử lại.');
-    } finally {
-      setInputDisabled(false);
+    if (!content.trim() || !activeConversation?._id || sending) {
+      return;
     }
-  }, [activeConversation, connected, emit, dispatch, myChatId]);
 
-  // Nếu không có cuộc trò chuyện đang kích hoạt, hiển thị placeholder
+    setSending(true);
+    setInputDisabled(true);
+
+    try {
+      // Gửi tin nhắn qua REST API
+      await sendMessageToRoom(activeConversation._id, content.trim());
+      
+      // Reset input
+      setInputDisabled(false);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Toast sẽ được hiển thị qua socket error
+      setInputDisabled(false);
+    } finally {
+      setSending(false);
+    }
+  }, [activeConversation, sending]);
+
+  // Xử lý khi không có cuộc trò chuyện
   if (!activeConversation) {
     return (
       <PlaceholderContainer>
         <Typography variant="h6" color="text.secondary">
-          Hãy chọn một cuộc trò chuyện để bắt đầu
+          Chọn một cuộc trò chuyện để bắt đầu
         </Typography>
       </PlaceholderContainer>
     );
   }
 
+  // Xử lý khi đang tải tin nhắn
+  if (loading) {
+    return (
+      <LoadingContainer>
+        <CircularProgress />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          Đang tải tin nhắn...
+        </Typography>
+      </LoadingContainer>
+    );
+  }
+
   return (
-    <ChatBoxContainer elevation={0}>
-      {/* Chat header */}
-      <ChatHeader>
-        {/* Back button only on mobile */}
-        {isMobile && onBack && (
+    <ChatBoxContainer>
+      {/* Floating back button cho màn hình nhỏ */}
+      {isSmallScreen && onBack && (
+        <FloatingBackButton>
           <IconButton 
-            color="primary" 
-            onClick={onBack} 
-            sx={{ mr: 1 }}
+            onClick={onBack}
+            sx={{
+              backgroundColor: 'background.paper',
+              boxShadow: 3,
+              '&:hover': {
+                backgroundColor: 'background.paper',
+                boxShadow: 6
+              }
+            }}
           >
             <ArrowBackIcon />
           </IconButton>
-        )}
+        </FloatingBackButton>
+      )}
 
+      {/* Header */}
+      <ChatHeader>
         <UserInfoContainer>
-          <UserAvatar 
-            src={activeConversation.participant?.avatar} 
-            alt={activeConversation.participant?.fullName}
-          />
-          <Box>
-            <Typography variant="subtitle1">
-              {activeConversation.participant?.fullName || "Unknown User"}
+          {/* Inline back button cho màn hình vừa (không phải nhỏ) */}
+          {isMobile && !isSmallScreen && onBack && (
+            <IconButton onClick={onBack} sx={{ mr: 1 }}>
+              <ArrowBackIcon />
+            </IconButton>
+          )}
+          <UserAvatar
+            src={activeConversation.participant?.avatar || '/assets/images/avatar_default.webp'}
+            alt={activeConversation.participant?.fullName || 'User'}
+            sx={{
+              backgroundColor: activeConversation.isGroup ? 'primary.main' : 'grey.300',
+              color: activeConversation.isGroup ? 'white' : 'grey.700'
+            }}
+          >
+            {activeConversation.isGroup ? <GroupIcon /> : <PersonIcon />}
+          </UserAvatar>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Typography 
+                variant="subtitle1" 
+                fontWeight="bold"
+                noWrap
+                sx={{ maxWidth: '100%' }}
+              >
+                {activeConversation.participant?.fullName || 'Unknown User'}
+              </Typography>
+              {activeConversation.isGroup && (
+                <Chip
+                  label="Nhóm"
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ 
+                    height: 20, 
+                    fontSize: '0.7rem',
+                    '& .MuiChip-label': { px: 1 }
+                  }}
+                />
+              )}
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              {activeConversation.isGroup 
+                ? `${activeConversation.members?.length || 0} thành viên`
+                : (connected ? 'Online' : 'Offline')
+              }
             </Typography>
           </Box>
+          
+          {/* Info button cho group */}
+          {activeConversation.isGroup && (
+            <IconButton 
+              onClick={() => setSidebarOpen(true)}
+              sx={{ 
+                color: 'text.secondary',
+                '&:hover': { backgroundColor: 'action.hover' }
+              }}
+            >
+              <InfoIcon />
+            </IconButton>
+          )}
         </UserInfoContainer>
       </ChatHeader>
-      
-      {/* Message list */}
-      {loading ? (
-        <LoadingContainer>
-          <CircularProgress />
-        </LoadingContainer>
-      ) : (
-        <MessageList 
-          messages={messages} 
+
+      {/* Messages */}
+      <MessageList 
+        messages={messages} 
+        currentUserId={myChatId}
+        conversationId={activeConversation._id}
+      />
+
+      {/* Input hoặc thông báo nhóm đã giải tán */}
+      <InputContainer>
+        {activeConversation?.groupId?.isDissolved || activeConversation?.isGroupDissolved ? (
+          <Typography variant="body2" color="text.secondary">
+            Nhóm đã bị giải tán. Bạn không thể gửi tin nhắn.
+          </Typography>
+        ) : (
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            disabled={inputDisabled || !connected}
+            sending={sending}
+          />
+        )}
+      </InputContainer>
+
+      {/* Toast */}
+      <Snackbar 
+        open={toastInfo.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseToast} 
+          severity={toastInfo.severity} 
+          sx={{ width: '100%' }}
+        >
+          {toastInfo.message}
+        </Alert>
+      </Snackbar>
+
+      {/* Group Sidebar */}
+      {activeConversation?.isGroup && (
+        <GroupSidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          conversation={activeConversation}
           currentUserId={myChatId}
         />
       )}
-      
-      {/* Chat input */}
-      <InputContainer>
-        <ChatInput 
-          onSendMessage={handleSendMessage}
-          disabled={inputDisabled || !connected}
-          loading={sending}
-        />
-      </InputContainer>
     </ChatBoxContainer>
   );
 };
 
 ChatBox.propTypes = {
   conversation: PropTypes.object,
-  onBack: PropTypes.func
+  onBack: PropTypes.func,
+  currentConversation: PropTypes.object
 };
 
 export default ChatBox; 

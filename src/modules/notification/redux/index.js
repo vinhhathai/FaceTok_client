@@ -1,7 +1,4 @@
-import notificationReducer from './notificationSlice';
+import notificationReducer, { addNotification, setNotifications, markAsRead, clearNotifications, markAsReadNotification, markAllAsReadNotification } from './notificationSlice';
 
-// Export actions
-// export { someAction, anotherAction } from './notificationSlice';
-
-// Export reducer as default
+export { addNotification, setNotifications, markAsRead, clearNotifications, markAsReadNotification, markAllAsReadNotification };
 export default notificationReducer; 

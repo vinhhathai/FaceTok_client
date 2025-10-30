@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, IconButton, useMediaQuery, useTheme, Alert } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { jwtDecode } from 'jwt-decode';
-import { getCookie } from '../../../../shared/utils/cookieUtils';
+import { getCookie } from '@utils/cookieUtils';
 
-import ConversationList from '../../components/ConversationList/ConversationList';
-import ChatBox from '../../components/ChatBox/ChatBox';
-import MessageLayout from '../../../../shared/components/Layout/MessageLayout';
-import useMessageSocket from '../../hooks/useMessageSocket';
-import { setCurrentConversation, clearCurrentConversation } from '../../redux/slices/messageSlice';
-import { fetchConversations } from '../../redux/slices/conversationSlice';
-import { getOrCreateRoom } from '../../api/messageAPI';
+import ConversationList from '@message/components/ConversationList/ConversationList';
+import ChatBox from '@message/components/ChatBox/ChatBox';
+import MessageLayout from '@message/components/Layout/MessageLayout';
+import useMessageSocket from '@message/hooks/useMessageSocket';
+import { fetchConversations, markConversationAsRead } from '@message/redux/slices/conversationSlice';
+import { getOrCreateRoom } from '@message/api/messageAPI';
 import { toast } from 'react-toastify';
 import {
   ChatPageContainer,
@@ -26,22 +25,24 @@ import {
   MobileBackButtonBox
 } from './ChatPage.styles';
 
-const TOKEN_COOKIE_NAME = 'auth_token';
+const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
 
 const ChatPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { conversationId } = useParams();
+  const { conversationId } = useLocation().state || {};
   
   const [showConversations, setShowConversations] = useState(!conversationId || !isMobile);
   const [showChat, setShowChat] = useState(!!conversationId || !isMobile);
   const [loadingRoom, setLoadingRoom] = useState(false);
   const [processingRoomCreation, setProcessingRoomCreation] = useState(false);
   
+  const [currentConversation, setCurrentConversation] = useState(null);
+  
+  // Lấy conversations từ Redux
   const { conversations, loading: conversationsLoading } = useSelector(state => state.conversations);
-  const { currentConversation } = useSelector(state => state.messages);
   
   // Kiểm tra xem ID có phải là ObjectId MongoDB hợp lệ không (24 ký tự hex)
   const isValidMongoId = (id) => {
@@ -49,7 +50,7 @@ const ChatPage = () => {
   };
   
   // Initialize WebSocket connection
-  const { connected } = useMessageSocket();
+  const { connected } = useMessageSocket(currentConversation);
   
   // Get current user ID from token in cookie
   useEffect(() => {
@@ -61,17 +62,15 @@ const ChatPage = () => {
         const userId = decoded.userId;
         if (userId) {
           localStorage.setItem('currentUserId', userId);
-          console.log('Set currentUserId to:', userId);
         } else {
           console.error('Could not find userId in token. Token fields:', 
             Object.keys(decoded));
-          console.log('Token payload:', JSON.stringify(decoded, null, 2).substring(0, 200));
         }
       } catch (error) {
         console.error('Failed to decode token:', error);
       }
     } else {
-      console.warn('No auth token found in cookies');
+      // debug removed
     }
   }, []);
   
@@ -82,12 +81,27 @@ const ChatPage = () => {
     }
   }, [dispatch, conversations.length]);
   
+  // Listen for new messages to refresh conversation list
+  useEffect(() => {
+    const handleNewMessage = () => {
+      // Chỉ refresh khi nhận tin nhắn từ người khác, không refresh khi gửi
+      dispatch(fetchConversations());
+    };
+    
+    // Chỉ listen for message received event, bỏ MESSAGE_SENT_SUCCESS
+    window.addEventListener('facetok_message_received', handleNewMessage);
+    
+    return () => {
+      window.removeEventListener('facetok_message_received', handleNewMessage);
+    };
+  }, [dispatch]);
+  
   // Kiểm tra xem conversationId là userId hoặc roomId
   useEffect(() => {
     const checkOrCreateRoom = async () => {
       if (!conversationId) {
         // Nếu không có conversationId, xóa cuộc trò chuyện hiện tại
-        dispatch(clearCurrentConversation());
+        setCurrentConversation(null);
         
         if (isMobile) {
           setShowConversations(true);
@@ -103,84 +117,85 @@ const ChatPage = () => {
       
       if (existingRoom) {
         // Nếu tìm thấy phòng hiện có, hiển thị nó
-        dispatch(setCurrentConversation(existingRoom));
+        setCurrentConversation(existingRoom);
         
         if (isMobile) {
           setShowConversations(false);
           setShowChat(true);
         }
-      } else {
-        // Nếu không tìm thấy phòng, có thể conversationId là userId
-        // Trước khi gửi, kiểm tra xem ID có hợp lệ không
-        if (!isValidMongoId(conversationId)) {
-          toast.error('ID người dùng không hợp lệ');
+        return;
+      }
+      
+      // Trước khi gửi, kiểm tra xem ID có hợp lệ không
+      if (!isValidMongoId(conversationId)) {
+        toast.error('ID người dùng không hợp lệ');
+        navigate('/messages', {  replace: true });
+        return;
+      }
+      
+      // Ngăn ngừa nhiều cuộc gọi API đồng thời
+      if (processingRoomCreation) {
+        return;
+      }
+      
+      // Đánh dấu đang xử lý
+      setProcessingRoomCreation(true);
+      
+      // Thử tạo hoặc tìm phòng chat với người dùng này
+      try {
+        setLoadingRoom(true);
+        
+        const response = await getOrCreateRoom(conversationId);
+        
+        if (response && response.success && response.data && response.data.room) {
+          // Nếu tạo phòng thành công, chuyển về /messages và truyền roomId qua state
+          navigate('/messages', { replace: true, state: { roomId: response.data.room._id } });
+
+          // Tìm phòng trong danh sách hoặc tải lại danh sách phòng
+          setCurrentConversation(response.data.room);
+          
+          if (isMobile) {
+            setShowConversations(false);
+            setShowChat(true);
+          }
+        } else {
+          // Không thể tạo phòng, chuyển về danh sách trò chuyện
           navigate('/messages', { replace: true });
-          return;
-        }
-        
-        // Ngăn ngừa nhiều cuộc gọi API đồng thời
-        if (processingRoomCreation) {
-          return;
-        }
-        
-        // Đánh dấu đang xử lý
-        setProcessingRoomCreation(true);
-        
-        // Thử tạo hoặc tìm phòng chat với người dùng này
-        try {
-          setLoadingRoom(true);
           
-          const response = await getOrCreateRoom(conversationId);
-          
-          if (response && response.success && response.data && response.data.room) {
-            // Nếu tạo phòng thành công, cập nhật URL và chuyển đến phòng chat
-            navigate(`/messages/${response.data.room._id}`, { replace: true });
-            
-            // Tìm phòng trong danh sách hoặc tải lại danh sách phòng
-            const room = conversations.find(conv => conv._id === response.data.room._id);
-            if (room) {
-              dispatch(setCurrentConversation(room));
-            } else {
-              dispatch(fetchConversations());
-            }
-            
-            if (isMobile) {
-              setShowConversations(false);
-              setShowChat(true);
-            }
-          } else {
-            // Không thể tạo phòng, chuyển về danh sách trò chuyện
-            navigate('/messages', { replace: true });
-            
-            const errorMessage = response?.error?.message || 'Không thể tạo phòng chat với người dùng này.';
-            toast.error(errorMessage);
-          }
-        } catch (error) {
-          console.error('Error creating room:', error);
-          
-          // Hiển thị thông báo lỗi chi tiết hơn nếu có
-          let errorMessage = 'Không thể tạo phòng chat, vui lòng thử lại sau.';
-          if (error.response?.data?.error?.message) {
-            errorMessage = error.response.data.error.message;
-          }
-          
+          const errorMessage = response?.error?.message || 'Không thể tạo phòng chat với người dùng này.';
           toast.error(errorMessage);
-          navigate('/messages', { replace: true });
-        } finally {
-          setLoadingRoom(false);
-          // Đặt lại trạng thái xử lý
-          setProcessingRoomCreation(false);
         }
+      } catch (error) {
+        console.error('Error creating room:', error);
+        
+        // Hiển thị thông báo lỗi chi tiết hơn nếu có
+        let errorMessage = 'Không thể tạo phòng chat, vui lòng thử lại sau.';
+        if (error.response?.data?.error?.message) {
+          errorMessage = error.response.data.error.message;
+        }
+        
+        toast.error(errorMessage);
+        navigate('/messages', { replace: true });
+      } finally {
+        setLoadingRoom(false);
+        // Đặt lại trạng thái xử lý
+        setProcessingRoomCreation(false);
       }
     };
     
     checkOrCreateRoom();
-  }, [conversationId, conversations, conversationsLoading, dispatch, isMobile, navigate, processingRoomCreation]);
+  }, [conversationId, currentConversation, isMobile, navigate, processingRoomCreation, conversations, conversationsLoading]);
   
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
-    navigate(`/messages/${conversation._id}`);
+    // Mark conversation as read khi click
+    if (conversation.unreadCount > 0) {
+      dispatch(markConversationAsRead({ conversationId: conversation._id }));
+    }
     
+    // Ẩn roomId khỏi URL, truyền qua state
+    navigate('/messages', { state: { roomId: conversation._id } });
+
     if (isMobile) {
       setShowConversations(false);
       setShowChat(true);
@@ -265,7 +280,11 @@ const ChatPage = () => {
                 </MobileBackButtonBox>
               )}
               
-              <ChatBox conversation={currentConversation} />
+              <ChatBox 
+                conversation={currentConversation}
+                onBack={handleBackToConversations}
+                currentConversation={currentConversation}
+              />
             </ChatAreaGridItem>
           )}
         </ChatGridContainer>
@@ -274,4 +293,4 @@ const ChatPage = () => {
   );
 };
 
-export default ChatPage; 
+export default ChatPage;

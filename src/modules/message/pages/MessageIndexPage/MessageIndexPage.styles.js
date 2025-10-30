@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { Box, Grid, Paper } from '@mui/material';
+import { Box, Grid, Paper, Fab } from '@mui/material';
 
 // Container chính cho toàn bộ trang
 export const PageContainer = styled(Box)({
@@ -31,7 +31,10 @@ export const ConversationsHeader = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2), 
   borderBottom: '1px solid', 
   borderColor: theme.palette.divider,
-  fontWeight: 'bold'
+  fontWeight: 'bold',
+  [theme.breakpoints.down('md')]: {
+    padding: theme.spacing(1.5),
+  }
 }));
 
 // Box chứa danh sách cuộc hội thoại
@@ -42,19 +45,10 @@ export const ConversationsListContainer = styled(Box)({
 
 // Grid item cho khu vực chat
 export const ChatAreaGridItem = styled(Grid)({
-  height: '100%'
-});
-
-// Box cho nút Back trên mobile
-export const MobileBackBox = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(1), 
-  borderBottom: '1px solid', 
-  borderColor: theme.palette.divider,
+  height: '100%',
   display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  backgroundColor: theme.palette.background.paper
-}));
+  flexDirection: 'column'
+});
 
 // Box cho màn hình chào mừng khi không có cuộc trò chuyện nào được chọn
 export const WelcomeContainer = styled(Box)({
@@ -66,3 +60,40 @@ export const WelcomeContainer = styled(Box)({
   textAlign: 'center',
   padding: 24
 }); 
+
+// Wrapper cố định chiều cao chứa FAB trong danh sách hội thoại
+export const FabContainer = styled(Box)({
+  position: 'relative',
+  height: 80,
+});
+
+// Nút tạo nhóm dùng lại giữa desktop và mobile
+export const CreateGroupFab = styled(Fab)(({ theme }) => ({
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+  background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+  '&:hover': {
+    boxShadow: '0 6px 16px rgba(0, 0, 0, 0.2)',
+    transform: 'scale(1.05)',
+    background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)'
+  },
+  // Responsive tweak
+  [theme.breakpoints.down('sm')]: {
+    width: 48,
+    height: 48,
+    '& .MuiSvgIcon-root': { fontSize: 20 }
+  },
+  [theme.breakpoints.between('sm','md')]: {
+    width: 52,
+    height: 52,
+    '& .MuiSvgIcon-root': { fontSize: 22 }
+  }
+}));
+
+// Wrapper cho FAB nổi ở mobile
+export const MobileFabWrapper = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  bottom: 16,
+  right: 16,
+  zIndex: 1000,
+  display: { xs: 'block', sm: 'block', md: 'none' }
+}));

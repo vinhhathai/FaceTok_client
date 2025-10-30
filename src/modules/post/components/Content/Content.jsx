@@ -4,140 +4,157 @@ import {
   Box, 
   CircularProgress, 
   Typography, 
-  Button 
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from "@mui/material";
-import RefreshIcon from '@mui/icons-material/Refresh';
+
 import { ContentContainer, PostsContainer } from './Content.styles';
-import { fetchTimelinePosts } from "../../redux";
+import Post from '../Post';
+import CreatePost from '../CreatePost';
+import { toast } from 'react-toastify';
+import { fetchTimelinePosts } from '../../redux/slices/postSlice';
+import postAPI from '@post/api/postAPI';
 
-function Content() {
+const Content = () => {
   const dispatch = useDispatch();
-  const { 
-    timelinePosts, 
-    currentPage, 
-    totalPages, 
-    isLoading, 
-    error, 
-    createPostStatus 
-  } = useSelector(state => state.posts);
+  const { timelinePosts, loading, error } = useSelector((state) => state.posts);
+  const currentUser = useSelector((state) => state.auth.user);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState(null);
 
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  // Fetch initial posts when component mounts
   useEffect(() => {
+    // Fetch timeline posts when component mounts
     dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
   }, [dispatch]);
 
-  // Refresh timeline when a new post is created
-  useEffect(() => {
-    if (createPostStatus === 'succeeded') {
+  // Post event handlers
+  const handleLike = async (postId, isLiked) => {
+    try {
+      // Gọi API toggle like (server đã bật route)
+      await postAPI.toggleLike(postId);
+      // Không hiển thị toast cho like/unlike để tránh spam
+    } catch (e) {
+      // Thông báo lỗi và refetch để đồng bộ nếu cần
+      toast.error('Thao tác thích/bỏ thích thất bại');
+      // Có thể refetch để đảm bảo đồng bộ số liệu
+      // dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
+    }
+  };
+
+  // Post component tự gọi API tạo bình luận để cập nhật UI ngay; ở đây chỉ hiển thị thông báo
+  const handleComment = (postId, comment, replyToId = null) => {
+    toast.success(replyToId ? 'Đã trả lời bình luận' : 'Đã bình luận bài viết');
+  };
+
+  const handleShare = async (postId) => {
+    try {
+      const res = await postAPI.toggleShare(postId);
+      const data = res?.data || res; // expect { action: 'shared' | 'exists' }
+      if (data?.action === 'shared') {
+        toast.success('Đã chia sẻ bài viết');
+      }
+      return data;
+    } catch (e) {
+      toast.error('Chia sẻ thất bại');
+      return null;
+    }
+  };
+
+  const handleRequestDelete = (postId) => {
+    setSelectedPostId(postId);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedPostId) return;
+    try {
+      setDeleting(true);
+      await postAPI.deletePost(selectedPostId);
+      setConfirmOpen(false);
+      setSelectedPostId(null);
       dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
-    }
-  }, [createPostStatus, dispatch]);
-
-  // Handle loading more posts
-  const handleLoadMore = async () => {
-    if (currentPage < totalPages && !isLoading && !loadingMore) {
-      setLoadingMore(true);
-      await dispatch(fetchTimelinePosts({ page: currentPage + 1, limit: 10 }));
-      setLoadingMore(false);
+      toast.success('Đã xóa bài viết');
+    } catch (e) {
+      toast.error('Xóa bài viết thất bại');
+    } finally {
+      setDeleting(false);
     }
   };
 
-  // Handle refresh
-  const handleRefresh = () => {
-    dispatch(fetchTimelinePosts({ page: 1, limit: 10 }));
-  };
+  const handleEdit = () => {};
 
-  return (
-    <ContentContainer>
-      {/* CreatePost placeholder - to be implemented */}
-      <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1, mb: 2 }}>
-        <Typography variant="body1">Chia sẻ cảm nghĩ của bạn...</Typography>
-      </Box>
-      
-      {/* Refresh Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-        <Button 
-          variant="outlined" 
-          startIcon={<RefreshIcon />} 
-          onClick={handleRefresh}
-          disabled={isLoading}
-          size="small"
-        >
-          Làm mới
-        </Button>
-      </Box>
-      
-      {/* Error state */}
-      {error && (
-        <Box sx={{ textAlign: 'center', my: 3, p: 2, bgcolor: '#FFF4F4', borderRadius: 1 }}>
-          <Typography color="error" variant="body1">
+  if (loading && timelinePosts.length === 0) {
+    return (
+      <ContentContainer>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      </ContentContainer>
+    );
+  }
+
+  if (error && timelinePosts.length === 0) {
+    return (
+      <ContentContainer>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography color="error" gutterBottom>
             {error}
           </Typography>
           <Button 
             variant="contained" 
-            color="primary" 
-            size="small" 
-            sx={{ mt: 1 }}
-            onClick={handleRefresh}
+            onClick={() => dispatch(fetchTimelinePosts({ page: 1, limit: 10 }))}
           >
             Thử lại
           </Button>
         </Box>
-      )}
-      
-      {/* Loading state (first load) */}
-      {isLoading && timelinePosts.length === 0 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-      
-      {/* Empty state */}
-      {!isLoading && timelinePosts.length === 0 && !error && (
-        <Box sx={{ textAlign: 'center', my: 4, p: 3, bgcolor: '#f8f9fa', borderRadius: 2 }}>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-            Không có bài viết nào để hiển thị.
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Hãy tạo bài viết đầu tiên hoặc kết bạn với người khác!
-          </Typography>
-        </Box>
-      )}
-      
-      {/* Posts list - to be populated */}
+      </ContentContainer>
+    );
+  }
+
+  return (
+    <ContentContainer>
+      <CreatePost />
       <PostsContainer>
-        {/* Posts will be inserted here */}
-        {timelinePosts.map(post => (
-          <div key={post.id}>
-            {/* Post component will go here */}
-          </div>
-        ))}
+        {timelinePosts.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="body1" color="text.secondary">
+              Chưa có bài viết nào. Hãy tạo bài viết đầu tiên!
+            </Typography>
+          </Box>
+        ) : (
+          timelinePosts.map(post => (
+            <Post
+              key={post._id || post.tempId}
+              post={post}
+              onLike={handleLike}
+              onComment={handleComment}
+              onShare={handleShare}
+              onDelete={handleRequestDelete}
+              onEdit={handleEdit}
+            />
+          ))
+        )}
       </PostsContainer>
-      
-      {/* Load more button */}
-      {!isLoading && timelinePosts.length > 0 && currentPage < totalPages && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Button 
-            variant="outlined" 
-            onClick={handleLoadMore} 
-            disabled={loadingMore}
-          >
-            {loadingMore ? 'Đang tải...' : 'Tải thêm'}
+
+      {/* Confirm delete dialog */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Xác nhận xóa bài viết</DialogTitle>
+        <DialogContent>
+          <Typography>Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Hủy</Button>
+          <Button color="error" variant="contained" onClick={handleConfirmDelete} disabled={deleting}>
+            {deleting ? 'Đang xóa...' : 'Xóa'}
           </Button>
-        </Box>
-      )}
-      
-      {/* Loading more indicator */}
-      {loadingMore && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-          <CircularProgress size={24} sx={{ mr: 1 }} />
-          <Typography variant="body2">Đang tải thêm bài viết...</Typography>
-        </Box>
-      )}
+        </DialogActions>
+      </Dialog>
     </ContentContainer>
   );
-}
+};
 
 export default Content; 

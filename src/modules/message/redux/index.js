@@ -1,8 +1,6 @@
 import messageReducer, {
   fetchMessages,
   sendMessage,
-  setCurrentConversation,
-  clearCurrentConversation,
   addReceivedMessage
 } from './slices/messageSlice';
 
@@ -17,8 +15,6 @@ export {
   // Message actions
   fetchMessages,
   sendMessage,
-  setCurrentConversation,
-  clearCurrentConversation,
   addReceivedMessage,
   
   // Conversation actions

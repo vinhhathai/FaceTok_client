@@ -1,69 +1,49 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Typography, CircularProgress, Grid } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { Typography, CircularProgress, Box } from '@mui/material';
+import { toast } from 'react-toastify';
+
+// Import Post component and Redux actions
+import Post from '@post/components/Post';
+import { fetchUserPosts } from '@post/redux/slices/postSlice';
 
 // Styles
 import {
   LoadingContainer,
   EmptyContainer,
-  PostsContainer,
-  PostItem,
-  PostContent,
-  PostTimestamp,
-  PostStats
+  PostsContainer
 } from './UserPosts.styles';
 
-// Default image
-const DEFAULT_AVATAR = '/assets/images/avatar_default.jpg';
-
-// Component này sẽ sử dụng PostCard từ module post
-// Tạm thời chỉ giữ chỗ cho component này
-
 const UserPosts = ({ userId }) => {
-  const [loading, setLoading] = useState(true);
-  const [posts, setPosts] = useState([]);
+  const dispatch = useDispatch();
+  const { userPosts, loading, error } = useSelector((state) => state.posts);
+  const posts = userPosts[userId] || [];
   
   useEffect(() => {
-    // Giả lập việc tải bài viết
-    const timer = setTimeout(() => {
-      // Dữ liệu mẫu
-      setPosts([
-        {
-          id: '1',
-          content: 'Đây là bài viết đầu tiên',
-          createdAt: new Date().toISOString(),
-          likes: 45,
-          comments: 12,
-          user: {
-            id: userId,
-            name: 'Nguyễn Văn A',
-            avatar: DEFAULT_AVATAR,
-          }
-        },
-        {
-          id: '2',
-          content: 'Đây là bài viết thứ hai với nhiều nội dung hơn. Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-          createdAt: new Date(Date.now() - 86400000).toISOString(), // Một ngày trước
-          likes: 23,
-          comments: 5,
-          user: {
-            id: userId,
-            name: 'Nguyễn Văn A',
-            avatar: DEFAULT_AVATAR,
-          }
-        },
-      ]);
-      setLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, [userId]);
+    if (userId) {
+      dispatch(fetchUserPosts({ userId, params: { page: 1, limit: 10 } }));
+    }
+  }, [userId, dispatch]);
   
-  if (loading) {
+  if (loading && posts.length === 0) {
     return (
       <LoadingContainer>
         <CircularProgress />
       </LoadingContainer>
+    );
+  }
+  
+  if (error && posts.length === 0) {
+    return (
+      <EmptyContainer>
+        <Typography variant="body1" color="error" gutterBottom>
+          {error}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Không thể tải bài viết. Vui lòng thử lại.
+        </Typography>
+      </EmptyContainer>
     );
   }
   
@@ -77,32 +57,50 @@ const UserPosts = ({ userId }) => {
     );
   }
   
+  // Post event handlers
+  const handleLike = (postId, isLiked) => {
+    console.log(`Post ${postId} ${isLiked ? 'liked' : 'unliked'}`);
+    toast.success(isLiked ? 'Đã thích bài viết' : 'Đã bỏ thích bài viết');
+  };
+
+  const handleComment = (postId, comment, replyToId = null) => {
+    if (replyToId) {
+      console.log(`Reply to comment ${replyToId} on post ${postId}:`, comment);
+      toast.success('Đã trả lời bình luận');
+    } else {
+      console.log(`Comment on post ${postId}:`, comment);
+      toast.success('Đã bình luận bài viết');
+    }
+  };
+
+  const handleShare = (postId) => {
+    console.log(`Share post ${postId}`);
+    toast.success('Đã chia sẻ bài viết');
+  };
+
+  const handleDelete = (postId) => {
+    console.log(`Delete post ${postId}`);
+    toast.success('Đã xóa bài viết');
+  };
+
+  const handleEdit = (postId) => {
+    console.log(`Edit post ${postId}`);
+    toast.info('Chức năng chỉnh sửa đang được phát triển');
+  };
+
   return (
     <PostsContainer>
-      <Grid container spacing={3} direction="column">
-        {posts.map(post => (
-          <Grid item key={post.id}>
-            <PostItem>
-              <PostContent>
-                <Typography variant="body1">{post.content}</Typography>
-              </PostContent>
-              <PostTimestamp>
-                <Typography variant="caption" color="text.secondary">
-                  Đăng lúc: {new Date(post.createdAt).toLocaleString('vi-VN')}
-                </Typography>
-              </PostTimestamp>
-              <PostStats>
-                <Typography variant="body2" color="text.secondary">
-                  {post.likes} lượt thích
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {post.comments} bình luận
-                </Typography>
-              </PostStats>
-            </PostItem>
-          </Grid>
-        ))}
-      </Grid>
+      {posts.map(post => (
+        <Post
+          key={post._id}
+          post={post}
+          onLike={handleLike}
+          onComment={handleComment}
+          onShare={handleShare}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+        />
+      ))}
     </PostsContainer>
   );
 };

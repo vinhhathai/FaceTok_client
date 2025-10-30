@@ -1,8 +1,9 @@
 /**
  * Error utilities for handling and formatting errors
  */
-import { ERROR_CODES } from '../../common/constants';
-import { ERROR_MESSAGES } from '../../common/constants/errorConstants';
+import { toast } from 'react-toastify';
+import { ERROR_CODES } from '@common/constants';
+import { ERROR_MESSAGES } from '@common/constants/errorConstants';
 
 export { ERROR_CODES };
 

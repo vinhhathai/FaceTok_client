@@ -12,8 +12,8 @@ import {
   useMediaQuery,
   Alert
 } from '@mui/material';
-import { register } from '../../redux';
-import { createError, showSuccess, formatErrorMessage } from '../../../../shared/utils';
+import { register } from '@auth/redux';
+import { createError, showSuccess, formatErrorMessage } from '@utils';
 import styles from './RegisterForm.module.css';
 
 const RegisterForm = () => {

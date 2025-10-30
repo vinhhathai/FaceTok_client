@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { useMediaQuery, useTheme } from '@mui/material';
 import MessageItem from '../MessageItem/MessageItem';
 import {
   MessageListContainer,
@@ -11,8 +12,22 @@ import {
 
 const MessageList = ({ messages, currentUserId }) => {
   const messagesEndRef = useRef(null);
+  const containerRef = useRef(null);
   const previousMessagesLength = useRef(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
+  // Sort messages với useMemo thay vì Redux
+  const sortedMessages = useMemo(() => {
+    if (!messages || messages.length === 0) return [];
+    
+    return [...messages].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateA - dateB; // Oldest first
+    });
+  }, [messages]);
+
   // Scroll to bottom when new messages are added
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -20,17 +35,28 @@ const MessageList = ({ messages, currentUserId }) => {
     }
     
     // Kiểm tra nếu có tin nhắn mới thì mới log
-    if (messages && messages.length !== previousMessagesLength.current) {
-      previousMessagesLength.current = messages.length;
-      console.log(`MessageList: Messages updated, count: ${messages.length}`);
+    if (sortedMessages && sortedMessages.length !== previousMessagesLength.current) {
+      previousMessagesLength.current = sortedMessages.length;
+  
+      
+      // Scroll to bottom khi có tin nhắn mới
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     }
-  }, [messages]);
+  }, [sortedMessages]);
 
-  // Force scroll to bottom on initial load
+  // Force scroll to bottom on initial load with a slight delay to ensure rendering is complete
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
-    }
+    const timer = setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   // Function to properly extract senderId from any message format
@@ -41,6 +67,7 @@ const MessageList = ({ messages, currentUserId }) => {
     if (typeof message.senderId === 'string') {
       return message.senderId;
     } else if (typeof message.senderId === 'object' && message.senderId !== null) {
+      // Backend populate senderId thành object, lấy _id
       return message.senderId._id || message.senderId.id || JSON.stringify(message.senderId);
     } else if (message.sender) {
       if (typeof message.sender === 'string') {
@@ -59,15 +86,20 @@ const MessageList = ({ messages, currentUserId }) => {
     const senderId = getSenderId(message);
     if (!senderId) return false;
     
-    // Either comparing directly or checking if senderId contains userId
-    return String(senderId) === String(userId) || 
-           (typeof senderId === 'string' && senderId.includes(userId));
+
+    
+    // So sánh chính xác với nhiều cách khác nhau
+    const senderIdStr = String(senderId).trim();
+    const userIdStr = String(userId).trim();
+    
+    return senderIdStr === userIdStr;
   };
   
   // Kiểm tra tin nhắn rỗng
   if (!messages || messages.length === 0) {
     return (
-      <MessageListContainer>
+      <MessageListContainer ref={containerRef}>
+        {isMobile && <div style={{ height: '60px', flexShrink: 0, marginBottom: '8px' }} />} {/* Spacer cho mobile */}
         <EmptyMessageContainer>
           Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
         </EmptyMessageContainer>
@@ -76,12 +108,7 @@ const MessageList = ({ messages, currentUserId }) => {
     );
   }
   
-  // Sort messages by timestamp first
-  const sortedMessages = [...messages].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return dateA - dateB; // Ascending (oldest first)
-  });
+
   
   // Group messages by date
   const getMessageDate = (timestamp) => {
@@ -112,8 +139,13 @@ const MessageList = ({ messages, currentUserId }) => {
   // Kiểm tra xem currentUserId có đúng định dạng không
   const cleanCurrentUserId = String(currentUserId).trim();
   
+
+  
   return (
-    <MessageListContainer>
+    <MessageListContainer ref={containerRef}>
+      {/* Thêm phần tử giả có chiều cao cố định trên mobile để tránh bị che bởi header */}
+      {isMobile && <div style={{ height: '60px', flexShrink: 0, marginBottom: '8px' }} />}
+      
       {sortedGroupedMessages.map(([date, dateMessages]) => (
         <DateGroup key={date}>
           <DateHeaderContainer>

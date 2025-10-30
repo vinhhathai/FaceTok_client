@@ -1,21 +1,23 @@
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "../../modules/auth/redux";
-import { postsReducer } from "../../modules/post/redux";
-import postDetailReducer from "../../modules/post/redux";
-import friendReducer from "../../modules/friend/redux";
-import messageReducer from "../../modules/message/redux";
-import notificationReducer from "../../modules/notification/redux";
-import { reducers as userReducers } from "../../modules/user/redux";
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from "@auth/redux";
+import postReducer from "@post/redux/slices/postSlice";
+import postDetailReducer from "@post/redux/slices/postDetailSlice";
+import friendReducer from "@friend/redux";
+import messageReducer from "@message/redux";
+import notificationReducer from "@notification/redux";
+import { reducers as userReducers } from "@user/redux";
+import { administratorAPI } from "../../modules/administrator/api/administratorAPI";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    posts: postsReducer,
+    posts: postReducer,
+    postDetail: postDetailReducer,
     friend: friendReducer,
     ...messageReducer,
     notification: notificationReducer,
-    post: postDetailReducer,
     ...userReducers,
+    [administratorAPI.reducerPath]: administratorAPI.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -25,7 +27,7 @@ export const store = configureStore({
         // Bỏ qua kiểm tra serializable cho các path của state
         ignoredPaths: ['auth.error'],
       },
-    }),
+    }).concat(administratorAPI.middleware),
 });
 
 // Make store available in window object for mock socket access
