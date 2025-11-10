@@ -12,7 +12,7 @@ import { SocketProvider } from "@contexts/SocketContext";
 // Phân tách auth routes và protected routes
 function App() {
   // Xác định đường dẫn đăng nhập
-  const authPaths = ["/login", "/register", "/forgot-password"];
+  const authPaths = ["/login", "/register", "/forgot-password", "/verify-email"];
 
   return (
     <Provider store={store}>

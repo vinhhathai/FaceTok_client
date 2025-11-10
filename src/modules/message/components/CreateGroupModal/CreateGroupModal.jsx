@@ -81,25 +81,7 @@ const CreateGroupModal = ({ open, onClose, onGroupCreated }) => {
           }
         }
 
-        // If no friends found, try mock data for testing
-        if (friendsArray.length === 0) {
-          const timestamp = Date.now();
-          friendsArray = [
-            {
-              id: "friend1_" + timestamp + "_1",
-              fullName: "Bé Vinh Lon Ton Chúa Tể Diệt BUG",
-              email: "vinh@example.com",
-              profilePicture: null,
-            },
-            {
-              id: "friend2_" + timestamp + "_2",
-              fullName: "eeeee",
-              email: "eee@example.com",
-              profilePicture: null,
-            },
-          ];
-        }
-
+        // No mock data in production - show empty state if no friends
         setFriendsList(friendsArray);
         setFilteredFriends(friendsArray);
       } else {
@@ -248,9 +230,7 @@ const CreateGroupModal = ({ open, onClose, onGroupCreated }) => {
             sx={styles.inputSpacingSmall}
             placeholder="Nhập tên hoặc email bạn bè..."
             InputProps={{
-              startAdornment: (
-                <SearchIcon sx={styles.searchIcon} />
-              ),
+              startAdornment: <SearchIcon sx={styles.searchIcon} />,
             }}
           />
 

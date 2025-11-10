@@ -116,11 +116,14 @@ const RegisterForm = () => {
       
       // 4. Handle result
       if (register.fulfilled.match(resultAction)) {
-        // Success: Show message and redirect
-        showSuccess('Đăng ký thành công! Vui lòng đăng nhập.');
+        // Success: Show message and redirect to verify email page
+        showSuccess('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.');
         
-        // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
-        navigate("/login", { replace: true });
+        // Redirect to verify email page with email in state
+        navigate("/verify-email", { 
+          state: { email: formData.email },
+          replace: true 
+        });
       } else if (register.rejected.match(resultAction)) {
         const errorMessage = formatErrorMessage(resultAction.payload);
         setGeneralError(errorMessage);

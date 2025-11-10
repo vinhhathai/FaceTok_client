@@ -10,7 +10,8 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { login } from "../../redux";
-import { createError, showSuccess, showError, formatErrorMessage } from "../../../../shared/utils";
+import { showSuccess, showError, formatErrorMessage } from "../../../../shared/utils";
+import { ERROR_CODES } from "@common/constants";
 import styles from "./LoginForm.module.css";
 
 /**
@@ -95,8 +96,24 @@ const LoginForm = () => {
         }
       } else if (login.rejected.match(resultAction)) {
         console.log('Login rejected:', resultAction.payload);
-        const errorMessage = formatErrorMessage(resultAction.payload)
-        showError(errorMessage);
+        
+        // Check if error is EMAIL_NOT_VERIFIED
+        const errorPayload = resultAction.payload;
+        const errorCode = errorPayload?.code || errorPayload?.error?.code;
+        
+        if (errorCode === ERROR_CODES.AUTH.EMAIL_NOT_VERIFIED) {
+          // Redirect to verify email page with email in state
+          showError('Email chưa được xác thực. Đang chuyển đến trang xác thực...');
+          setTimeout(() => {
+            navigate("/verify-email", { 
+              state: { email: formData.email },
+              replace: true 
+            });
+          }, 1500);
+        } else {
+          const errorMessage = formatErrorMessage(errorPayload);
+          showError(errorMessage);
+        }
       }
     } catch (error) {
       // Unexpected error
@@ -181,6 +198,16 @@ const LoginForm = () => {
           Chưa có tài khoản?{" "}
           <Link component={RouterLink} to="/register" variant="body2">
             Đăng ký ngay
+          </Link>
+        </Typography>
+      </Box>
+      
+      {/* Verify email link */}
+      <Box sx={{ textAlign: "center", mt: 1 }}>
+        <Typography variant="body2" color="text.secondary">
+          Chưa xác thực email?{" "}
+          <Link component={RouterLink} to="/verify-email" variant="body2">
+            Xác thực ngay
           </Link>
         </Typography>
       </Box>

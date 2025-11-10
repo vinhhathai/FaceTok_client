@@ -334,3 +334,67 @@ export const resetPassword = async (data) => {
     );
   }
 };
+
+/**
+ * Verify email with OTP code
+ */
+export const verifyEmail = async ({ email, otp }) => {
+  try {
+    const response = await apiClient.post('/auth/verify-email', { email, otp });
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      const errorData = error.response.data;
+      const message = errorData?.message || errorData?.error?.message || 'Xác thực email thất bại';
+      
+      throw createError(
+        errorData?.error?.code || ERROR_CODES.AUTH.VERIFY_EMAIL_FAILED,
+        message
+      );
+    }
+
+    if (error.request) {
+      throw createError(
+        ERROR_CODES.API.NETWORK_ERROR,
+        'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.'
+      );
+    }
+
+    throw createError(
+      ERROR_CODES.UNKNOWN,
+      'Đã xảy ra lỗi không xác định. Vui lòng thử lại.'
+    );
+  }
+};
+
+/**
+ * Resend verification OTP to email
+ */
+export const resendVerificationOTP = async ({ email }) => {
+  try {
+    const response = await apiClient.post('/auth/resend-verification', { email });
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      const errorData = error.response.data;
+      const message = errorData?.message || errorData?.error?.message || 'Gửi lại mã OTP thất bại';
+      
+      throw createError(
+        errorData?.error?.code || ERROR_CODES.AUTH.RESEND_OTP_FAILED,
+        message
+      );
+    }
+
+    if (error.request) {
+      throw createError(
+        ERROR_CODES.API.NETWORK_ERROR,
+        'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.'
+      );
+    }
+
+    throw createError(
+      ERROR_CODES.UNKNOWN,
+      'Đã xảy ra lỗi không xác định. Vui lòng thử lại.'
+    );
+  }
+};

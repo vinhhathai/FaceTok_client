@@ -1,0 +1,22 @@
+# CloudFront Cache Behavior Configuration
+# Sao chép cấu hình này vào CloudFront Distribution
+
+## Behavior cho index.html (NO CACHE)
+Path Pattern: /
+Cache Policy: CachingDisabled
+Origin Request Policy: AllViewer
+
+## Behavior cho static assets (LONG CACHE)
+Path Pattern: /static/*
+Cache Policy: CachingOptimized (1 year)
+Origin Request Policy: AllViewer
+
+## Behavior cho assets có hash
+Path Pattern: /static/js/*.chunk.js
+Cache Policy: CachingOptimized (1 year)
+
+## Lưu ý:
+1. HTML files KHÔNG được cache (để luôn load phiên bản mới)
+2. JS/CSS files CÓ HASH trong tên → cache lâu được
+3. Sau mỗi deploy PHẢI invalidate CloudFront cache
+4. Invalidation path: /* (clear tất cả)

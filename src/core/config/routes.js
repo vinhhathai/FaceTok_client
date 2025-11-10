@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 
 // Loading component
@@ -20,6 +20,7 @@ const Loading = () => (
 const LoginPage = lazy(() => import('@auth/pages/LoginPage/LoginPage'));
 const RegisterPage = lazy(() => import('@auth/pages/RegisterPage/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('@auth/pages/ForgotPasswordPage/ForgotPasswordPage'));
+const VerifyEmailPage = lazy(() => import('@auth/pages/VerifyEmailPage/VerifyEmailPage'));
 const HomePage = lazy(() => import('@post/pages/HomePage/HomePage'));
 const ProfilePage = lazy(() => import('@user/pages/ProfilePage/ProfilePage'));
 const ChatPage = lazy(() => import('@message/pages/ChatPage/ChatPage'));
@@ -47,6 +48,10 @@ export const routes = [
   {
     path: '/forgot-password',
     element: withSuspense(ForgotPasswordPage),
+  },
+  {
+    path: '/verify-email',
+    element: withSuspense(VerifyEmailPage),
   },
   
   // Public Routes

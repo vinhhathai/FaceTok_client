@@ -42,6 +42,8 @@ export const SocketProvider = ({ children }) => {
     }
 
     // Tạo kết nối socket
+    // SOCKET_URL đã có /message ở cuối (từ process.env.REACT_APP_SOCKET_URL/message)
+    // Socket.IO sẽ tự thêm /socket.io/ làm path
     const socket = io(SOCKET_URL, {
       auth: {
         token: token,
@@ -59,6 +61,8 @@ export const SocketProvider = ({ children }) => {
 
     // Socket connection events
     socket.on("connect", () => {
+      console.log("✅ Socket connected to namespace:", socket.nsp);
+      console.log("Socket ID:", socket.id);
       setConnected(true);
 
       // Xác thực bằng token
