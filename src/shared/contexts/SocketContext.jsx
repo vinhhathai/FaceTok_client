@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { getCookie } from "@utils/cookieUtils";
 import io from "socket.io-client";
 import {
   addReceivedMessage,
@@ -13,12 +12,9 @@ import {
 } from "@message/redux";
 import { useDispatch } from "react-redux";
 import { store } from "@core/config/store";
-import { jwtDecode } from "jwt-decode";
 import { addNotification } from "@notification/redux";
 
 const SOCKET_URL = `${process.env.REACT_APP_SOCKET_URL}/message`;
-
-const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || "auth_token";
 
 // Tạo context
 const SocketContext = createContext(null);
@@ -33,25 +29,15 @@ export const SocketProvider = ({ children }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const token = getCookie(TOKEN_COOKIE_NAME);
-
-    // Nếu không có token thì không kết nối socket
-    if (!token) {
-      // debug removed
-      return;
-    }
-
+    // Socket.IO will automatically send httpOnly cookies with connection
+    // No need to manually pass token - more secure approach
+    
     // Tạo kết nối socket
     // SOCKET_URL đã có /message ở cuối (từ process.env.REACT_APP_SOCKET_URL/message)
     // Socket.IO sẽ tự thêm /socket.io/ làm path
     const socket = io(SOCKET_URL, {
-      auth: {
-        token: token,
-      },
+      withCredentials: true, // Important: Send httpOnly cookies
       transports: ["websocket"],
-      extraHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -61,24 +47,23 @@ export const SocketProvider = ({ children }) => {
 
     // Socket connection events
     socket.on("connect", () => {
-      console.log("✅ Socket connected to namespace:", socket.nsp);
-      console.log("Socket ID:", socket.id);
       setConnected(true);
-
-      // Xác thực bằng token
-      socket.emit("authenticate", { accessToken: token });
-
-      // Lấy userId từ token
-      try {
-        const decoded = jwtDecode(token);
-        const userId = decoded.userId;
-
-        if (userId) {
-          localStorage.setItem("currentUserId", userId);
-        }
-      } catch (error) {
-        console.error("Error decoding token in socket connection:", error);
+      
+      // No need to manually authenticate - backend will auto-authenticate from httpOnly cookie
+      // Backend will emit 'auth_success' or 'auth_error' automatically
+    });
+    
+    // Listen for authentication success from backend
+    socket.on("auth_success", (data) => {
+      if (data.userId) {
+        localStorage.setItem("currentUserId", data.userId);
       }
+    });
+    
+    // Listen for authentication errors
+    socket.on("auth_error", (error) => {
+      console.error("❌ Socket authentication failed:", error);
+      setConnected(false);
     });
 
     socket.on("disconnect", () => {

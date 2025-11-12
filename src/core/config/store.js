@@ -7,6 +7,7 @@ import messageReducer from "@message/redux";
 import notificationReducer from "@notification/redux";
 import { reducers as userReducers } from "@user/redux";
 import { administratorAPI } from "../../modules/administrator/api/administratorAPI";
+import { announcementAPI } from "../../shared/api/announcementAPI";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     notification: notificationReducer,
     ...userReducers,
     [administratorAPI.reducerPath]: administratorAPI.reducer,
+    [announcementAPI.reducerPath]: announcementAPI.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -27,7 +29,7 @@ export const store = configureStore({
         // Bỏ qua kiểm tra serializable cho các path của state
         ignoredPaths: ['auth.error'],
       },
-    }).concat(administratorAPI.middleware),
+    }).concat(administratorAPI.middleware, announcementAPI.middleware),
 });
 
 // Make store available in window object for mock socket access

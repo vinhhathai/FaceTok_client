@@ -8,20 +8,18 @@ import {
   Typography, 
   Link, 
   CircularProgress,
-  useTheme,
-  useMediaQuery,
-  Alert
+  Alert,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import { register } from '@auth/redux';
-import { createError, showSuccess, formatErrorMessage } from '@utils';
+import { showSuccess, formatErrorMessage } from '@utils';
+import TermsAndPrivacyDialog from '../../../../shared/components/TermsAndPrivacyDialog';
 import styles from './RegisterForm.module.css';
 
 const RegisterForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTabletOrMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   // Form state
   const [formData, setFormData] = useState({
@@ -35,6 +33,8 @@ const RegisterForm = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false);
 
   // Form validation
   const validateForm = () => {
@@ -65,6 +65,10 @@ const RegisterForm = () => {
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
     }
+
+    if (!acceptedTerms) {
+      newErrors.terms = 'Bạn phải đồng ý với Điều khoản và Chính sách';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // True nếu không có lỗi
@@ -94,12 +98,35 @@ const RegisterForm = () => {
     }
   };
 
+  // Handle opening terms dialog
+  const handleOpenTermsDialog = (e) => {
+    e.preventDefault();
+    setTermsDialogOpen(true);
+  };
+
+  // Handle accepting terms
+  const handleAcceptTerms = () => {
+    setAcceptedTerms(true);
+    setTermsDialogOpen(false);
+    // Clear terms error if exists
+    if (errors.terms) {
+      setErrors({
+        ...errors,
+        terms: ''
+      });
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // 1. Validate form
     if (!validateForm()) {
+      // If terms not accepted, show dialog
+      if (!acceptedTerms) {
+        setTermsDialogOpen(true);
+      }
       return; // Dừng nếu form không hợp lệ
     }
     
@@ -216,6 +243,54 @@ const RegisterForm = () => {
         helperText={errors.confirmPassword}
         placeholder="Nhập lại mật khẩu"
       />
+
+      {/* Terms and Privacy Checkbox */}
+      <Box sx={{ mt: 2, mb: 1 }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={acceptedTerms}
+              onChange={(e) => {
+                setAcceptedTerms(e.target.checked);
+                if (errors.terms) {
+                  setErrors({ ...errors, terms: '' });
+                }
+              }}
+              sx={{
+                color: errors.terms ? 'error.main' : '#4ECDC4',
+                '&.Mui-checked': {
+                  color: '#4ECDC4',
+                },
+              }}
+            />
+          }
+          label={
+            <Typography variant="body2" sx={{ color: errors.terms ? 'error.main' : 'text.secondary' }}>
+              Tôi đồng ý với{' '}
+              <Link
+                component="button"
+                type="button"
+                onClick={handleOpenTermsDialog}
+                sx={{
+                  color: '#4ECDC4',
+                  textDecoration: 'underline',
+                  '&:hover': {
+                    color: '#3AB0A8',
+                  },
+                }}
+              >
+                Điều khoản Dịch vụ và Chính sách Bảo mật
+              </Link>{' '}
+              của Chaotok
+            </Typography>
+          }
+        />
+        {errors.terms && (
+          <Typography variant="caption" color="error" sx={{ ml: 4, display: 'block', mt: -0.5 }}>
+            {errors.terms}
+          </Typography>
+        )}
+      </Box>
       
       {/* Register button */}
       <Button
@@ -237,6 +312,14 @@ const RegisterForm = () => {
           </Link>
         </Typography>
       </Box>
+
+      {/* Terms and Privacy Dialog */}
+      <TermsAndPrivacyDialog
+        open={termsDialogOpen}
+        onClose={() => setTermsDialogOpen(false)}
+        onAccept={handleAcceptTerms}
+        requireAcceptance={true}
+      />
     </Box>
   );
 };

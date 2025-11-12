@@ -6,6 +6,7 @@ import {
   addPostOptimistically,
   removeOptimisticPost,
 } from "../../redux/slices/postSlice";
+import { getRateLimitMessage, isRateLimitError } from "@utils/rateLimitUtils";
 import {
   Box,
   Card,
@@ -110,6 +111,11 @@ const CreatePost = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const mediaInputRef = useRef(null);
+
+  // Early return if user not loaded yet
+  if (!currentUser) {
+    return null; // or return a loading skeleton
+  }
 
   // Emoji list
   const emojis = [
@@ -342,6 +348,10 @@ const CreatePost = () => {
 
       if (error.code === "NETWORK_ERROR") {
         toast.error("Không thể kết nối đến server. Vui lòng kiểm tra kết nối.");
+      } else if (isRateLimitError(error)) {
+        // Rate limit exceeded - use utility to get Vietnamese message
+        const message = getRateLimitMessage(error.response?.data);
+        toast.error(message, { duration: 6000 });
       } else if (error.response?.status === 401) {
         toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
       } else if (error.response?.status === 400) {
@@ -366,14 +376,14 @@ const CreatePost = () => {
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <Avatar
             src={currentUser.profilePicture}
-            alt={currentUser.fullName}
+            alt={currentUser.fullName || 'User'}
             sx={{ width: 48, height: 48, mr: 2 }}
           >
-            {currentUser.fullName.charAt(0)}
+            {currentUser.fullName?.charAt(0) || 'U'}
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography variant="subtitle1" fontWeight="bold">
-              {currentUser.fullName}
+              {currentUser.fullName || 'User'}
             </Typography>
             <Button
               startIcon={

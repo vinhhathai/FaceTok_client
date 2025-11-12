@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import {
   Typography,
   IconButton,
@@ -68,7 +69,32 @@ const MessageItem = ({ message, isOwn }) => {
   const [isRecalling, setIsRecalling] = useState(false);
   const { socket, connected } = useSocket();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const theme = useTheme();
+
+  // Get sender ID for navigation
+  const getSenderId = () => {
+    if (message.senderId && typeof message.senderId === 'object') {
+      return message.senderId.id || message.senderId._id;
+    }
+    if (message.sender && typeof message.sender === 'object') {
+      return message.sender.id || message.sender._id;
+    }
+    return null;
+  };
+
+  const handleAvatarClick = () => {
+    const senderId = getSenderId();
+    console.log('MessageItem avatar clicked:', {
+      senderId,
+      isOwn,
+      message: message
+    });
+    if (senderId && !isOwn) {
+      console.log('Navigating to profile:', senderId);
+      navigate(`/profile/${senderId}`);
+    }
+  };
 
   // Format the time
   const formatTime = (timestamp) => {
@@ -169,7 +195,18 @@ const MessageItem = ({ message, isOwn }) => {
     return (
       <MessageContainer isOwn={shouldBeOwn}>
         {!shouldBeOwn && (
-          <SenderAvatar src={sender.avatar} alt={sender.fullName || "User"} />
+          <SenderAvatar 
+            src={sender.avatar} 
+            alt={sender.fullName || "User"}
+            onClick={handleAvatarClick}
+            sx={{
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              }
+            }}
+          />
         )}
 
         <MessageContentWrapper>
@@ -217,7 +254,18 @@ const MessageItem = ({ message, isOwn }) => {
         onMouseLeave={() => shouldBeOwn && setShowRecallButton(false)}
       >
         {!shouldBeOwn && (
-          <SenderAvatar src={sender.avatar} alt={sender.fullName || "User"} />
+          <SenderAvatar 
+            src={sender.avatar} 
+            alt={sender.fullName || "User"}
+            onClick={handleAvatarClick}
+            sx={{
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              }
+            }}
+          />
         )}
 
         <MessageContentWrapper>
@@ -229,7 +277,61 @@ const MessageItem = ({ message, isOwn }) => {
               position: "relative",
             }}
           >
-            <Typography variant="body1">{message.content}</Typography>
+            {/* Media content */}
+            {message.media && message.media.length > 0 && (
+              <Box sx={{ mb: message.content ? 1 : 0 }}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: message.media.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+                    gap: 0.5,
+                    maxWidth: message.media.length === 1 ? '400px' : '300px',
+                  }}
+                >
+                  {message.media.map((media, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        position: 'relative',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        backgroundColor: 'rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      {media.type === 'image' ? (
+                        <img
+                          src={media.url}
+                          alt="Attached media"
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            display: 'block',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => window.open(media.url, '_blank')}
+                        />
+                      ) : media.type === 'video' ? (
+                        <video
+                          src={media.url}
+                          controls
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            display: 'block',
+                          }}
+                          poster={media.thumbnail}
+                        />
+                      ) : null}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+            
+            {/* Text content */}
+            {message.content && (
+              <Typography variant="body1">{message.content}</Typography>
+            )}
 
             {/* Recall button - only show for own messages */}
             {shouldBeOwn && showRecallButton && (

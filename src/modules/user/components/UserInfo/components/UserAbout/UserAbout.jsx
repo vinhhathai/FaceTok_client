@@ -108,15 +108,17 @@ const UserAbout = ({ user, displayRelationship, onEditProfile }) => {
 
       <Divider sx={{ my: 1 }} />
 
-      {/* Always display relationship status */}
-      <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
-        <FavoriteIcon fontSize="small" color="error" />
-        <IntroItemText>
-          {formatRelationship(displayRelationship)}
-        </IntroItemText>
-      </IntroItem>
+      {/* Display relationship status if showPersonalInfo is true or if owner */}
+      {(user.showPersonalInfo !== false || isOwner) && (
+        <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
+          <FavoriteIcon fontSize="small" color="error" />
+          <IntroItemText>
+            {formatRelationship(displayRelationship)}
+          </IntroItemText>
+        </IntroItem>
+      )}
 
-      {user.gender && (
+      {(user.showPersonalInfo !== false || isOwner) && user.gender && (
         <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
           <Typography variant="body2" component="span">👤</Typography>
           <IntroItemText>
@@ -125,7 +127,7 @@ const UserAbout = ({ user, displayRelationship, onEditProfile }) => {
         </IntroItem>
       )}
 
-      {user.location && (
+      {(user.showPersonalInfo !== false || isOwner) && user.location && (
         <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
           <LocationOnIcon fontSize="small" />
           <IntroItemText>{user.location}</IntroItemText>
@@ -148,7 +150,7 @@ const UserAbout = ({ user, displayRelationship, onEditProfile }) => {
         </IntroItem>
       )}
 
-      {user.birthday && (
+      {(user.showPersonalInfo !== false || isOwner) && user.birthday && (
         <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
           <Typography variant="body2" component="span">🎂</Typography>
           <IntroItemText>
@@ -157,14 +159,7 @@ const UserAbout = ({ user, displayRelationship, onEditProfile }) => {
         </IntroItem>
       )}
       
-      {(user.createdAt) && (
-        <IntroItem sx={{ ...(isMobile && { mb: 1.5 }) }}>
-          <Typography variant="body2" component="span">📅</Typography>
-          <IntroItemText>
-            Tham gia ngày {new Date(user.createdAt).toLocaleDateString('vi-VN')}
-          </IntroItemText>
-        </IntroItem>
-      )}
+      {/* Removed "Tham gia ngày" as requested */}
 
       <Box sx={{ mt: 2 }}>
         <Typography

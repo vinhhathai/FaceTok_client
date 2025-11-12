@@ -18,19 +18,20 @@ import {
   ListItemAvatar,
   Button,
   CircularProgress,
-  Paper
 } from '@mui/material';
 import {
-  AccountCircle,
-  Settings,
   Logout,
   Person,
   Block,
   PersonRemove,
-  Close
+  Close,
+  BugReport
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@auth/redux/slices/authSlice';
+import ReportModal from '../../ReportModal';
+import { useCreateReportMutation } from '@/modules/administrator/api/administratorAPI';
+import { showSuccess } from '@utils/toastMessageUtils';
 import {
   userAvatarContainerStyle,
   userAvatarStyle,
@@ -47,6 +48,8 @@ const UserMenu = () => {
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [unblocking, setUnblocking] = useState({});
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [createReport] = useCreateReportMutation();
   const open = Boolean(anchorEl);
   
   const handleAvatarClick = (event) => {
@@ -114,6 +117,21 @@ const UserMenu = () => {
     setShowBlockedUsersModal(false);
     setBlockedUsers([]);
     setUnblocking({});
+  };
+
+  const handleReportBug = () => {
+    handleMenuClose();
+    setReportModalOpen(true);
+  };
+
+  const handleSubmitReport = async (reportData) => {
+    try {
+      await createReport(reportData).unwrap();
+      showSuccess('Báo cáo đã được gửi thành công');
+      setReportModalOpen(false);
+    } catch (error) {
+      throw new Error(error?.data?.message || 'Không thể gửi báo cáo');
+    }
   };
   
   // Function to get first letter of name safely
@@ -202,6 +220,13 @@ const UserMenu = () => {
             <Block fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="Danh sách chặn" />
+        </MenuItem>
+        
+        <MenuItem onClick={handleReportBug}>
+          <ListItemIcon>
+            <BugReport fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Báo cáo lỗi" />
         </MenuItem>
         
         <Divider />
@@ -342,6 +367,14 @@ const UserMenu = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Report Modal */}
+      <ReportModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        onSubmit={handleSubmitReport}
+        defaultType="bug"
+      />
     </>
   );
 };

@@ -54,6 +54,27 @@ const PostDetailPage = () => {
     } catch (_) { return null; }
   };
 
+  const handleDelete = async (postId) => {
+    try {
+      await postAPI.deletePost(postId);
+      // Navigate back to home after successful delete
+      navigate('/home');
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+    }
+  };
+
+  const handleEdit = async (postId, updatedData) => {
+    try {
+      const res = await postAPI.updatePost(postId, updatedData);
+      const updated = res?.data || res;
+      // Update local post state
+      setPost(updated);
+    } catch (error) {
+      console.error('Failed to edit post:', error);
+    }
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -82,7 +103,14 @@ const PostDetailPage = () => {
     }
     return (
       <Box sx={{ maxWidth: 720, mx: 'auto', p: 2 }}>
-        <Post post={post} onLike={handleLike} onComment={handleComment} onShare={handleShare} />
+        <Post 
+          post={post} 
+          onLike={handleLike} 
+          onComment={handleComment} 
+          onShare={handleShare}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+        />
       </Box>
     );
   };

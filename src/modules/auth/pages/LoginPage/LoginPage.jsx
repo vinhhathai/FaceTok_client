@@ -2,8 +2,9 @@ import React from 'react';
 import { Box, Container, Grid, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
 import LoginForm from '@auth/components/LoginForm/LoginForm';
 import Logo from '@components/Logo/Logo';
+import TermsPrivacyFooter from '../../../../shared/components/TermsPrivacyFooter';
 import styles from './LoginPage.module.css';
-import { backgroundBoxStyles, desktopLogoBoxStyles, subtitleTypographyStyles } from './LoginPage.styles';
+import { backgroundBoxStyles } from './LoginPage.styles';
 
 const LoginPage = () => {
   const theme = useTheme();
@@ -39,6 +40,9 @@ const LoginPage = () => {
                 </Box>
               
               <LoginForm />
+              
+              {/* Terms & Privacy Footer */}
+              <TermsPrivacyFooter sx={{ mt: 3, mb: 2 }} />
             </Paper>
           </Grid>
         </Grid>

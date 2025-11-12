@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as authAPI from '@auth/api/authAPI';
-import { setCookie, getCookie, removeCookie } from '@utils/cookieUtils';
+import { getCookie, removeCookie } from '@utils/cookieUtils';
 
-// Cookie configuration
-const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
-const TOKEN_COOKIE_EXPIRY = 7; // 7 days
+// Cookie configuration (cookies are httpOnly, set by backend)
+const ACCESS_TOKEN_COOKIE = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
+const REFRESH_TOKEN_COOKIE = process.env.REACT_APP_REFRESH_TOKEN_NAME || 'refresh_token';
 
 /**
  * Tạo action để lấy thông tin người dùng hiện tại
@@ -14,7 +14,7 @@ export const fetchCurrentUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Chỉ gọi API nếu có token
-      const token = getCookie(TOKEN_COOKIE_NAME);
+      const token = getCookie(ACCESS_TOKEN_COOKIE);
       if (!token) {
         return rejectWithValue('No token found');
       }
@@ -23,7 +23,8 @@ export const fetchCurrentUser = createAsyncThunk(
     } catch (error) {
       // Nếu lỗi 401 (Unauthorized), xóa token
       if (error.status === 401) {
-        removeCookie(TOKEN_COOKIE_NAME);
+        removeCookie(ACCESS_TOKEN_COOKIE);
+        removeCookie(REFRESH_TOKEN_COOKIE);
       }
       return rejectWithValue(error);
     }
@@ -38,10 +39,10 @@ export const login = createAsyncThunk(
   async (credentials, { rejectWithValue, dispatch }) => {
     try {
       const data = await authAPI.loginUser(credentials);
-      // Lưu token vào cookie khi đăng nhập thành công
-      if (data.data.accessToken) {
-        setCookie(TOKEN_COOKIE_NAME, data.data.accessToken, { expires: TOKEN_COOKIE_EXPIRY });
-      }
+      
+      // Backend sets httpOnly cookies automatically
+      // Socket.IO will also use httpOnly cookies now (no localStorage needed)
+      
       return data;
     } catch (error) {
       return rejectWithValue(error);
@@ -110,13 +111,40 @@ export const resetPassword = createAsyncThunk(
 );
 
 /**
+ * Load user from localStorage
+ */
+const loadUserFromStorage = () => {
+  try {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (error) {
+    console.error('Error loading user from localStorage:', error);
+    return null;
+  }
+};
+
+/**
+ * Save user to localStorage
+ */
+const saveUserToStorage = (user) => {
+  try {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  } catch (error) {
+    console.error('Error saving user to localStorage:', error);
+  }
+};
+
+/**
  * Trạng thái ban đầu của slice auth
  */
 const initialState = {
-  // Thông tin người dùng và token
-  user: null,
-  token: getCookie(TOKEN_COOKIE_NAME) || null,
-  isAuthenticated: !!getCookie(TOKEN_COOKIE_NAME)
+  // Thông tin người dùng (from localStorage)
+  user: loadUserFromStorage(),
+  // Token status - since tokens are in httpOnly cookies (not accessible from JS),
+  // we determine auth status by whether we have user data
+  isAuthenticated: !!loadUserFromStorage()
 };
 
 /**
@@ -129,13 +157,27 @@ const authSlice = createSlice({
   // Reducers thông thường (không bất đồng bộ)
   reducers: {
     /**
-     * Đăng xuất: xóa thông tin người dùng, token và lỗi
+     * Đăng xuất: xóa thông tin người dùng và cookies
      */
     logout: (state) => {
-      removeCookie(TOKEN_COOKIE_NAME);
+      // Clear all cookies (httpOnly cookies will be cleared by backend)
+      removeCookie(ACCESS_TOKEN_COOKIE);
+      removeCookie(REFRESH_TOKEN_COOKIE);
+      
+      // Clear user from localStorage
+      localStorage.removeItem('user');
+      
       state.user = null;
-      state.token = null;
       state.isAuthenticated = false;
+    },
+    /**
+     * Set user: cập nhật thông tin người dùng (dùng khi reload trang)
+     */
+    setUser: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+      // Save to localStorage
+      saveUserToStorage(action.payload);
     }
   },
   
@@ -146,6 +188,8 @@ const authSlice = createSlice({
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload.data;
         state.isAuthenticated = true;
+        // Save to localStorage
+        saveUserToStorage(action.payload.data);
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         if (action.payload === 'No token found') {
@@ -161,8 +205,10 @@ const authSlice = createSlice({
       // ===== Các trường hợp đăng nhập =====
       .addCase(login.fulfilled, (state, action) => {
         state.user = action.payload.data.user;
-        state.token = action.payload.data.accessToken;
         state.isAuthenticated = true;
+        // Save user to localStorage
+        saveUserToStorage(action.payload.data.user);
+        // Tokens are stored in cookies automatically
       })
       .addCase(login.rejected, (state) => {
         state.isAuthenticated = false;
@@ -191,7 +237,7 @@ const authSlice = createSlice({
 });
 
 // Export actions
-export const { logout } = authSlice.actions;
+export const { logout, setUser } = authSlice.actions;
 
 // Export reducer
 export default authSlice.reducer;

@@ -54,9 +54,8 @@ const Content = () => {
     try {
       const res = await postAPI.toggleShare(postId);
       const data = res?.data || res; // expect { action: 'shared' | 'exists' }
-      if (data?.action === 'shared') {
-        toast.success('Đã chia sẻ bài viết');
-      }
+      // Don't show toast here, let the Post component handle it
+      // to avoid duplicate toast when copying link
       return data;
     } catch (e) {
       toast.error('Chia sẻ thất bại');

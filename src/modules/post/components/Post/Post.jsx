@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { showSuccess } from '@utils/toastMessageUtils';
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import postAPI from "@post/api/postAPI";
 import { updatePost as updatePostInStore } from "../../redux/slices/postSlice";
+import ReportModal from "../../../../shared/components/ReportModal";
+import { useCreateReportMutation } from "../../../administrator/api/administratorAPI";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -38,14 +41,15 @@ import {
   Flag,
   AccessTime,
   Send,
-  EmojiEmotions,
-  AttachFile,
   Reply,
   Favorite as HeartIcon,
   FavoriteBorder as HeartBorderIcon,
   Close,
   NavigateBefore,
   NavigateNext,
+  Public,
+  People,
+  Lock,
 } from "@mui/icons-material";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -70,17 +74,27 @@ import {
 
 const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const currentUser = useSelector((state) => state.auth.user);
+  
+  // Use publicId for post owner comparison (UUID)
+  const currentUserPublicId = currentUser?.publicId || currentUser?.id;
+  const postAuthorPublicId = post.author?.publicId || post.author?.id;
+  const isOwner = currentUserPublicId && postAuthorPublicId && 
+    currentUserPublicId === postAuthorPublicId;
+  
+  // Check if user is admin or staff
+  const isAdmin = currentUser?.role === 'admin';
+  const isStaff = currentUser?.role === 'staff';
+  const canDelete = isOwner || isAdmin || isStaff;
+  
+  // Keep old variables for comment comparisons (using ObjectId)
   const currentUserId = currentUser?._id || currentUser?.id;
   const currentUserIdStr =
     currentUserId && currentUserId.toString
       ? currentUserId.toString()
       : String(currentUserId || "");
-  const isPostOwnerUser =
-    String(post.author?._id || post.author?.id || "") === currentUserIdStr;
-  const isOwner =
-    (post.author?._id && post.author._id === currentUserId) ||
-    (post.author?.id && post.author.id === currentUserId);
+  const isPostOwnerUser = isOwner; // Alias for backward compatibility
   const [liked, setLiked] = useState(post.isLiked || false);
   const [likeCount, setLikeCount] = useState(
     (typeof post.likesCount === "number" ? post.likesCount : post.likeCount) ||
@@ -114,6 +128,8 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const [replyText, setReplyText] = useState("");
   const [likedComments, setLikedComments] = useState(new Set());
   const [mediaViewerOpen, setMediaViewerOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const sharingLockRef = useRef(false); // Strong lock to prevent race conditions
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -125,8 +141,26 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   );
   const [newMediaFiles, setNewMediaFiles] = useState([]);
   const [mediaRemoveKeys, setMediaRemoveKeys] = useState(new Set());
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [createReport] = useCreateReportMutation();
   const getCommentId = (c) =>
     c && (c._id || c.id) ? String(c._id || c.id) : undefined;
+
+  // Get privacy info (icon, label, color)
+  const getPrivacyInfo = (privacy) => {
+    switch (privacy) {
+      case 'public':
+        return { icon: Public, label: 'Công khai', color: 'primary' };
+      case 'friends':
+        return { icon: People, label: 'Bạn bè', color: 'success' };
+      case 'private':
+        return { icon: Lock, label: 'Chỉ mình tôi', color: 'error' };
+      default:
+        return { icon: Public, label: 'Công khai', color: 'primary' };
+    }
+  };
+
+  const privacyInfo = getPrivacyInfo(post.privacy || 'public');
 
   // Debug logs for owner checks
   useEffect(() => {
@@ -135,11 +169,12 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       console.log('[DBG] owner check', {
         postId: post?._id,
         postAuthor: post?.author,
-        currentUserIdStr,
-        isPostOwnerUser,
+        currentUserPublicId,
+        postAuthorPublicId,
+        isOwner,
       });
     } catch (_) {}
-  }, [post?._id, post?.author, currentUserIdStr, isPostOwnerUser]);
+  }, [post?._id, post?.author, currentUserPublicId, postAuthorPublicId, isOwner]);
 
   const handleLike = () => {
     setLiked(!liked);
@@ -173,6 +208,18 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             const items = res?.data || res;
             if (Array.isArray(items)) {
               setComments(items);
+              
+              // Populate liked comments from backend response
+              const liked = new Set();
+              items.forEach(comment => {
+                if (comment.isLiked) {
+                  const commentId = comment._id || comment.id;
+                  if (commentId) {
+                    liked.add(String(commentId));
+                  }
+                }
+              });
+              setLikedComments(liked);
             }
           } finally {
             setLoadingComments(false);
@@ -183,18 +230,48 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   };
 
   const handleShare = async () => {
-    const result = await onShare?.(post._id);
-    if (result && result.action === 'shared') {
-      setShareCount((c) => c + 1);
+    // Strong lock check - prevent race conditions
+    if (sharingLockRef.current) {
+      console.log('Share blocked: already processing');
+      return;
     }
-    // Copy link and notify
+    
+    // Set both state and ref lock immediately
+    sharingLockRef.current = true;
+    setIsSharing(true);
+    
     try {
-      const url = `${window.location.origin}/post/${post._id}`;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(url);
-        showSuccess('Đã sao chép liên kết bài viết');
+      // Call share API - backend will check if user already shared
+      // Returns: { action: 'shared' } - first time (increase count)
+      //          { action: 'exists' } - already shared (just copy link)
+      const result = await onShare?.(post._id);
+      console.log('Share result:', result); // Debug log
+      
+      if (result && result.action === 'shared') {
+        // First time sharing - increase count
+        setShareCount((c) => c + 1);
+        console.log('Share count increased'); // Debug log
+      } else if (result && result.action === 'exists') {
+        console.log('User already shared, just copy link'); // Debug log
       }
-    } catch (_) {}
+      
+      // Copy link to clipboard (always)
+      try {
+        const url = `${window.location.origin}/post/${post._id}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+          showSuccess('Đã sao chép liên kết bài viết');
+        }
+      } catch (error) {
+        console.error('Failed to copy link:', error);
+      }
+    } finally {
+      // Release lock after a small delay to ensure no race condition
+      setTimeout(() => {
+        sharingLockRef.current = false;
+        setIsSharing(false);
+      }, 10000); // 10 seconds cooldown
+    }
   };
 
   const handleMoreClick = (event) => {
@@ -218,6 +295,21 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
     setMediaRemoveKeys(new Set());
     setEditOpen(true);
     handleMoreClose();
+  };
+
+  const handleReportPost = () => {
+    setReportModalOpen(true);
+    handleMoreClose();
+  };
+
+  const handleSubmitReport = async (reportData) => {
+    try {
+      await createReport(reportData).unwrap();
+      showSuccess('Báo cáo đã được gửi thành công');
+      setReportModalOpen(false);
+    } catch (error) {
+      throw new Error(error?.data?.message || 'Không thể gửi báo cáo');
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -311,6 +403,21 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
           limit: 20,
         });
         const items = res?.data || res;
+        
+        // Populate liked replies from backend response
+        if (Array.isArray(items)) {
+          const liked = new Set(likedComments);
+          items.forEach(reply => {
+            if (reply.isLiked) {
+              const replyId = reply._id || reply.id;
+              if (replyId) {
+                liked.add(String(replyId));
+              }
+            }
+          });
+          setLikedComments(liked);
+        }
+        
         setComments((prev) =>
           prev.map((c) =>
             getCommentId(c) === String(commentId)
@@ -365,14 +472,89 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
     }
   };
 
-  const handleLikeComment = (commentId) => {
-    const newLikedComments = new Set(likedComments);
-    if (newLikedComments.has(commentId)) {
-      newLikedComments.delete(commentId);
-    } else {
-      newLikedComments.add(commentId);
+  const handleLikeComment = async (commentId) => {
+    try {
+      // Optimistic update
+      const newLikedComments = new Set(likedComments);
+      const wasLiked = newLikedComments.has(commentId);
+      
+      if (wasLiked) {
+        newLikedComments.delete(commentId);
+      } else {
+        newLikedComments.add(commentId);
+      }
+      setLikedComments(newLikedComments);
+
+      // Update like count optimistically
+      setComments(prevComments => 
+        prevComments.map(comment => {
+          if (comment.id === commentId || comment._id === commentId) {
+            return {
+              ...comment,
+              likesCount: (comment.likesCount || 0) + (wasLiked ? -1 : 1)
+            };
+          }
+          // Also check replies
+          if (comment.replies) {
+            return {
+              ...comment,
+              replies: comment.replies.map(reply => {
+                if (reply.id === commentId || reply._id === commentId) {
+                  return {
+                    ...reply,
+                    likesCount: (reply.likesCount || 0) + (wasLiked ? -1 : 1)
+                  };
+                }
+                return reply;
+              })
+            };
+          }
+          return comment;
+        })
+      );
+
+      // Call API
+      const response = await postAPI.toggleCommentLike(commentId);
+      
+      if (!response.success) {
+        // Rollback on error
+        if (wasLiked) {
+          newLikedComments.add(commentId);
+        } else {
+          newLikedComments.delete(commentId);
+        }
+        setLikedComments(newLikedComments);
+        
+        // Rollback like count
+        setComments(prevComments => 
+          prevComments.map(comment => {
+            if (comment.id === commentId || comment._id === commentId) {
+              return {
+                ...comment,
+                likesCount: (comment.likesCount || 0) + (wasLiked ? 1 : -1)
+              };
+            }
+            if (comment.replies) {
+              return {
+                ...comment,
+                replies: comment.replies.map(reply => {
+                  if (reply.id === commentId || reply._id === commentId) {
+                    return {
+                      ...reply,
+                      likesCount: (reply.likesCount || 0) + (wasLiked ? 1 : -1)
+                    };
+                  }
+                  return reply;
+                })
+              };
+            }
+            return comment;
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling comment like:", error);
     }
-    setLikedComments(newLikedComments);
   };
 
   const handleMediaClick = (index) => {
@@ -582,6 +764,20 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
               <Avatar
                 src={post.author?.profilePicture}
                 alt={post.author?.fullName || "User"}
+                onClick={() => {
+                  const userId = post.author?.publicId || post.author?.id;
+                  if (userId) {
+                    console.log('Post avatar clicked, navigating to:', userId);
+                    navigate(`/profile/${userId}`);
+                  }
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                  }
+                }}
               >
                 {(post.author?.fullName || "U").charAt(0)}
               </Avatar>
@@ -592,7 +788,23 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
               </IconButton>
             }
             title={
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography 
+                variant="subtitle1" 
+                fontWeight="bold"
+                onClick={() => {
+                  const userId = post.author?.publicId || post.author?.id;
+                  if (userId) {
+                    console.log('Post author name clicked, navigating to:', userId);
+                    navigate(`/profile/${userId}`);
+                  }
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  }
+                }}
+              >
                 {post.author?.fullName || "Unknown User"}
               </Typography>
             }
@@ -612,6 +824,18 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                     locale: vi,
                   })}
                   size="small"
+                />
+                <Chip
+                  icon={React.createElement(privacyInfo.icon, { sx: { fontSize: 16 } })}
+                  label={privacyInfo.label}
+                  size="small"
+                  color={privacyInfo.color}
+                  variant="outlined"
+                  sx={{ 
+                    height: '24px',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                  }}
                 />
               </Box>
             }
@@ -748,7 +972,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             <Typography variant="body2">Bình luận</Typography>
           </ActionButton>
 
-          <ActionButton onClick={handleShare}>
+          <ActionButton onClick={handleShare} disabled={isSharing}>
             <ShareButton>
               <Share />
             </ShareButton>
@@ -821,28 +1045,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                             },
                           }}
                         >
-                          <IconButton
-                            size="small"
-                            sx={{
-                              [(theme) => theme.breakpoints.down("sm")]: {
-                                width: 28,
-                                height: 28,
-                              },
-                            }}
-                          >
-                            <EmojiEmotions />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            sx={{
-                              [(theme) => theme.breakpoints.down("sm")]: {
-                                width: 28,
-                                height: 28,
-                              },
-                            }}
-                          >
-                            <AttachFile />
-                          </IconButton>
                           <IconButton
                             size="small"
                             color="primary"
@@ -966,14 +1168,14 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                               alignItems: "center",
                               gap: 0.5,
                               cursor: "pointer",
-                              color: likedComments.has(comment.id)
+                              color: likedComments.has(getCommentId(comment))
                                 ? "error.main"
                                 : "text.secondary",
                               "&:hover": { color: "error.main" },
                             }}
-                            onClick={() => handleLikeComment(comment.id)}
+                            onClick={() => handleLikeComment(getCommentId(comment))}
                           >
-                            {likedComments.has(comment.id) ? (
+                            {likedComments.has(getCommentId(comment)) ? (
                               <HeartIcon
                                 sx={{
                                   fontSize: 16,
@@ -993,7 +1195,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                               />
                             )}
                             <Typography variant="caption">
-                              {comment.likeCount || 0}
+                              {comment.likesCount || comment.likeCount || 0}
                             </Typography>
                           </Box>
 
@@ -1214,20 +1416,20 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                                       alignItems: "center",
                                       gap: 0.5,
                                       cursor: "pointer",
-                                      color: likedComments.has(reply.id)
+                                      color: likedComments.has(getCommentId(reply))
                                         ? "error.main"
                                         : "text.secondary",
                                       "&:hover": { color: "error.main" },
                                     }}
-                                    onClick={() => handleLikeComment(reply.id)}
+                                    onClick={() => handleLikeComment(getCommentId(reply))}
                                   >
-                                    {likedComments.has(reply.id) ? (
+                                    {likedComments.has(getCommentId(reply)) ? (
                                       <HeartIcon sx={{ fontSize: 14 }} />
                                     ) : (
                                       <HeartBorderIcon sx={{ fontSize: 14 }} />
                                     )}
                                     <Typography variant="caption">
-                                      {reply.likeCount || 0}
+                                      {reply.likesCount || reply.likeCount || 0}
                                     </Typography>
                                   </Box>
                                   {(String(reply.author?._id || reply.author?.id || "") === currentUserIdStr || isPostOwnerUser) && (
@@ -1315,12 +1517,25 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
               </MenuItem>
             </>
           ) : (
-            <MenuItem>
-              <ListItemIcon>
-                <Flag fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Báo cáo</ListItemText>
-            </MenuItem>
+            <>
+              <MenuItem onClick={handleReportPost}>
+                <ListItemIcon>
+                  <Flag fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Báo cáo bài viết</ListItemText>
+              </MenuItem>
+              {/* Admin/Staff can delete any post */}
+              {(isAdmin || isStaff) && (
+                <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+                  <ListItemIcon>
+                    <Delete fontSize="small" color="error" />
+                  </ListItemIcon>
+                  <ListItemText>
+                    {isAdmin ? 'Xóa bài viết (Admin)' : 'Xóa bài viết (Staff)'}
+                  </ListItemText>
+                </MenuItem>
+              )}
+            </>
           )}
         </Menu>
       </Card>
@@ -1681,12 +1896,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                     <Box
                       sx={{ display: "flex", gap: 0.5, alignItems: "center" }}
                     >
-                      <IconButton size="small">
-                        <EmojiEmotions />
-                      </IconButton>
-                      <IconButton size="small">
-                        <AttachFile />
-                      </IconButton>
                       <IconButton
                         size="small"
                         color="primary"
@@ -1758,20 +1967,20 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                             alignItems: "center",
                             gap: 0.5,
                             cursor: "pointer",
-                            color: likedComments.has(comment.id)
+                            color: likedComments.has(getCommentId(comment))
                               ? "error.main"
                               : "text.secondary",
                             "&:hover": { color: "error.main" },
                           }}
-                          onClick={() => handleLikeComment(comment.id)}
+                          onClick={() => handleLikeComment(getCommentId(comment))}
                         >
-                          {likedComments.has(comment.id) ? (
+                          {likedComments.has(getCommentId(comment)) ? (
                             <HeartIcon sx={{ fontSize: 16 }} />
                           ) : (
                             <HeartBorderIcon sx={{ fontSize: 16 }} />
                           )}
                           <Typography variant="caption">
-                            {comment.likeCount || 0}
+                            {comment.likesCount || comment.likeCount || 0}
                           </Typography>
                         </Box>
 
@@ -1784,7 +1993,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                             color: "text.secondary",
                             "&:hover": { color: "primary.main" },
                           }}
-                          onClick={() => handleReplyComment(comment.id)}
+                          onClick={() => handleReplyComment(getCommentId(comment))}
                         >
                           <Reply sx={{ fontSize: 16 }} />
                           <Typography variant="caption">Trả lời</Typography>
@@ -1954,20 +2163,20 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                                   alignItems: "center",
                                   gap: 0.5,
                                   cursor: "pointer",
-                                  color: likedComments.has(reply.id)
+                                  color: likedComments.has(getCommentId(reply))
                                     ? "error.main"
                                     : "text.secondary",
                                   "&:hover": { color: "error.main" },
                                 }}
-                                onClick={() => handleLikeComment(reply.id)}
+                                onClick={() => handleLikeComment(getCommentId(reply))}
                               >
-                                {likedComments.has(reply.id) ? (
+                                {likedComments.has(getCommentId(reply)) ? (
                                   <HeartIcon sx={{ fontSize: 14 }} />
                                 ) : (
                                   <HeartBorderIcon sx={{ fontSize: 14 }} />
                                 )}
                                 <Typography variant="caption">
-                                  {reply.likeCount || 0}
+                                  {reply.likesCount || reply.likeCount || 0}
                                 </Typography>
                               </Box>
                             </Box>
@@ -1988,6 +2197,15 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
           </Box>
         </DialogContent>
       </Dialog>
+
+      {/* Report Modal */}
+      <ReportModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        onSubmit={handleSubmitReport}
+        defaultType="post"
+        relatedPostId={post._id}
+      />
     </PostContainer>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, IconButton, useMediaQuery, useTheme, CircularProgress, Snackbar, Alert, Chip } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
@@ -25,6 +26,7 @@ import {
 
 const ChatBox = ({ conversation, onBack, currentConversation }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -52,6 +54,19 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
     state.conversations?.conversations?.find(c => c._id === conversationId)
   );
   const activeConversation = storeConversation || conversation || currentConversation;
+
+  // Handler to navigate to user profile
+  const handleAvatarClick = () => {
+    if (!activeConversation?.isGroup && activeConversation?.participant?.id) {
+      console.log('Navigating to profile:', activeConversation.participant.id);
+      navigate(`/profile/${activeConversation.participant.id}`);
+    } else {
+      console.log('Cannot navigate - Group or no participant ID:', {
+        isGroup: activeConversation?.isGroup,
+        participantId: activeConversation?.participant?.id
+      });
+    }
+  };
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
   useEffect(() => {
     if (conversationId) {
@@ -67,8 +82,8 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   }, [dispatch, conversationId]);
   
   // Xử lý gửi tin nhắn mới với Optimistic UI
-  const handleSendMessage = useCallback(async (content) => {
-    if (!content.trim() || !activeConversation?._id || sending) {
+  const handleSendMessage = useCallback(async (content, files = []) => {
+    if ((!content.trim() && files.length === 0) || !activeConversation?._id || sending) {
       return;
     }
 
@@ -76,8 +91,19 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
     setInputDisabled(true);
 
     try {
-      // Gửi tin nhắn qua REST API
-      await sendMessageToRoom(activeConversation._id, content.trim());
+      // Tạo FormData nếu có files
+      if (files.length > 0) {
+        const formData = new FormData();
+        formData.append('content', content.trim());
+        files.forEach(file => {
+          formData.append('media', file); // Backend expect 'media' field name
+        });
+        
+        await sendMessageToRoom(activeConversation._id, formData, true);
+      } else {
+        // Gửi tin nhắn text thông thường
+        await sendMessageToRoom(activeConversation._id, content.trim());
+      }
       
       // Reset input
       setInputDisabled(false);
@@ -146,9 +172,15 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
           <UserAvatar
             src={activeConversation.participant?.avatar || '/assets/images/avatar_default.webp'}
             alt={activeConversation.participant?.fullName || 'User'}
+            onClick={handleAvatarClick}
             sx={{
               backgroundColor: activeConversation.isGroup ? 'primary.main' : 'grey.300',
-              color: activeConversation.isGroup ? 'white' : 'grey.700'
+              color: activeConversation.isGroup ? 'white' : 'grey.700',
+              cursor: !activeConversation.isGroup ? 'pointer' : 'default',
+              transition: 'transform 0.2s',
+              '&:hover': !activeConversation.isGroup ? {
+                transform: 'scale(1.05)',
+              } : {}
             }}
           >
             {activeConversation.isGroup ? <GroupIcon /> : <PersonIcon />}

@@ -6,6 +6,8 @@ import EmailIcon from '@mui/icons-material/Email';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import HomeIcon from '@mui/icons-material/Home';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
+import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import {
   SidebarContainer,
   SidebarCard,
@@ -28,6 +30,18 @@ const additionalItems = [
   { 
     text: 'Game', 
     icon: <SportsEsportsIcon style={{ color: '#8e44ad' }} />, 
+    to: '#', 
+    comingSoon: true 
+  },
+  { 
+    text: 'Kho nhạc', 
+    icon: <LibraryMusicIcon style={{ color: '#e91e63' }} />, 
+    to: '#', 
+    comingSoon: true 
+  },
+  { 
+    text: 'Cửa hàng vật phẩm', 
+    icon: <StorefrontIcon style={{ color: '#ff9800' }} />, 
     to: '#', 
     comingSoon: true 
   },

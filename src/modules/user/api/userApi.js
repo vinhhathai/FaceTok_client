@@ -6,6 +6,7 @@ const API_ENDPOINTS = {
   UPLOAD_THUMBNAIL: '/user/upload-thumbnail',
   UPLOAD_AVATAR: '/user/upload-avatar',
   UPDATE_FULLNAME: '/user/update-fullname',
+  UPDATE_PRIVACY: '/user/update-privacy',
   SEARCH: '/user/search',
   BLOCK_USER: '/user/block-user',
   UNBLOCK_USER: '/user/unblock-user',
@@ -295,6 +296,21 @@ const userApi = {
       const response = await apiClient.get(API_ENDPOINTS.GET_BLOCKED_USERS);
       return response.data;
     } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Update privacy setting - Show/Hide personal info
+   * @param {boolean} showPersonalInfo - Show or hide personal info
+   * @returns {Promise} - Promise containing the result
+   */
+  updatePrivacySetting: async (showPersonalInfo) => {
+    try {
+      const response = await apiClient.put(API_ENDPOINTS.UPDATE_PRIVACY, { showPersonalInfo });
+      return response.data;
+    } catch (error) {
+      console.error('Update privacy setting error:', error);
       throw error;
     }
   },

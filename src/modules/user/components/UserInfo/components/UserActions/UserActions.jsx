@@ -23,8 +23,11 @@ import MessageIcon from "@mui/icons-material/Message";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
 import BlockIcon from "@mui/icons-material/Block";
+import FlagIcon from "@mui/icons-material/Flag";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import ReportModal from "../../../../../../shared/components/ReportModal";
+import { useCreateReportMutation } from "../../../../../administrator/api/administratorAPI";
+import { showSuccess } from "@utils/toastMessageUtils";
 
 // API functions
 import {
@@ -55,7 +58,6 @@ const UserActions = ({ user, onEditProfile }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   // State
   const [relationshipStatus, setRelationshipStatus] = useState(
@@ -74,6 +76,8 @@ const UserActions = ({ user, onEditProfile }) => {
     message: "",
     severity: "success",
   });
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [createReport] = useCreateReportMutation();
 
   const isOwner = user?.isOwner || false;
 
@@ -305,6 +309,20 @@ const UserActions = ({ user, onEditProfile }) => {
     navigate(`/messages`, { state: { roomId: response.data.room._id } });
   };
 
+  const handleReportUser = () => {
+    setReportModalOpen(true);
+  };
+
+  const handleSubmitReport = async (reportData) => {
+    try {
+      await createReport(reportData).unwrap();
+      showSuccess('Báo cáo đã được gửi thành công');
+      setReportModalOpen(false);
+    } catch (error) {
+      throw new Error(error?.data?.message || 'Không thể gửi báo cáo');
+    }
+  };
+
   // Hiển thị nút phù hợp dựa trên trạng thái mối quan hệ
   const renderFriendButton = () => {
     if (isChecking) {
@@ -453,6 +471,17 @@ const UserActions = ({ user, onEditProfile }) => {
               Nhắn tin
             </MessageButton>
 
+            {/* Report User Button */}
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<FlagIcon />}
+              onClick={handleReportUser}
+              fullWidth
+            >
+              Báo cáo người dùng
+            </Button>
+
             {/* Block/Unblock User Button */}
             {renderBlockButton()}
           </Stack>
@@ -563,6 +592,15 @@ const UserActions = ({ user, onEditProfile }) => {
           {alertInfo.message}
         </Alert>
       </Snackbar>
+
+      {/* Report Modal */}
+      <ReportModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        onSubmit={handleSubmitReport}
+        defaultType="user"
+        relatedUserId={user?.id}
+      />
     </>
   );
 };

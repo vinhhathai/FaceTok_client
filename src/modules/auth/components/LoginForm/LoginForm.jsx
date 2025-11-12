@@ -87,6 +87,9 @@ const LoginForm = () => {
         // Success: Show message and redirect
         showSuccess("Đăng nhập thành công!");
 
+        // Set flag for showing announcements on home page
+        sessionStorage.setItem('isNewLogin', 'true');
+
         // Check user role and redirect accordingly
         const userRole = resultAction.payload.data.user.role;
         if (userRole === 'admin') {

@@ -112,11 +112,27 @@ const UserAbout = ({ user }) => {
     }
   };
 
+  const handlePrivacyUpdate = async (newValue) => {
+    // Refresh user profile to get updated privacy setting
+    if (user?.id) {
+      try {
+        await dispatch(fetchUserProfile(user.id)).unwrap();
+        showSuccess(newValue ? 'Thông tin cá nhân đã được hiển thị' : 'Thông tin cá nhân đã được ẩn');
+      } catch (error) {
+        console.error('Failed to refresh profile:', error);
+      }
+    }
+  };
+
   return (
     <AboutContainer>
       <AboutPaper elevation={1}>
         <AboutHeader bio={user?.bio} />
-        <ProfileInfo user={user} />
+        <ProfileInfo 
+          user={user} 
+          isOwner={isOwner}
+          onPrivacyUpdate={handlePrivacyUpdate}
+        />
 
         {/* Mobile Edit Button - Only show for owner in mobile view */}
         {isOwner && isMobile && (

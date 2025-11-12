@@ -116,11 +116,17 @@ export const getMessages = async (roomId, limit = 20, skip = 0) => {
  * @param {string} content - Nội dung tin nhắn
  * @returns {Promise} Promise trả về thông tin tin nhắn đã gửi
  */
-export const sendMessageToRoom = async (roomId, content) => {
+export const sendMessageToRoom = async (roomId, content, isFormData = false) => {
   try {
-    const response = await apiClient.post(`/message/room/${roomId}/message`, {
-      content,
-    });
+    const config = isFormData ? {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    } : {};
+    
+    const payload = isFormData ? content : { content };
+    
+    const response = await apiClient.post(`/message/room/${roomId}/message`, payload, config);
     return response.data;
   } catch (error) {
     console.error("Error sending message to room:", error);

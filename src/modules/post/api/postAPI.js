@@ -245,6 +245,20 @@ const postAPI = {
     } catch (error) {
       throw error;
     }
+  },
+
+  /**
+   * Like/Unlike comment
+   * @param {string} commentId - ID của comment
+   * @returns {Promise} - Promise chứa kết quả
+   */
+  toggleCommentLike: async (commentId) => {
+    try {
+      const response = await apiClient.post(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}/like/toggle`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 
