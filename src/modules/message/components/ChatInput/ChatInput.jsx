@@ -146,7 +146,7 @@ const ChatInput = ({ onSendMessage, disabled = false, loading = false }) => {
                 <IconButton 
                   disabled={disabled}
                   size="medium"
-                  color={showEmojiPicker ? "primary" : "default"}
+                  color={"primary"}
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 >
                   <EmojiEmotionsOutlinedIcon />

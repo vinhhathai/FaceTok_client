@@ -29,6 +29,38 @@ export const sendMessage = createAsyncThunk(
   }
 );
 
+/**
+ * Normalize message data to ensure consistent format
+ * Especially for senderId which can be string or object
+ */
+const normalizeMessage = (message) => {
+  if (!message) return message;
+  
+  // If message already has isFromCurrentUser flag (from socket), keep it
+  if (typeof message.isFromCurrentUser === 'boolean') {
+    return message;
+  }
+  
+  const currentUserId = localStorage.getItem('currentUserId');
+  
+  // Extract senderId if it's an object (populated from API)
+  let extractedSenderId = null;
+  if (typeof message.senderId === 'string') {
+    extractedSenderId = message.senderId;
+  } else if (typeof message.senderId === 'object' && message.senderId !== null) {
+    extractedSenderId = message.senderId._id || message.senderId.id;
+  }
+  
+  // Determine if message is from current user
+  const isFromCurrentUser = extractedSenderId && currentUserId && 
+    String(extractedSenderId).trim() === String(currentUserId).trim();
+  
+  return {
+    ...message,
+    isFromCurrentUser
+  };
+};
+
 const initialState = {
   messages: []
 };
@@ -38,7 +70,7 @@ const messageSlice = createSlice({
   initialState,
   reducers: {
     addReceivedMessage(state, action) {
-      const newMessage = action.payload;
+      const newMessage = normalizeMessage(action.payload);
       
       // Kiểm tra xem tin nhắn đã tồn tại chưa
       const messageExists = state.messages.some(m => m._id === newMessage._id);
@@ -62,13 +94,15 @@ const messageSlice = createSlice({
     builder
       // fetchMessages
       .addCase(fetchMessages.fulfilled, (state, action) => {
-        state.messages = action.payload.data || [];
+        const messages = action.payload.data || [];
+        // Normalize all messages to ensure consistent format
+        state.messages = messages.map(normalizeMessage);
       })
       
       // sendMessage
       .addCase(sendMessage.fulfilled, (state, action) => {
         // Chỉ thêm tin nhắn nếu chưa tồn tại
-        const newMessage = action.payload.data;
+        const newMessage = normalizeMessage(action.payload.data);
         if (newMessage) {
           const messageExists = state.messages.some(m => m._id === newMessage._id);
           if (!messageExists) {

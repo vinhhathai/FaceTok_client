@@ -19,7 +19,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <ToastContainer />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
             <Routes>
               {/* Auth routes - không cần socket */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Card, CardContent, CardMedia, Typography, Avatar, Button, IconButton, Stack, Tooltip, Chip, Snackbar, Alert } from '@mui/material';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
@@ -26,16 +26,21 @@ const FriendCard = ({
   onActionComplete
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const processingRef = useRef(false); // Prevent race conditions on double-click
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    navigate(`/profile/${friend.id}`);
+    // Prefer publicId (UUID) for public URLs, fallback to id or _id
+    const profileId = friend.publicId || friend.id || friend._id;
+    navigate(`/profile/${profileId}`);
   };
 
   const handleMessage = (e) => {
     e.stopPropagation();
-    navigate(`/messages/${friend.id}`);
+    // Messages use internal ObjectId, not publicId
+    const userId = friend._id || friend.id;
+    navigate(`/messages/${userId}`);
   };
 
   const showToast = (message, severity = 'success') => {
@@ -48,8 +53,10 @@ const FriendCard = ({
 
   const handleAccept = async (e) => {
     e.stopPropagation();
-    if (isLoading || !requestId) return;
+    // Check ref first to prevent race condition
+    if (processingRef.current || isLoading || !requestId) return;
 
+    processingRef.current = true;
     setIsLoading(true);
     try {
       const response = await acceptFriendRequest(requestId);
@@ -64,14 +71,16 @@ const FriendCard = ({
       showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
       console.error("Error accepting friend request:", error);
     } finally {
+      processingRef.current = false;
       setIsLoading(false);
     }
   };
 
   const handleReject = async (e) => {
     e.stopPropagation();
-    if (isLoading || !requestId) return;
+    if (processingRef.current || isLoading || !requestId) return;
 
+    processingRef.current = true;
     setIsLoading(true);
     try {
       const response = await rejectFriendRequest(requestId);
@@ -86,16 +95,18 @@ const FriendCard = ({
       showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
       console.error("Error rejecting friend request:", error);
     } finally {
+      processingRef.current = false;
       setIsLoading(false);
     }
   };
 
   const handleCancel = async (e) => {
     e.stopPropagation();
-    if (isLoading || !requestId) return;
+    if (processingRef.current || isLoading || !requestId) return;
     
     if (!window.confirm("Bạn có chắc muốn hủy lời mời kết bạn?")) return;
 
+    processingRef.current = true;
     setIsLoading(true);
     try {
       const response = await cancelFriendRequest(requestId);
@@ -110,16 +121,18 @@ const FriendCard = ({
       showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
       console.error("Error cancelling friend request:", error);
     } finally {
+      processingRef.current = false;
       setIsLoading(false);
     }
   };
 
   const handleRemoveFriend = async (e) => {
     e.stopPropagation();
-    if (isLoading || !friend.id) return;
+    if (processingRef.current || isLoading || !friend.id) return;
     
     if (!window.confirm("Bạn có chắc muốn hủy kết bạn?")) return;
 
+    processingRef.current = true;
     setIsLoading(true);
     try {
       const response = await removeFriend(friend.id);
@@ -134,6 +147,7 @@ const FriendCard = ({
       showToast("Đã xảy ra lỗi, vui lòng thử lại sau", "error");
       console.error("Error removing friend:", error);
     } finally {
+      processingRef.current = false;
       setIsLoading(false);
     }
   };

@@ -2,7 +2,9 @@ import { styled } from '@mui/material/styles';
 import { Box, Paper, Typography, Avatar } from '@mui/material';
 
 // Container cho một tin nhắn
-export const MessageContainer = styled(Box)(({ isOwn }) => ({
+export const MessageContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isOwn',
+})(({ isOwn }) => ({
   display: 'flex',
   flexDirection: isOwn ? 'row-reverse' : 'row',
   marginBottom: '12px',
@@ -22,7 +24,9 @@ export const MessageContentWrapper = styled(Box)({
 });
 
 // Paper chứa text của tin nhắn
-export const MessageBubble = styled(Paper)(({ theme, isOwn }) => ({
+export const MessageBubble = styled(Paper, {
+  shouldForwardProp: (prop) => prop !== 'isOwn',
+})(({ theme, isOwn }) => ({
   padding: '12px',
   backgroundColor: isOwn ? theme.palette.primary.main : theme.palette.background.paper,
   color: isOwn ? 'white' : theme.palette.text.primary,
@@ -34,7 +38,9 @@ export const MessageBubble = styled(Paper)(({ theme, isOwn }) => ({
 }));
 
 // Container cho thời gian và trạng thái đã đọc
-export const MessageInfoContainer = styled(Box)(({ isOwn }) => ({
+export const MessageInfoContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isOwn',
+})(({ isOwn }) => ({
   display: 'flex',
   marginTop: 4,
   justifyContent: isOwn ? 'flex-end' : 'flex-start',

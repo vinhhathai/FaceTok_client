@@ -59,6 +59,8 @@ const UserPosts = ({ userId }) => {
   
   // Post event handlers
   const handleLike = (postId, isLiked) => {
+    // Skip temporary posts
+    if (postId.startsWith('temp_')) return;
     console.log(`Post ${postId} ${isLiked ? 'liked' : 'unliked'}`);
     toast.success(isLiked ? 'Đã thích bài viết' : 'Đã bỏ thích bài viết');
   };

@@ -31,6 +31,7 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { messages } = useSelector(state => state.messages);
+  const currentUser = useSelector(state => state.auth.user);
   const { emit, connected, toastInfo, handleCloseToast } = useMessageSocket(currentConversation);
   
   // Local states thay vì Redux loading states
@@ -38,10 +39,10 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   const [sending, setSending] = useState(false);
   const [inputDisabled, setInputDisabled] = useState(false);
   
-  // Lấy ID người dùng từ localStorage
-  const myChatId = localStorage.getItem('currentUserId');
+  // Lấy ID người dùng từ Redux auth state
+  const myChatId = currentUser?._id || currentUser?.id;
   
-  // State cho sidebar
+  // myChatId from Redux
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Memoize conversationId để tránh re-render không cần thiết
@@ -55,16 +56,15 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   );
   const activeConversation = storeConversation || conversation || currentConversation;
 
-  // Handler to navigate to user profile
+  // Handler to navigate to user profile - prefer publicId (UUID) over _id (ObjectId)
   const handleAvatarClick = () => {
-    if (!activeConversation?.isGroup && activeConversation?.participant?.id) {
-      console.log('Navigating to profile:', activeConversation.participant.id);
-      navigate(`/profile/${activeConversation.participant.id}`);
-    } else {
-      console.log('Cannot navigate - Group or no participant ID:', {
-        isGroup: activeConversation?.isGroup,
-        participantId: activeConversation?.participant?.id
-      });
+    if (!activeConversation?.isGroup && activeConversation?.participant) {
+      const participant = activeConversation.participant;
+      const profileId = participant.publicId || participant.id || participant._id;
+      
+      if (profileId) {
+        navigate(`/profile/${profileId}`);
+      }
     }
   };
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi

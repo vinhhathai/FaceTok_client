@@ -61,8 +61,10 @@ const UserMenu = () => {
   };
 
   const handleProfileClick = () => {
-    if (user && user.id) {
-      navigate('/profile', { state: { userId: user.id } });
+    if (user) {
+      // Prefer publicId (UUID) for public URLs, fallback to id or _id
+      const profileId = user.publicId || user.id || user._id;
+      navigate(`/profile/${profileId}`);
     } else {
       navigate('/profile');
     }

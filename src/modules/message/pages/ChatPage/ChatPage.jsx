@@ -3,8 +3,6 @@ import { CircularProgress, IconButton, useMediaQuery, useTheme, Alert } from '@m
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { jwtDecode } from 'jwt-decode';
-import { getCookie } from '@utils/cookieUtils';
 
 import ConversationList from '@message/components/ConversationList/ConversationList';
 import ChatBox from '@message/components/ChatBox/ChatBox';
@@ -24,8 +22,6 @@ import {
   ChatAreaGridItem,
   MobileBackButtonBox
 } from './ChatPage.styles';
-
-const TOKEN_COOKIE_NAME = process.env.REACT_APP_AUTH_TOKEN_NAME || 'auth_token';
 
 const ChatPage = () => {
   const theme = useTheme();
@@ -52,27 +48,8 @@ const ChatPage = () => {
   // Initialize WebSocket connection
   const { connected } = useMessageSocket(currentConversation);
   
-  // Get current user ID from token in cookie
-  useEffect(() => {
-    const token = getCookie(TOKEN_COOKIE_NAME);
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        // Trong AuthLoginService, token được tạo với trường userId
-        const userId = decoded.userId;
-        if (userId) {
-          localStorage.setItem('currentUserId', userId);
-        } else {
-          console.error('Could not find userId in token. Token fields:', 
-            Object.keys(decoded));
-        }
-      } catch (error) {
-        console.error('Failed to decode token:', error);
-      }
-    } else {
-      // debug removed
-    }
-  }, []);
+  // currentUserId is now automatically set in localStorage by authSlice when user logs in
+  // No need to decode JWT token here
   
   // Fetch conversations on mount
   useEffect(() => {

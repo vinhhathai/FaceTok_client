@@ -2,7 +2,9 @@ import { styled } from '@mui/material/styles';
 import { ListItem, Typography, Box } from '@mui/material';
 
 // Styled ListItem cho mỗi cuộc hội thoại
-export const StyledConversationItem = styled(ListItem)(({ theme, isActive, isGroup }) => ({
+export const StyledConversationItem = styled(ListItem, {
+  shouldForwardProp: (prop) => prop !== 'isActive' && prop !== 'isGroup',
+})(({ theme, isActive, isGroup }) => ({
   padding: `${theme.spacing(1.5)} ${theme.spacing(2)}`,
   backgroundColor: isActive ? theme.palette.action.selected : 'inherit',
   borderBottom: '1px solid',
@@ -32,7 +34,9 @@ export const ConversationInfo = styled(Box)({
 });
 
 // Typography cho nội dung tin nhắn
-export const MessagePreview = styled(Typography)(({ theme, hasUnread }) => ({
+export const MessagePreview = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'hasUnread',
+})(({ theme, hasUnread }) => ({
   maxWidth: '80%',
   fontWeight: hasUnread ? 500 : 400,
   color: hasUnread ? theme.palette.text.primary : theme.palette.text.secondary

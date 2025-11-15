@@ -20,7 +20,8 @@ function FriendRequests({ requests, loading, error }) {
   };
   
   const navigateToProfile = (userId) => {
-    navigate(`/profile/`, { state: { userId } });
+    // Navigate directly with URL param (backend supports both UUID and ObjectId)
+    navigate(`/profile/${userId}`);
   };
 
   if (loading) {

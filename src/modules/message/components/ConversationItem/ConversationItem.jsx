@@ -97,7 +97,7 @@ const ConversationItem = ({ conversation, isActive, onClick, onDelete }) => {
         primary={
           <ConversationHeader>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle2" noWrap>
+              <Typography variant="subtitle2" component="span" noWrap>
                 {conversation.participant?.fullName || 'Người dùng không xác định'}
               </Typography>
               {conversation.isGroup && (
@@ -114,47 +114,49 @@ const ConversationItem = ({ conversation, isActive, onClick, onDelete }) => {
                 />
               )}
             </Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" component="span" color="text.secondary">
               {formatTime(conversation.updatedAt)}
             </Typography>
           </ConversationHeader>
         }
         secondary={
-          <ConversationInfo>
-            <MessagePreview 
-              variant="body2" 
-              hasUnread={conversation.unreadCount > 0}
-              noWrap
-            >
-              {getMessagePreview(conversation.lastMessage)}
-            </MessagePreview>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {conversation.unreadCount > 0 && (
-                <Badge
-                  badgeContent={conversation.unreadCount}
-                  color="primary"
-                />
-              )}
+          <Box component="div">
+            <ConversationInfo>
+              <MessagePreview 
+                variant="body2" 
+                hasUnread={conversation.unreadCount > 0}
+                noWrap
+              >
+                {getMessagePreview(conversation.lastMessage)}
+              </MessagePreview>
               
-              <DeleteButtonContainer className="delete-button-container">
-                <Tooltip title="Xóa cuộc trò chuyện" placement="top">
-                  <IconButton
-                    size="small"
-                    onClick={handleDeleteClick}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: 'error.main',
-                        color: 'error.contrastText'
-                      }
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </DeleteButtonContainer>
-            </Box>
-          </ConversationInfo>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {conversation.unreadCount > 0 && (
+                  <Badge
+                    badgeContent={conversation.unreadCount}
+                    color="primary"
+                  />
+                )}
+              
+                <DeleteButtonContainer className="delete-button-container">
+                  <Tooltip title="Xóa cuộc trò chuyện" placement="top">
+                    <IconButton
+                      size="small"
+                      onClick={handleDeleteClick}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: 'error.main',
+                          color: 'error.contrastText'
+                        }
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </DeleteButtonContainer>
+              </Box>
+            </ConversationInfo>
+          </Box>
         }
       />
     </StyledConversationItem>

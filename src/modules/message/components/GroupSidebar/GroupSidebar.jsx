@@ -79,7 +79,6 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
 
   // Xác định ownerId từ conversation đã được adapter chuẩn hóa
   const ownerId = conversation?.groupOwnerId || conversation?.participant?.groupOwnerId || conversation?.participant?.ownerId || conversation?.participant?._id;
-
   const isOwner = (currentUserId && ownerId) ? String(currentUserId) === String(ownerId) : false;
   const groupName = conversation?.participant?.fullName || "Group Chat";
   const [localAvatar, setLocalAvatar] = useState(null);
@@ -113,22 +112,33 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
         return;
       }
 
-      // Thử nhiều cách để lấy groupId
-      const groupId =
-        conversation?.groupId?._id ||
-        conversation?.participant?.groupId ||
-        conversation?.groupId || // Thử conversation.groupId trực tiếp
-        conversation?._id; // Fallback: sử dụng conversation._id
-      // debug removed
+      // Debug conversation structure
+      console.log('Conversation data for rename:', {
+        conversationId: conversation?._id,
+        isGroup: conversation?.isGroup,
+        groupId: conversation?.groupId,
+        groupIdType: typeof conversation?.groupId,
+        hasParticipant: !!conversation?.participant
+      });
 
-      if (!groupId) {
-        console.error("Group ID not found");
+      // Check if this is actually a group conversation
+      if (!conversation?.isGroup) {
+        console.error("This is not a group conversation");
         return;
       }
 
-      // Sử dụng Socket.IO để đổi tên nhóm
-      // debug removed
-      const success = renameGroup(groupId, newGroupName.trim());
+      // Use roomId (conversation._id) - backend expects roomId, not groupId
+      const roomId = conversation?._id;
+
+      console.log('Using roomId for rename:', roomId);
+
+      if (!roomId) {
+        console.error("Room ID not found");
+        return;
+      }
+
+      // Call renameGroup with roomId (backend will find group by roomId)
+      const success = await renameGroup(roomId, newGroupName.trim());
       // debug removed
 
       if (success) {
@@ -647,14 +657,18 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
                 <ListItemText
                   primary={member.fullName}
                   secondary={
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        {String(member._id || member.id) === String(ownerId) ? "Chủ nhóm" : "Thành viên"}
-                      </Typography>
-                      {String(member._id || member.id) === String(ownerId) && (
-                        <CrownIcon fontSize="small" color="primary" />
-                      )}
-                      <Typography variant="caption" color="text.secondary">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexDirection: "column", alignItems: "flex-start" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          {String(member._id || member.id) === String(ownerId) ? "Chủ nhóm" : "Thành viên"}
+                        </Typography>
+                        {String(member._id || member.id) === String(ownerId) && (
+                          <CrownIcon fontSize="small" color="primary" />
+                        )}
+                      </Box>
+                      {/* Debug info */}
+                      <Typography variant="caption" color="warning.main">
+                        isOwner: {String(isOwner)} | ownerId: {String(ownerId)} | currentUserId: {String(currentUserId)} | memberId: {String(member._id || member.id)}
                       </Typography>
                     </Box>
                   }

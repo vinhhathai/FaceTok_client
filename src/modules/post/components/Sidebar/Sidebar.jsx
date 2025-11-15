@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ListItemText, Divider, Box } from '@mui/material';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ListItemText, Divider, Box, Chip, CircularProgress } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EmailIcon from '@mui/icons-material/Email';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -30,8 +30,7 @@ const additionalItems = [
   { 
     text: 'Game', 
     icon: <SportsEsportsIcon style={{ color: '#8e44ad' }} />, 
-    to: '#', 
-    comingSoon: true 
+    action: 'game'
   },
   { 
     text: 'Kho nhạc', 
@@ -51,6 +50,25 @@ const additionalItems = [
 ];
 
 function Sidebar() {
+  const navigate = useNavigate();
+  const [isGameLoading, setIsGameLoading] = useState(false);
+
+  const handleGameClick = () => {
+    setIsGameLoading(true);
+    // Add small delay for visual feedback
+    setTimeout(() => {
+      navigate('/games');
+      // Reset loading after navigation (will be unmounted anyway)
+      setIsGameLoading(false);
+    }, 300);
+  };
+
+  const handleItemClick = (item) => {
+    if (item.action === 'game') {
+      handleGameClick();
+    }
+  };
+
   return (
     <SidebarContainer>
       <SidebarCard>
@@ -87,15 +105,21 @@ function Sidebar() {
           {additionalItems.map((item, index) => (
             <ItemListItem key={index} disablePadding>
               <ItemListItemButton 
-                component={item.comingSoon ? 'div' : Link} 
-                to={item.comingSoon ? undefined : item.to}
+                component={item.comingSoon ? 'div' : (item.action ? 'div' : Link)} 
+                to={item.comingSoon || item.action ? undefined : item.to}
+                onClick={item.action ? () => handleItemClick(item) : undefined}
+                disabled={item.action === 'game' && isGameLoading}
                 sx={{ 
-                  cursor: item.comingSoon ? 'default' : 'pointer',
-                  '&:hover': item.comingSoon ? {} : undefined
+                  cursor: (item.comingSoon && !item.action) ? 'default' : 'pointer',
+                  '&:hover': (item.comingSoon && !item.action) ? {} : undefined
                 }}
               >
                 <ItemListItemIcon>
-                  {item.icon}
+                  {item.action === 'game' && isGameLoading ? (
+                    <CircularProgress size={24} sx={{ color: '#8e44ad' }} />
+                  ) : (
+                    item.icon
+                  )}
                 </ItemListItemIcon>
                 <ListItemText 
                   primary={
@@ -113,7 +137,9 @@ function Sidebar() {
                   } 
                   sx={{ opacity: 1 }} 
                 />
-                {!item.comingSoon && <ChevronRightIcon color="action" fontSize="small" />}
+                {!item.comingSoon && !item.action && <ChevronRightIcon color="action" fontSize="small" />}
+                {item.action === 'game' && !isGameLoading && <ChevronRightIcon color="action" fontSize="small" />}
+                {item.action !== 'game' && item.action && <ChevronRightIcon color="action" fontSize="small" />}
               </ItemListItemButton>
             </ItemListItem>
           ))}

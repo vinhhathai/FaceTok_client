@@ -33,6 +33,11 @@ const Content = () => {
 
   // Post event handlers
   const handleLike = async (postId, isLiked) => {
+    // Skip temporary posts (optimistic UI)
+    if (postId.startsWith('temp_')) {
+      return;
+    }
+    
     try {
       // Gọi API toggle like (server đã bật route)
       await postAPI.toggleLike(postId);

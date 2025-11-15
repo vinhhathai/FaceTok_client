@@ -10,6 +10,7 @@ export const fetchConversations = createAsyncThunk(
     try {
       const response = await getUserRooms();
       // debug removed
+      console.log(response);
 
       let rooms = [];
 
@@ -71,8 +72,28 @@ const conversationSlice = createSlice({
         
         // Tăng unreadCount nếu tin nhắn không phải từ user hiện tại
         const currentUserId = localStorage.getItem('currentUserId');
-        const isFromCurrentUser = message.senderId === currentUserId || 
-                                 (message.sender && message.sender._id === currentUserId);
+        
+        // Ưu tiên sử dụng flag isFromCurrentUser nếu có
+        let isFromCurrentUser = false;
+        if (typeof message.isFromCurrentUser === 'boolean') {
+          isFromCurrentUser = message.isFromCurrentUser;
+        } else {
+          // Extract senderId properly
+          let extractedSenderId = null;
+          if (typeof message.senderId === 'string') {
+            extractedSenderId = message.senderId;
+          } else if (typeof message.senderId === 'object' && message.senderId !== null) {
+            extractedSenderId = message.senderId._id || message.senderId.id;
+          } else if (message.sender) {
+            if (typeof message.sender === 'string') {
+              extractedSenderId = message.sender;
+            } else {
+              extractedSenderId = message.sender._id || message.sender.id;
+            }
+          }
+          isFromCurrentUser = extractedSenderId && currentUserId && 
+            String(extractedSenderId).trim() === String(currentUserId).trim();
+        }
         
         const currentUnreadCount = typeof existingConversation.unreadCount === 'number' 
           ? existingConversation.unreadCount 
@@ -152,13 +173,20 @@ const conversationSlice = createSlice({
       // debug removed
 
       if (conversation) {
-        // debug removed
         // Cập nhật tên nhóm
         if (conversation.participant) {
           conversation.participant.fullName = newName;
         }
-        if (conversation.groupId) {
+        
+        // Check if groupId is an object before updating
+        if (conversation.groupId && typeof conversation.groupId === 'object') {
           conversation.groupId.name = newName;
+        } else if (conversation.groupId && typeof conversation.groupId === 'string') {
+          // If groupId is a string, convert to object first
+          conversation.groupId = {
+            _id: conversation.groupId,
+            name: newName
+          };
         }
 
         // Cập nhật thời gian

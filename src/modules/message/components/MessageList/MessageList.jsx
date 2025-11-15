@@ -68,12 +68,12 @@ const MessageList = ({ messages, currentUserId }) => {
       return message.senderId;
     } else if (typeof message.senderId === 'object' && message.senderId !== null) {
       // Backend populate senderId thành object, lấy _id
-      return message.senderId._id || message.senderId.id || JSON.stringify(message.senderId);
+      return message.senderId._id || message.senderId.id;
     } else if (message.sender) {
       if (typeof message.sender === 'string') {
         return message.sender;
       }
-      return message.sender._id || message.sender.id || JSON.stringify(message.sender);
+      return message.sender._id || message.sender.id;
     }
     
     return null;
@@ -83,10 +83,13 @@ const MessageList = ({ messages, currentUserId }) => {
   const isSenderCurrentUser = (message, userId) => {
     if (!message || !userId) return false;
     
+    // Ưu tiên sử dụng flag isFromCurrentUser nếu có (từ normalization)
+    if (typeof message.isFromCurrentUser === 'boolean') {
+      return message.isFromCurrentUser;
+    }
+    
     const senderId = getSenderId(message);
     if (!senderId) return false;
-    
-
     
     // So sánh chính xác với nhiều cách khác nhau
     const senderIdStr = String(senderId).trim();
@@ -95,8 +98,8 @@ const MessageList = ({ messages, currentUserId }) => {
     return senderIdStr === userIdStr;
   };
   
-  // Kiểm tra tin nhắn rỗng
-  if (!messages || messages.length === 0) {
+  // Show empty state if no messages
+  if (!sortedMessages || sortedMessages.length === 0) {
     return (
       <MessageListContainer ref={containerRef}>
         {isMobile && <div style={{ height: '60px', flexShrink: 0, marginBottom: '8px' }} />} {/* Spacer cho mobile */}

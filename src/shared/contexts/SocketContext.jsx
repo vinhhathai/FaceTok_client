@@ -62,7 +62,7 @@ export const SocketProvider = ({ children }) => {
     
     // Listen for authentication errors
     socket.on("auth_error", (error) => {
-      console.error("❌ Socket authentication failed:", error);
+      console.error("Socket authentication failed:", error);
       setConnected(false);
     });
 
@@ -109,9 +109,27 @@ export const SocketProvider = ({ children }) => {
 
       // Kiểm tra xem tin nhắn này có phải từ người dùng hiện tại không
       const currentUserId = localStorage.getItem("currentUserId");
-      const isFromCurrentUser =
-        messageData.senderId === currentUserId ||
-        (messageData.sender && messageData.sender._id === currentUserId);
+      
+      // Extract senderId properly (handle both string and object formats)
+      let extractedSenderId = null;
+      
+      if (typeof messageData.senderId === 'string') {
+        extractedSenderId = messageData.senderId;
+      } else if (typeof messageData.senderId === 'object' && messageData.senderId !== null) {
+        extractedSenderId = messageData.senderId._id || messageData.senderId.id;
+      } else if (messageData.sender) {
+        if (typeof messageData.sender === 'string') {
+          extractedSenderId = messageData.sender;
+        } else {
+          extractedSenderId = messageData.sender._id || messageData.sender.id;
+        }
+      }
+      
+      const isFromCurrentUser = extractedSenderId && currentUserId && 
+        String(extractedSenderId).trim() === String(currentUserId).trim();
+
+      // Add isFromCurrentUser flag to message data for easier rendering
+      messageData.isFromCurrentUser = isFromCurrentUser;
 
       // Nếu tin nhắn từ người dùng hiện tại, kiểm tra xem có tin nhắn optimistic không
       if (isFromCurrentUser) {
@@ -206,6 +224,18 @@ export const SocketProvider = ({ children }) => {
     // Cleanup khi component unmount
     return () => {
       if (socket) {
+        // Remove all event listeners before disconnecting
+        socket.off("connect");
+        socket.off("auth_success");
+        socket.off("auth_error");
+        socket.off("disconnect");
+        socket.off("connect_error");
+        socket.off("message_received");
+        socket.off("message_sent");
+        socket.off("message_error");
+        socket.off("notification_received");
+        
+        // Disconnect socket
         socket.disconnect();
       }
     };

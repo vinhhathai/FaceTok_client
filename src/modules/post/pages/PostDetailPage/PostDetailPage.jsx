@@ -36,6 +36,8 @@ const PostDetailPage = () => {
 
   // Handlers to enable full functionality like on Home
   const handleLike = async (postId, isLiked) => {
+    // Skip temporary posts
+    if (postId.startsWith('temp_')) return;
     try {
       await postAPI.toggleLike(postId);
     } catch (_) {}

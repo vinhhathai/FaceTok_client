@@ -55,8 +55,8 @@ const UserSearchResults = ({
     if (onSelectUser) {
       onSelectUser();
     }
-    // Navigate to user profile
-    navigate(`/profile/`, { state: { userId } });
+    // Navigate to user profile directly with URL param (backend supports both UUID and ObjectId)
+    navigate(`/profile/${userId}`);
   };
 
   // Common styling for the dropdown container

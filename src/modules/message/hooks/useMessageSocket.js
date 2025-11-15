@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "@contexts/SocketContext";
 import { useDispatch } from "react-redux";
-import { updateMessageAsRevoked } from "@message/redux/slices/messageSlice";
+import { updateMessageAsRevoked, addReceivedMessage } from "@message/redux/slices/messageSlice";
 import {
   updateGroupName,
   markGroupDissolved,
@@ -48,7 +48,19 @@ const useMessageSocket = (currentConversation) => {
 
   // Lắng nghe sự kiện message_revoked từ socket
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log('⚠️ useMessageSocket - No socket available');
+      return;
+    }
+
+    // Setting up socket listeners
+
+    const handleMessageReceived = (data) => {
+      // Thêm tin nhắn mới vào Redux store
+      if (data) {
+        dispatch(addReceivedMessage(data));
+      }
+    };
 
     const handleMessageRevoked = (data) => {
       // debug removed
@@ -120,6 +132,7 @@ const useMessageSocket = (currentConversation) => {
       }
     };
 
+    socket.on("message_received", handleMessageReceived);
     socket.on("message_revoked", handleMessageRevoked);
     socket.on("message_error", handleMessageError);
     socket.on("group_renamed", handleGroupRenamed);
@@ -146,6 +159,7 @@ const useMessageSocket = (currentConversation) => {
     });
 
     return () => {
+      socket.off("message_received", handleMessageReceived);
       socket.off("message_revoked", handleMessageRevoked);
       socket.off("message_error", handleMessageError);
       socket.off("group_renamed", handleGroupRenamed);
@@ -173,8 +187,6 @@ const useMessageSocket = (currentConversation) => {
     timerRef.current = setTimeout(() => {
       // Chỉ join room khi roomId thay đổi để tránh gọi nhiều lần
       if (previousRoomIdRef.current !== roomId) {
-        // debug removed
-
         // Nếu đã ở trong phòng khác, rời phòng đó trước
         if (previousRoomIdRef.current) {
           leaveRoom({ roomId: previousRoomIdRef.current });
@@ -254,7 +266,12 @@ const useMessageSocket = (currentConversation) => {
       await apiClient.post("/message/room/leave", { id: roomId });
       return true;
     } catch (e) {
-      showToast(e?.response?.data?.error?.message || "Không thể rời nhóm", "error");
+      let msg = e?.response?.data?.error?.message || "Không thể rời nhóm";
+      // Map backend error to friendly Vietnamese
+      if (msg.includes("Owner cannot leave the group")) {
+        msg = "Bạn là chủ nhóm. Vui lòng chuyển quyền chủ nhóm cho thành viên khác trước khi rời nhóm.";
+      }
+      showToast(msg, "error");
       return false;
     }
   };

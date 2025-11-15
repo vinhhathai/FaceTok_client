@@ -11,7 +11,9 @@ export const RootBox = styled(Box)(({ theme }) => ({
 }));
 
 // Main content area
-export const MainContentBox = styled(Box)(({ theme, isMobile }) => ({
+export const MainContentBox = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isMobile',
+})(({ theme, isMobile }) => ({
   flexGrow: 1,
   paddingTop: 0,
   paddingBottom: 0,
@@ -22,7 +24,9 @@ export const MainContentBox = styled(Box)(({ theme, isMobile }) => ({
 }));
 
 // Container cho nội dung chính
-export const ContentContainer = styled(Container)(({ theme, isMobile }) => ({
+export const ContentContainer = styled(Container, {
+  shouldForwardProp: (prop) => prop !== 'isMobile',
+})(({ theme, isMobile }) => ({
   paddingLeft: isMobile ? 0 : theme.spacing(2),
   paddingRight: isMobile ? 0 : theme.spacing(2),
   height: `calc(100vh - ${theme.spacing(8)})`,
@@ -35,7 +39,9 @@ export const ContentContainer = styled(Container)(({ theme, isMobile }) => ({
 }));
 
 // Paper bao quanh nội dung
-export const ContentPaper = styled(Paper)(({ theme, isMobile }) => ({
+export const ContentPaper = styled(Paper, {
+  shouldForwardProp: (prop) => prop !== 'isMobile',
+})(({ theme, isMobile }) => ({
   height: '100%', 
   overflow: 'hidden',
   borderRadius: isMobile ? 0 : theme.shape.borderRadius * 2

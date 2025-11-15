@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { showSuccess } from '@utils/toastMessageUtils';
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -72,6 +72,13 @@ import {
   MultipleImageGrid,
 } from "./Post.styles";
 
+// Static privacy configuration - moved outside component for performance
+const PRIVACY_CONFIG = {
+  public: { icon: Public, label: 'Công khai', color: 'primary' },
+  friends: { icon: People, label: 'Bạn bè', color: 'success' },
+  private: { icon: Lock, label: 'Chỉ mình tôi', color: 'error' },
+};
+
 const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -130,6 +137,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const [mediaViewerOpen, setMediaViewerOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const sharingLockRef = useRef(false); // Strong lock to prevent race conditions
+  const shareTimeoutRef = useRef(null); // Track timeout for cleanup
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -146,35 +154,24 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const getCommentId = (c) =>
     c && (c._id || c.id) ? String(c._id || c.id) : undefined;
 
-  // Get privacy info (icon, label, color)
-  const getPrivacyInfo = (privacy) => {
-    switch (privacy) {
-      case 'public':
-        return { icon: Public, label: 'Công khai', color: 'primary' };
-      case 'friends':
-        return { icon: People, label: 'Bạn bè', color: 'success' };
-      case 'private':
-        return { icon: Lock, label: 'Chỉ mình tôi', color: 'error' };
-      default:
-        return { icon: Public, label: 'Công khai', color: 'primary' };
-    }
-  };
+  // Get privacy info from static config (optimized - no function recreation)
+  const privacyInfo = PRIVACY_CONFIG[post.privacy] || PRIVACY_CONFIG.public;
 
-  const privacyInfo = getPrivacyInfo(post.privacy || 'public');
-
-  // Debug logs for owner checks
+  // Cleanup timeouts and blob URLs on unmount
   useEffect(() => {
-    try {
-      // eslint-disable-next-line no-console
-      console.log('[DBG] owner check', {
-        postId: post?._id,
-        postAuthor: post?.author,
-        currentUserPublicId,
-        postAuthorPublicId,
-        isOwner,
+    return () => {
+      // Clear share timeout
+      if (shareTimeoutRef.current) {
+        clearTimeout(shareTimeoutRef.current);
+      }
+      // Revoke all blob URLs to prevent memory leaks
+      newMediaFiles.forEach(item => {
+        if (item.url) {
+          URL.revokeObjectURL(item.url);
+        }
       });
-    } catch (_) {}
-  }, [post?._id, post?.author, currentUserPublicId, postAuthorPublicId, isOwner]);
+    };
+  }, [newMediaFiles]);
 
   const handleLike = () => {
     setLiked(!liked);
@@ -232,7 +229,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const handleShare = async () => {
     // Strong lock check - prevent race conditions
     if (sharingLockRef.current) {
-      console.log('Share blocked: already processing');
       return;
     }
     
@@ -245,14 +241,10 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       // Returns: { action: 'shared' } - first time (increase count)
       //          { action: 'exists' } - already shared (just copy link)
       const result = await onShare?.(post._id);
-      console.log('Share result:', result); // Debug log
       
       if (result && result.action === 'shared') {
         // First time sharing - increase count
         setShareCount((c) => c + 1);
-        console.log('Share count increased'); // Debug log
-      } else if (result && result.action === 'exists') {
-        console.log('User already shared, just copy link'); // Debug log
       }
       
       // Copy link to clipboard (always)
@@ -267,10 +259,15 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       }
     } finally {
       // Release lock after a small delay to ensure no race condition
-      setTimeout(() => {
+      // Clear any existing timeout before setting a new one
+      if (shareTimeoutRef.current) {
+        clearTimeout(shareTimeoutRef.current);
+      }
+      shareTimeoutRef.current = setTimeout(() => {
         sharingLockRef.current = false;
         setIsSharing(false);
-      }, 10000); // 10 seconds cooldown
+        shareTimeoutRef.current = null;
+      }, 1000); // 1 second cooldown (reduced from 10s)
     }
   };
 
@@ -767,7 +764,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                 onClick={() => {
                   const userId = post.author?.publicId || post.author?.id;
                   if (userId) {
-                    console.log('Post avatar clicked, navigating to:', userId);
                     navigate(`/profile/${userId}`);
                   }
                 }}
@@ -794,7 +790,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                 onClick={() => {
                   const userId = post.author?.publicId || post.author?.id;
                   if (userId) {
-                    console.log('Post author name clicked, navigating to:', userId);
                     navigate(`/profile/${userId}`);
                   }
                 }}
@@ -2212,7 +2207,8 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
 
 Post.propTypes = {
   post: PropTypes.shape({
-    id: PropTypes.string.isRequired,
+    id: PropTypes.string, // Optional - can be id or _id
+    _id: PropTypes.string, // MongoDB ObjectId
     content: PropTypes.string.isRequired,
     author: PropTypes.shape({
       id: PropTypes.string.isRequired,

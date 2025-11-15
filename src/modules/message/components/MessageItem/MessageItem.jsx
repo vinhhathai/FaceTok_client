@@ -72,26 +72,20 @@ const MessageItem = ({ message, isOwn }) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  // Get sender ID for navigation
+  // Get sender ID for navigation - prefer publicId (UUID) over _id (ObjectId)
   const getSenderId = () => {
     if (message.senderId && typeof message.senderId === 'object') {
-      return message.senderId.id || message.senderId._id;
+      return message.senderId.publicId || message.senderId.id || message.senderId._id;
     }
     if (message.sender && typeof message.sender === 'object') {
-      return message.sender.id || message.sender._id;
+      return message.sender.publicId || message.sender.id || message.sender._id;
     }
     return null;
   };
 
   const handleAvatarClick = () => {
     const senderId = getSenderId();
-    console.log('MessageItem avatar clicked:', {
-      senderId,
-      isOwn,
-      message: message
-    });
     if (senderId && !isOwn) {
-      console.log('Navigating to profile:', senderId);
       navigate(`/profile/${senderId}`);
     }
   };
@@ -104,18 +98,6 @@ const MessageItem = ({ message, isOwn }) => {
 
   // Get sender information from the message
   const getSender = () => {
-    console.log('🔍 MessageItem - message data:', {
-      messageId: message._id,
-      sender: message.sender,
-      senderId: message.senderId,
-      hasSender: !!message.sender,
-      hasSenderId: !!message.senderId,
-      senderProfilePicture: message.sender?.profilePicture,
-      senderAvatar: message.sender?.avatar,
-      senderIdProfilePicture: message.senderId?.profilePicture,
-      senderIdAvatar: message.senderId?.avatar
-    });
-    
     // Ưu tiên senderId (từ API populate) trước sender (từ socket)
     if (message.senderId && typeof message.senderId === 'object') {
       return {
@@ -136,7 +118,16 @@ const MessageItem = ({ message, isOwn }) => {
   const sender = getSender();
 
   // Sử dụng logic chính xác hơn để xác định tin nhắn là của mình
-  const shouldBeOwn = message.isFromCurrentUser === true || isOwn;
+  // Ưu tiên sử dụng flag isFromCurrentUser từ socket/backend nếu có
+  let shouldBeOwn = false;
+  
+  if (typeof message.isFromCurrentUser === 'boolean') {
+    // Ưu tiên flag từ backend/socket
+    shouldBeOwn = message.isFromCurrentUser;
+  } else {
+    // Fallback: sử dụng prop isOwn được truyền từ parent
+    shouldBeOwn = isOwn === true;
+  }
 
   // Kiểm tra xem tin nhắn có phải là optimistic không
   const isOptimistic = message.isOptimistic === true;

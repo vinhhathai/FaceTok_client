@@ -28,6 +28,7 @@ const FriendPage = lazy(() => import('@friend/pages/FriendPage/FriendPage'));
 const MessageIndexPage = lazy(() => import('@message/pages/MessageIndexPage/MessageIndexPage'));
 const PostDetailPage = lazy(() => import('@post/pages/PostDetailPage/PostDetailPage'));
 const AdministratorPage = lazy(() => import('../../modules/administrator/pages/AdministratorPage/AdministratorPage'));
+const GamesPage = lazy(() => import('../../modules/games/GamesPage'));
 
 const withSuspense = (Component) => (
   <Suspense fallback={<Loading />}>
@@ -78,6 +79,12 @@ export const routes = [
   {
     path: '/friends',
     element: withSuspense(FriendPage),
+  },
+  
+  // Games Routes
+  {
+    path: '/games',
+    element: withSuspense(GamesPage),
   },
   
   // Message Routes

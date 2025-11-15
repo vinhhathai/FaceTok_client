@@ -95,11 +95,13 @@ function FriendSearch() {
   };
 
   const handleMessageFriend = (friendId) => {
-    navigate(`/messages/`, { state: { friendId } });
+    // Messages use internal ObjectId
+    navigate(`/messages/${friendId}`);
   };
 
   const navigateToProfile = (userId) => {
-    navigate(`/profile/`, { state: { userId } });
+    // Navigate directly with URL param (backend supports both UUID and ObjectId)
+    navigate(`/profile/${userId}`);
   };
 
   return (
