@@ -62,9 +62,8 @@ const UserMenu = () => {
 
   const handleProfileClick = () => {
     if (user) {
-      // Prefer publicId (UUID) for public URLs, fallback to id or _id
-      const profileId = user.publicId || user.id || user._id;
-      navigate(`/profile/${profileId}`);
+      const profileId = user._id || user.id;
+      navigate('/profile', { state: { userId: profileId } });
     } else {
       navigate('/profile');
     }
@@ -89,7 +88,13 @@ const UserMenu = () => {
       const response = await userApi.getBlockedUsers();
       
       if (response.success && response.data) {
-        setBlockedUsers(response.data.blockedUsers || []);
+        const users = (response.data.blockedUsers || []).map((u) => ({
+          id: typeof u === 'string' ? u : (u?._id || u?.id || ''),
+          fullName: typeof u === 'string' ? '' : (u?.fullName || ''),
+          email: typeof u === 'string' ? '' : (u?.email || ''),
+          profilePicture: typeof u === 'string' ? '' : (u?.profilePicture || ''),
+        }));
+        setBlockedUsers(users);
       }
     } catch (error) {
       console.error('Error fetching blocked users:', error);
@@ -101,12 +106,10 @@ const UserMenu = () => {
   const handleUnblockUser = async (userId) => {
     try {
       setUnblocking(prev => ({ ...prev, [userId]: true }));
-      
       const response = await userApi.unblockUser(userId);
       
       if (response.success) {
-        // Remove user from blocked list
-        setBlockedUsers(prev => prev.filter(user => user._id !== userId));
+        setBlockedUsers(prev => prev.filter(user => user.id !== userId));
       }
     } catch (error) {
       console.error('Error unblocking user:', error);
@@ -310,7 +313,7 @@ const UserMenu = () => {
             <List sx={{ p: 0 }}>
               {blockedUsers.map((user, index) => (
                 <ListItem 
-                  key={user._id} 
+                  key={user.id} 
                   sx={{
                     px: 3,
                     py: 2,
@@ -341,7 +344,7 @@ const UserMenu = () => {
                     }
                     sx={{ mr: 2 }}
                   />
-                  {unblocking[user._id] ? (
+                  {unblocking[user.id] ? (
                     <CircularProgress size={24} />
                   ) : (
                     <Button
@@ -349,7 +352,7 @@ const UserMenu = () => {
                       color="success"
                       size="small"
                       startIcon={<PersonRemove />}
-                      onClick={() => handleUnblockUser(user._id)}
+                      onClick={() => handleUnblockUser(user.id)}
                       sx={{
                         borderRadius: 2,
                         textTransform: 'none',
@@ -381,4 +384,4 @@ const UserMenu = () => {
   );
 };
 
-export default UserMenu; 
+export default UserMenu;

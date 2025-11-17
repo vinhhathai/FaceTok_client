@@ -55,8 +55,8 @@ const UserSearchResults = ({
     if (onSelectUser) {
       onSelectUser();
     }
-    // Navigate to user profile directly with URL param (backend supports both UUID and ObjectId)
-    navigate(`/profile/${userId}`);
+    // Navigate to user profile using ObjectId-only identifier
+    navigate('/profile', { state: { userId } });
   };
 
   // Common styling for the dropdown container
@@ -130,10 +130,10 @@ const UserSearchResults = ({
         {/* User list */}
         <List sx={{ p: 0 }} ref={scrollRef}>
           {users.map((user, index) => (
-            <React.Fragment key={user.id}>
+            <React.Fragment key={user._id || user.id}>
               <ListItem 
                 button 
-                onClick={() => handleUserClick(user.id)}
+                onClick={() => handleUserClick(String(user?._id || user?.id))}
                 sx={{
                   py: 1.5,
                   '&:hover': {
@@ -200,4 +200,4 @@ const UserSearchResults = ({
   return null;
 };
 
-export default UserSearchResults; 
+export default UserSearchResults;

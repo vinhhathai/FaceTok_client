@@ -101,7 +101,7 @@ function FriendList({ friends, loading, error }) {
   const navigateToProfile = (friendId) => {
     // Navigate directly with URL param instead of state
     // FriendId could be publicId or _id, backend will handle both
-    navigate(`/profile/${friendId}`);
+    navigate('/profile', { state: { userId: friendId } });
   };
 
   if (loading) {
@@ -133,7 +133,7 @@ function FriendList({ friends, loading, error }) {
       <FriendListContainer>
         <List>
           {friends.map((friend) => {
-            const friendId = friend.id || friend._id;
+            const friendId = String(friend?._id || friend?.id);
 
             return (
               <FriendCard

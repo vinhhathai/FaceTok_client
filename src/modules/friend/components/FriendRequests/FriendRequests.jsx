@@ -6,22 +6,49 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { acceptRequest, rejectRequest } from '@friend/redux';
 import { useNavigate } from 'react-router-dom';
 import { RequestContainer, RequestCard, RequestActionButton, RequestActionButtons } from './FriendRequests.styles';
+import { handleApiError, showSuccess } from '@utils/toastMessageUtils';
 
 function FriendRequests({ requests, loading, error }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleAcceptRequest = (requestId) => {
-    dispatch(acceptRequest(requestId));
+  const handleAcceptRequest = async (requestId) => {
+    try {
+      const resultAction = await dispatch(acceptRequest(requestId));
+      const data = resultAction.payload;
+      if (acceptRequest.fulfilled.match(resultAction)) {
+        showSuccess('Đã chấp nhận lời mời kết bạn');
+      } else {
+        handleApiError({
+          message: data?.message || 'Không thể chấp nhận lời mời',
+          status: data?.status,
+        });
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
   };
 
-  const handleRejectRequest = (requestId) => {
-    dispatch(rejectRequest(requestId));
+  const handleRejectRequest = async (requestId) => {
+    try {
+      const resultAction = await dispatch(rejectRequest(requestId));
+      const data = resultAction.payload;
+      if (rejectRequest.fulfilled.match(resultAction)) {
+        showSuccess('Đã từ chối lời mời kết bạn');
+      } else {
+        handleApiError({
+          message: data?.message || 'Không thể từ chối lời mời',
+          status: data?.status,
+        });
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
   };
   
   const navigateToProfile = (userId) => {
-    // Navigate directly with URL param (backend supports both UUID and ObjectId)
-    navigate(`/profile/${userId}`);
+    // Navigate with ObjectId
+    navigate('/profile', { state: { userId } });
   };
 
   if (loading) {
@@ -59,7 +86,7 @@ function FriendRequests({ requests, loading, error }) {
             onClick={(e) => {
               // Only navigate if the click was not on one of the action buttons
               if (!e.defaultPrevented) {
-                navigateToProfile(request.sender.id);
+                navigateToProfile(String(request?.sender?.id || request?.sender?._id));
               }
             }}
           >
@@ -110,4 +137,4 @@ function FriendRequests({ requests, loading, error }) {
   );
 }
 
-export default FriendRequests; 
+export default FriendRequests;

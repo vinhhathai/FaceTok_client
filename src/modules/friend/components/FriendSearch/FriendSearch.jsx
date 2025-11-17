@@ -95,13 +95,13 @@ function FriendSearch() {
   };
 
   const handleMessageFriend = (friendId) => {
-    // Messages use internal ObjectId
+    // Messages use ObjectId
     navigate(`/messages/${friendId}`);
   };
 
   const navigateToProfile = (userId) => {
-    // Navigate directly with URL param (backend supports both UUID and ObjectId)
-    navigate(`/profile/${userId}`);
+    // Navigate with ObjectId-only identifier
+    navigate('/profile', { state: { userId: String(userId) } });
   };
 
   return (
@@ -145,7 +145,7 @@ function FriendSearch() {
                 onClick={(e) => {
                   // Only navigate if the click was not on the button
                   if (!e.defaultPrevented) {
-                    navigateToProfile(friend.id || friend._id);
+                    navigateToProfile(friend?.id || friend?._id);
                   }
                 }}
               >
@@ -209,4 +209,4 @@ function FriendSearch() {
   );
 }
 
-export default FriendSearch; 
+export default FriendSearch;

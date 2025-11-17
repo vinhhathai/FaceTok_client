@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Typography,
+  Typography
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useMediaQuery } from "@mui/material";
@@ -77,7 +77,8 @@ const UserActions = ({ user, onEditProfile }) => {
     severity: "success",
   });
   const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [createReport] = useCreateReportMutation();
+const [confirmUnfriendOpen, setConfirmUnfriendOpen] = useState(false);
+const [createReport] = useCreateReportMutation();
 
   const isOwner = user?.isOwner || false;
 
@@ -123,9 +124,14 @@ const UserActions = ({ user, onEditProfile }) => {
 
       if (response.success && response.data) {
         const blockedUsers = response.data.blockedUsers || [];
-        const isUserBlocked = blockedUsers.some(
-          (blockedUser) => blockedUser._id === userId || blockedUser === userId
-        );
+        // So sánh theo ObjectId (server trả về id = ObjectId)
+        const targetId = user?.id || user?._id || null;
+        const isUserBlocked = blockedUsers.some((blockedUser) => {
+          const blockedId = typeof blockedUser === "string" 
+            ? blockedUser 
+            : (blockedUser?.id || blockedUser?._id || null);
+          return targetId && blockedId === targetId;
+        });
         setIsBlocked(isUserBlocked);
       } else {
         setIsBlocked(false);
@@ -198,28 +204,29 @@ const UserActions = ({ user, onEditProfile }) => {
   const handleUnfriend = async () => {
     if (isLoading) return;
 
-    if (!window.confirm("Bạn có chắc muốn hủy kết bạn với người này?")) {
-      return;
-    }
+    setConfirmUnfriendOpen(true);
+};
 
-    setIsLoading(true);
-    try {
-      const response = await removeFriend(user.id);
+const handleConfirmUnfriend = async () => {
+  setConfirmUnfriendOpen(false);
+  setIsLoading(true);
+  try {
+    const response = await removeFriend(user.id);
 
-      if (response.success) {
-        setRelationshipStatus(RELATIONSHIP_STATUS.NONE);
-        setRequestId(null);
-        showAlert("Đã hủy kết bạn thành công", "success");
-      } else {
-        showAlert(response.error?.message || "Hủy kết bạn thất bại", "error");
-      }
-    } catch (error) {
-      showAlert(error.message || "Đã xảy ra lỗi", "error");
-      console.error("Error unfriending:", error);
-    } finally {
-      setIsLoading(false);
+    if (response.success) {
+      setRelationshipStatus(RELATIONSHIP_STATUS.NONE);
+      setRequestId(null);
+      showAlert('Đã hủy kết bạn thành công', 'success');
+    } else {
+      showAlert(response.error?.message || 'Hủy kết bạn thất bại', 'error');
     }
-  };
+  } catch (error) {
+    showAlert(error.message || 'Đã xảy ra lỗi', 'error');
+    console.error('Error unfriending:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Handle block user
   const handleBlockUser = () => {
@@ -574,6 +581,41 @@ const UserActions = ({ user, onEditProfile }) => {
             autoFocus
           >
             {isUnblocking ? "Đang bỏ chặn..." : "Bỏ chặn người dùng"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Unfriend Confirmation Dialog */}
+      <Dialog
+        open={confirmUnfriendOpen}
+        onClose={() => setConfirmUnfriendOpen(false)}
+        aria-labelledby="unfriend-dialog-title"
+        aria-describedby="unfriend-dialog-description"
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle id="unfriend-dialog-title">Xác nhận hủy kết bạn</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Bạn có chắc muốn hủy kết bạn với {user?.fullName || "người này"}?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmUnfriendOpen(false)}
+            color="primary"
+            disabled={isLoading}
+          >
+            Hủy
+          </Button>
+          <Button
+            onClick={handleConfirmUnfriend}
+            color="error"
+            variant="contained"
+            disabled={isLoading}
+            autoFocus
+          >
+            Hủy kết bạn
           </Button>
         </DialogActions>
       </Dialog>

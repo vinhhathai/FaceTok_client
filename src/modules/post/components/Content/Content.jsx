@@ -56,6 +56,12 @@ const Content = () => {
   };
 
   const handleShare = async (postId) => {
+    // Bỏ qua nếu ID không hợp lệ (ví dụ: temp_...) để tránh chia sẻ sai
+    const isValidObjectId = typeof postId === 'string' && /^[a-fA-F0-9]{24}$/.test(postId);
+    if (!isValidObjectId) {
+      toast.warning('Bài viết đang được lưu, vui lòng thử lại sau.');
+      return null;
+    }
     try {
       const res = await postAPI.toggleShare(postId);
       const data = res?.data || res; // expect { action: 'shared' | 'exists' }
@@ -161,4 +167,4 @@ const Content = () => {
   );
 };
 
-export default Content; 
+export default Content;

@@ -11,6 +11,8 @@ const API_ENDPOINTS = {
   SHARE_POST: '/post'
 };
 
+const isValidObjectId = (id) => typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id);
+
 const postAPI = {
   /**
    * Tạo bài viết mới
@@ -178,6 +180,9 @@ const postAPI = {
    */
   createComment: async (postId, commentData) => {
     try {
+      if (!isValidObjectId(postId)) throw new Error('postId không hợp lệ');
+      const { parentId } = commentData || {};
+      if (parentId && !isValidObjectId(parentId)) throw new Error('parentId không hợp lệ');
       const response = await apiClient.post(`${API_ENDPOINTS.COMMENT_POST}/${postId}/comment`, commentData);
       return response.data;
     } catch (error) {
@@ -190,6 +195,7 @@ const postAPI = {
    */
   getComments: async (postId, params = { page: 1, limit: 50 }) => {
     try {
+      if (!isValidObjectId(postId)) throw new Error('postId không hợp lệ');
       const response = await apiClient.get(`${API_ENDPOINTS.COMMENT_POST}/${postId}/comments`, { params });
       return response.data;
     } catch (error) {
@@ -202,6 +208,7 @@ const postAPI = {
    */
   getReplies: async (commentId, params = { page: 1, limit: 20 }) => {
     try {
+      if (!isValidObjectId(commentId)) throw new Error('commentId không hợp lệ');
       const response = await apiClient.get(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}/replies`, { params });
       return response.data;
     } catch (error) {
@@ -214,6 +221,7 @@ const postAPI = {
    */
   deleteComment: async (commentId) => {
     try {
+      if (!isValidObjectId(commentId)) throw new Error('commentId không hợp lệ');
       const response = await apiClient.delete(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}`);
       return response.data;
     } catch (error) {
@@ -226,6 +234,7 @@ const postAPI = {
    */
   updateComment: async (commentId, content) => {
     try {
+      if (!isValidObjectId(commentId)) throw new Error('commentId không hợp lệ');
       const response = await apiClient.put(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}`, { content });
       return response.data;
     } catch (error) {
@@ -240,6 +249,7 @@ const postAPI = {
    */
   toggleShare: async (postId) => {
     try {
+      if (!isValidObjectId(postId)) throw new Error('postId không hợp lệ');
       const response = await apiClient.post(`${API_ENDPOINTS.SHARE_POST}/${postId}/share/toggle`);
       return response.data;
     } catch (error) {
@@ -254,6 +264,7 @@ const postAPI = {
    */
   toggleCommentLike: async (commentId) => {
     try {
+      if (!isValidObjectId(commentId)) throw new Error('commentId không hợp lệ');
       const response = await apiClient.post(`${API_ENDPOINTS.COMMENT_POST}/comment/${commentId}/like/toggle`);
       return response.data;
     } catch (error) {

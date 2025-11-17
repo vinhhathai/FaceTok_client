@@ -44,8 +44,8 @@ function SentRequestsList({ requests, loading, error, onCancelRequest }) {
   };
   
   const navigateToProfile = (userId) => {
-    // Navigate directly with URL param (backend supports both UUID and ObjectId)
-    navigate(`/profile/${userId}`);
+    // Navigate with ObjectId
+    navigate('/profile', { state: { userId } });
   };
 
   if (loading) {
@@ -79,7 +79,7 @@ function SentRequestsList({ requests, loading, error, onCancelRequest }) {
           {requests.map((request) => {
             const recipient = request.recipient || {};
             const requestId = request.id || request._id;
-            const recipientId = recipient.id || recipient._id;
+            const recipientId = String(recipient?._id || recipient?.id);
             
             return (
               <FriendCard 
@@ -164,4 +164,4 @@ SentRequestsList.defaultProps = {
   error: null
 };
 
-export default SentRequestsList; 
+export default SentRequestsList;

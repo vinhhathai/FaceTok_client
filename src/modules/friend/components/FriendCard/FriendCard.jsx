@@ -31,15 +31,14 @@ const FriendCard = ({
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    // Prefer publicId (UUID) for public URLs, fallback to id or _id
-    const profileId = friend.publicId || friend.id || friend._id;
-    navigate(`/profile/${profileId}`);
+    const profileId = friend.id || friend._id;
+    navigate('/profile', { state: { userId: profileId } });
   };
 
   const handleMessage = (e) => {
     e.stopPropagation();
-    // Messages use internal ObjectId, not publicId
-    const userId = friend._id || friend.id;
+    // Messages use ObjectId
+    const userId = friend.id || friend._id;
     navigate(`/messages/${userId}`);
   };
 
@@ -294,4 +293,4 @@ FriendCard.propTypes = {
   onActionComplete: PropTypes.func
 };
 
-export default FriendCard; 
+export default FriendCard;
