@@ -128,8 +128,7 @@ const UserInfo = ({ user }) => {
       
       {/* Modals */}
       <NameEditModal 
-        open={nameModalOpen}
-        currentName={user?.fullName}
+        isOpen={nameModalOpen} 
         onClose={handleCloseNameModal} 
         user={user} 
       />

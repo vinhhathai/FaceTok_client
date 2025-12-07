@@ -159,7 +159,7 @@ const ReportManagement = () => {
   const handleGoToUser = (userId) => {
     if (userId) {
       // Navigate to user profile
-      navigate('/profile', { state: { userId } });
+      navigate(`/profile/${userId}`);
     }
   };
 

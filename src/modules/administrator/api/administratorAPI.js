@@ -59,23 +59,23 @@ export const administratorAPI = createApi({
     
     banUser: builder.mutation({
       query: (userId) => ({
-        url: `user/admin/ban/${userId}`,
-        method: 'POST',
+        url: `user/admin/users/${userId}/ban`,
+        method: 'PUT',
       }),
       invalidatesTags: ['User', 'Statistics'],
     }),
     
     unbanUser: builder.mutation({
       query: (userId) => ({
-        url: `user/admin/unban/${userId}`,
-        method: 'POST',
+        url: `user/admin/users/${userId}/unban`,
+        method: 'PUT',
       }),
       invalidatesTags: ['User', 'Statistics'],
     }),
     
     deleteUser: builder.mutation({
       query: (userId) => ({
-        url: `user/admin/delete/${userId}`,
+        url: `user/admin/users/${userId}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['User', 'Statistics'],
@@ -91,8 +91,8 @@ export const administratorAPI = createApi({
 
     updateUserRole: builder.mutation({
       query: ({ userId, role }) => ({
-        url: `user/admin/update-role/${userId}`,
-        method: 'PATCH',
+        url: `user/admin/users/${userId}/role`,
+        method: 'PUT',
         body: { role },
       }),
       invalidatesTags: ['User', 'Statistics'],

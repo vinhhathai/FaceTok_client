@@ -79,8 +79,7 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
 
   // Xác định ownerId từ conversation đã được adapter chuẩn hóa
   const ownerId = conversation?.groupOwnerId || conversation?.participant?.groupOwnerId || conversation?.participant?.ownerId || conversation?.participant?._id;
-  const viewerIsOwner = (currentUserId && ownerId) ? String(currentUserId) === String(ownerId) : false;
-  const isOwner = viewerIsOwner;
+  const isOwner = (currentUserId && ownerId) ? String(currentUserId) === String(ownerId) : false;
   const groupName = conversation?.participant?.fullName || "Group Chat";
   const [localAvatar, setLocalAvatar] = useState(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -667,6 +666,10 @@ const GroupSidebar = ({ open, onClose, conversation, currentUserId }) => {
                           <CrownIcon fontSize="small" color="primary" />
                         )}
                       </Box>
+                      {/* Debug info */}
+                      <Typography variant="caption" color="warning.main">
+                        isOwner: {String(isOwner)} | ownerId: {String(ownerId)} | currentUserId: {String(currentUserId)} | memberId: {String(member._id || member.id)}
+                      </Typography>
                     </Box>
                   }
                 />

@@ -72,14 +72,13 @@ const MessageItem = ({ message, isOwn }) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  // Get sender ID for navigation - prefer ObjectId string
+  // Get sender ID for navigation - prefer publicId (UUID) over _id (ObjectId)
   const getSenderId = () => {
-    if (message.senderId) {
-      if (typeof message.senderId === 'string') return message.senderId;
-      if (typeof message.senderId === 'object') return message.senderId._id || message.senderId.id || null;
+    if (message.senderId && typeof message.senderId === 'object') {
+      return message.senderId.publicId || message.senderId.id || message.senderId._id;
     }
     if (message.sender && typeof message.sender === 'object') {
-      return message.sender._id || message.sender.id || null;
+      return message.sender.publicId || message.sender.id || message.sender._id;
     }
     return null;
   };
@@ -87,7 +86,7 @@ const MessageItem = ({ message, isOwn }) => {
   const handleAvatarClick = () => {
     const senderId = getSenderId();
     if (senderId && !isOwn) {
-      navigate('/profile', { state: { userId: senderId } });
+      navigate(`/profile/${senderId}`);
     }
   };
 

@@ -12,8 +12,8 @@ export default function GamesPage() {
   const token = localStorage.getItem('auth_token');
   const [isLoading, setIsLoading] = useState(true);
   
-  // Dynamic game platform URL
-  const gamesPlatformUrl = `${window.location.protocol}//${window.location.hostname}:4000?token=${token}`;
+  // Game platform URL - Netlify hosted
+  const gamesPlatformUrl = `https://egg-catcher-chaotok.netlify.app/?token=${token}`;
 
   useEffect(() => {
     // Listen for messages from iframe

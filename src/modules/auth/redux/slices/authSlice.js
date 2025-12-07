@@ -131,13 +131,13 @@ const saveUserToStorage = (user) => {
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
       
-      // Prefer `id` (MongoDB ObjectId) for consistency across the system
-      const userId = user.id || user._id;
+      // Prioritize _id (MongoDB ObjectId) over id (UUID) for message system compatibility
+      const userId = user._id || user.id;
       
       if (userId) {
         localStorage.setItem('currentUserId', String(userId));
       } else {
-        console.error('Error: User missing both id and _id fields');
+        console.error('Error: User missing both _id and id fields');
       }
     }
   } catch (error) {

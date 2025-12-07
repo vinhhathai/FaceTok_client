@@ -73,9 +73,7 @@ export const updateUserFullname = createAsyncThunk(
       
       return response.data;
     } catch (error) {
-      // Trả về toàn bộ payload lỗi để giữ lại thông tin chi tiết (ví dụ timeRemaining)
-      const payload = typeof error === 'string' ? { message: error } : error;
-      return rejectWithValue(payload);
+      return rejectWithValue(error.message || 'Failed to update fullname');
     }
   }
 );

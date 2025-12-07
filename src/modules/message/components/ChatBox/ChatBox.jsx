@@ -56,11 +56,16 @@ const ChatBox = ({ conversation, onBack, currentConversation }) => {
   );
   const activeConversation = storeConversation || conversation || currentConversation;
 
-  // Handler to navigate to user profile - use ObjectId (`id`) consistently
-  const handleAvatarClick = (participant) => {
-    if (!participant) return;
-    const profileId = participant.id || participant._id || null;
-    if (profileId) navigate('/profile', { state: { userId: profileId } });
+  // Handler to navigate to user profile - prefer publicId (UUID) over _id (ObjectId)
+  const handleAvatarClick = () => {
+    if (!activeConversation?.isGroup && activeConversation?.participant) {
+      const participant = activeConversation.participant;
+      const profileId = participant.publicId || participant.id || participant._id;
+      
+      if (profileId) {
+        navigate(`/profile/${profileId}`);
+      }
+    }
   };
   // Lấy tin nhắn khi cuộc trò chuyện thay đổi
   useEffect(() => {
@@ -284,4 +289,4 @@ ChatBox.propTypes = {
   currentConversation: PropTypes.object
 };
 
-export default ChatBox;
+export default ChatBox; 

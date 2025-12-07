@@ -218,6 +218,28 @@ export const SocketProvider = ({ children }) => {
       window.dispatchEvent(notificationEvent);
     });
 
+    // Lắng nghe force logout từ admin
+    socket.on("force_logout", (data) => {
+      console.warn("Force logout received:", data);
+      
+      // Hiển thị thông báo
+      if (data.message) {
+        alert(data.message);
+      }
+      
+      // Clear local storage và redirect về login
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Disconnect socket
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+      
+      // Redirect to login page
+      window.location.href = "/login";
+    });
+
     // Lưu trữ socket reference để có thể sử dụng sau này
     socketRef.current = socket;
 
@@ -234,6 +256,7 @@ export const SocketProvider = ({ children }) => {
         socket.off("message_sent");
         socket.off("message_error");
         socket.off("notification_received");
+        socket.off("force_logout");
         
         // Disconnect socket
         socket.disconnect();

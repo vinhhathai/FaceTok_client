@@ -8,8 +8,7 @@ import {
   Button,
   Box,
   Typography,
-  CircularProgress,
-  Alert
+  CircularProgress
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { updateUserFullname } from '@user/redux/slices/userSlice';
@@ -20,40 +19,19 @@ const NameEditModal = ({ open, onClose, currentName, user }) => {
   
   // Local states thay vì Redux selectors
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null); // API/server error
-  const [validationError, setValidationError] = useState(null); // client validation error
+  const [error, setError] = useState(null);
   const [name, setName] = useState(currentName || '');
-
-  // Hàm tạo thông điệp lỗi tiếng Việt từ lỗi server
-  const getLocalizedErrorMessage = (err) => {
-    if (!err) return 'Không thể cập nhật tên';
-    // Khi lỗi là chuỗi, giả định đã là thông báo tiếng Việt do client tạo
-    if (typeof err === 'string') return err;
-
-    // Lỗi giới hạn thời gian đổi tên
-    if (err.code === 'USER_NAME_UPDATE_TIME_LIMIT') {
-      const time = Number(err.timeRemaining);
-      if (Number.isFinite(time)) {
-        return `Bạn cần đợi thêm ${time} phút để cập nhật tên`;
-      }
-      return 'Bạn cần đợi thêm một thời gian trước khi cập nhật tên';
-    }
-
-    // Các lỗi khác: dùng thông điệp tổng quát tiếng Việt
-    return 'Không thể cập nhật tên. Vui lòng thử lại sau.';
-  };
 
   useEffect(() => {
     setName(currentName || '');
     setError(null);
-    setValidationError(null);
   }, [currentName, open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!name.trim()) {
-      setValidationError('Tên không được để trống');
+      setError('Tên không được để trống');
       return;
     }
 
@@ -64,17 +42,15 @@ const NameEditModal = ({ open, onClose, currentName, user }) => {
 
     setLoading(true);
     setError(null);
-    setValidationError(null);
 
     try {
       await dispatch(updateUserFullname(name.trim())).unwrap();
       showSuccess('Cập nhật tên thành công!');
       onClose();
     } catch (error) {
-      const localizedMsg = getLocalizedErrorMessage(error);
       console.error('Update name error:', error);
-      setError(localizedMsg);
-      showError(localizedMsg);
+      setError(error.message || 'Không thể cập nhật tên');
+      showError(error.message || 'Không thể cập nhật tên');
     } finally {
       setLoading(false);
     }
@@ -83,7 +59,6 @@ const NameEditModal = ({ open, onClose, currentName, user }) => {
   const handleClose = () => {
     if (!loading) {
       setError(null);
-      setValidationError(null);
       setName(currentName || '');
       onClose();
     }
@@ -99,13 +74,6 @@ const NameEditModal = ({ open, onClose, currentName, user }) => {
       
       <form onSubmit={handleSubmit}>
         <DialogContent>
-          {error && (
-            <Box sx={{ mb: 2 }}>
-              <Alert severity="error">
-                {error}
-              </Alert>
-            </Box>
-          )}
           <Box sx={{ mb: 2 }}>
             <TextField
               autoFocus
@@ -116,12 +84,20 @@ const NameEditModal = ({ open, onClose, currentName, user }) => {
               variant="outlined"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              error={!!validationError}
-              helperText={validationError}
+              error={!!error}
+              helperText={error}
               disabled={loading}
               placeholder="Nhập tên của bạn"
             />
           </Box>
+          
+          {error && (
+            <Box sx={{ mb: 2 }}>
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            </Box>
+          )}
         </DialogContent>
         
         <DialogActions>

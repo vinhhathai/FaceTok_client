@@ -125,14 +125,7 @@ export const acceptFriendRequest = async (requestId) => {
     const response = await apiClient.post('/friend/accept-request', { requestId });
     return response.data;
   } catch (error) {
-    const message =
-      error?.response?.data?.error?.message ||
-      error?.response?.data?.message ||
-      error?.message ||
-      'Không thể chấp nhận lời mời';
-    const code = error?.response?.data?.error?.code;
-    const status = error?.response?.status || 500;
-    throw { message, code, status };
+    throw error.response?.data || error;
   }
 };
 
@@ -146,14 +139,7 @@ export const rejectFriendRequest = async (requestId) => {
     const response = await apiClient.post('/friend/reject-request', { requestId });
     return response.data;
   } catch (error) {
-    const message =
-      error?.response?.data?.error?.message ||
-      error?.response?.data?.message ||
-      error?.message ||
-      'Không thể từ chối lời mời';
-    const code = error?.response?.data?.error?.code;
-    const status = error?.response?.status || 500;
-    throw { message, code, status };
+    throw error.response?.data || error;
   }
 };
 
@@ -169,4 +155,4 @@ export const removeFriend = async (friendId) => {
   } catch (error) {
     throw error.response?.data || error;
   }
-};
+}; 

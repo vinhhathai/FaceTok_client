@@ -78,12 +78,7 @@ export const acceptRequest = createAsyncThunk(
       const response = await acceptFriendRequest(requestId);
       return response;
     } catch (error) {
-      const payload = {
-        message: error?.message || 'Không thể chấp nhận lời mời',
-        code: error?.code,
-        status: error?.status || 500,
-      };
-      return rejectWithValue(payload);
+      return rejectWithValue(error.message || 'Failed to accept friend request');
     }
   }
 );
@@ -95,12 +90,7 @@ export const rejectRequest = createAsyncThunk(
       const response = await rejectFriendRequest(requestId);
       return response;
     } catch (error) {
-      const payload = {
-        message: error?.message || 'Không thể từ chối lời mời',
-        code: error?.code,
-        status: error?.status || 500,
-      };
-      return rejectWithValue(payload);
+      return rejectWithValue(error.message || 'Failed to reject friend request');
     }
   }
 );
@@ -217,4 +207,4 @@ const friendSlice = createSlice({
 
 export const { resetSearchResults } = friendSlice.actions;
 
-export default friendSlice.reducer;
+export default friendSlice.reducer; 

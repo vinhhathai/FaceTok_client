@@ -84,17 +84,18 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const navigate = useNavigate();
   const currentUser = useSelector((state) => state.auth.user);
   
-  // Use ObjectId for post owner comparison
+  // Use _id (ObjectId) for post owner comparison since backend returns author._id
   const currentUserId = currentUser?._id || currentUser?.id;
-  const isOwner = Boolean(currentUserId) && Boolean(post.author) &&
-    String(currentUserId) === String(post.author?._id || post.author?.id);
+  const postAuthorId = post.author?._id || post.author?.id;
+  const isOwner = currentUserId && postAuthorId && 
+    String(currentUserId) === String(postAuthorId);
   
   // Check if user is admin or staff
   const isAdmin = currentUser?.role === 'admin';
   const isStaff = currentUser?.role === 'staff';
   const canDelete = isOwner || isAdmin || isStaff;
   
-  // Keep old variables for comment comparisons (using ObjectId)
+  // String version for comment comparisons
   const currentUserIdStr =
     currentUserId && currentUserId.toString
       ? currentUserId.toString()
@@ -136,9 +137,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const [isSharing, setIsSharing] = useState(false);
   const sharingLockRef = useRef(false); // Strong lock to prevent race conditions
   const shareTimeoutRef = useRef(null); // Track timeout for cleanup
-  // Like locks to prevent rapid repeated toggles
-  const likeLockRef = useRef(false);
-  const commentLikeLocksRef = useRef(new Set());
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -154,41 +152,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const [createReport] = useCreateReportMutation();
   const getCommentId = (c) =>
     c && (c._id || c.id) ? String(c._id || c.id) : undefined;
-
-  // Sync 'liked' from server when post.isLiked changes (after reload/refetch)
-  useEffect(() => {
-    setLiked(Boolean(post?.isLiked));
-  }, [post?.isLiked, post?._id]);
-
-  // Sync likeCount from server when post.likesCount changes
-  useEffect(() => {
-    const serverCount = typeof post?.likesCount === 'number'
-      ? post.likesCount
-      : (typeof post?.likeCount === 'number' ? post.likeCount : 0);
-    setLikeCount(serverCount);
-  }, [post?.likesCount, post?.likeCount, post?._id]);
-
-  // Initialize likedComments when comments (including replies) are set/updated
-  useEffect(() => {
-    if (Array.isArray(comments) && comments.length > 0) {
-      const liked = new Set();
-      comments.forEach((comment) => {
-        const commentId = comment._id || comment.id;
-        if (commentId && comment.isLiked) {
-          liked.add(String(commentId));
-        }
-        if (Array.isArray(comment.replies)) {
-          comment.replies.forEach((reply) => {
-            const replyId = reply._id || reply.id;
-            if (replyId && reply.isLiked) {
-              liked.add(String(replyId));
-            }
-          });
-        }
-      });
-      setLikedComments(liked);
-    }
-  }, [comments]);
 
   // Get privacy info from static config (optimized - no function recreation)
   const privacyInfo = PRIVACY_CONFIG[post.privacy] || PRIVACY_CONFIG.public;
@@ -209,26 +172,13 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
     };
   }, [newMediaFiles]);
 
-  const handleLike = async () => {
-    // Prevent rapid repeated toggles while a request is in-flight
-    if (likeLockRef.current) return;
-    likeLockRef.current = true;
-
-    // Optimistic UI
-    setLiked((prev) => !prev);
+  const handleLike = () => {
+    setLiked(!liked);
     setLikeCount((prev) => {
       const next = liked ? prev - 1 : prev + 1;
       return next < 0 ? 0 : next;
     });
-
-    try {
-      // Delegate API to parent handler if provided
-      if (typeof onLike === 'function') {
-        await onLike(post._id, !liked);
-      }
-    } finally {
-      likeLockRef.current = false;
-    }
+    onLike?.(post._id, !liked);
   };
 
   const handleComment = () => {
@@ -247,10 +197,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
         (async () => {
           try {
             setLoadingComments(true);
-            // Guard: only fetch when post._id is a valid ObjectId
-            if (!(typeof post._id === "string" && /^[a-fA-F0-9]{24}$/.test(post._id))) {
-              return;
-            }
             const res = await postAPI.getComments(post._id, {
               page: 1,
               limit: 50,
@@ -259,7 +205,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
             if (Array.isArray(items)) {
               setComments(items);
               
-              // Populate liked comments from backend response (include replies)
+              // Populate liked comments from backend response
               const liked = new Set();
               items.forEach(comment => {
                 if (comment.isLiked) {
@@ -267,16 +213,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                   if (commentId) {
                     liked.add(String(commentId));
                   }
-                }
-                if (Array.isArray(comment.replies)) {
-                  comment.replies.forEach(reply => {
-                    if (reply.isLiked) {
-                      const replyId = reply._id || reply.id;
-                      if (replyId) {
-                        liked.add(String(replyId));
-                      }
-                    }
-                  });
                 }
               });
               setLikedComments(liked);
@@ -290,13 +226,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   };
 
   const handleShare = async () => {
-    // Guard: only proceed when post._id is a valid ObjectId (avoid temp_ ids)
-    const isValidObjectId = typeof post._id === 'string' && /^[a-fA-F0-9]{24}$/.test(post._id);
-    if (!isValidObjectId) {
-      // Bài viết đang được tạo (ID tạm), không chia sẻ/link
-      return;
-    }
-
     // Strong lock check - prevent race conditions
     if (sharingLockRef.current) {
       return;
@@ -317,7 +246,7 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
         setShareCount((c) => c + 1);
       }
       
-      // Copy link to clipboard (always when valid id)
+      // Copy link to clipboard (always)
       try {
         const url = `${window.location.origin}/post/${post._id}`;
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -444,10 +373,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const handleSubmitComment = async () => {
     if (commentText.trim()) {
       try {
-        // Guard: only create when post._id is a valid ObjectId
-        if (!(typeof post._id === "string" && /^[a-fA-F0-9]{24}$/.test(post._id))) {
-          return;
-        }
         const res = await postAPI.createComment(post._id, {
           content: commentText,
         });
@@ -509,10 +434,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   const handleSubmitReply = async (commentId) => {
     if (replyText.trim()) {
       try {
-        // Guard: only create when post._id is a valid ObjectId
-        if (!(typeof post._id === "string" && /^[a-fA-F0-9]{24}$/.test(post._id))) {
-          return;
-        }
         const res = await postAPI.createComment(post._id, {
           content: replyText,
           parentId: String(commentId),
@@ -548,11 +469,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
   };
 
   const handleLikeComment = async (commentId) => {
-    // Prevent rapid repeated toggles per comment while request is in-flight
-    const locks = commentLikeLocksRef.current;
-    if (locks.has(commentId)) return;
-    locks.add(commentId);
-
     try {
       // Optimistic update
       const newLikedComments = new Set(likedComments);
@@ -565,13 +481,12 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       }
       setLikedComments(newLikedComments);
 
-      // Update like count and isLiked optimistically
+      // Update like count optimistically
       setComments(prevComments => 
         prevComments.map(comment => {
           if (comment.id === commentId || comment._id === commentId) {
             return {
               ...comment,
-              isLiked: !wasLiked,
               likesCount: (comment.likesCount || 0) + (wasLiked ? -1 : 1)
             };
           }
@@ -583,7 +498,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                 if (reply.id === commentId || reply._id === commentId) {
                   return {
                     ...reply,
-                    isLiked: !wasLiked,
                     likesCount: (reply.likesCount || 0) + (wasLiked ? -1 : 1)
                   };
                 }
@@ -607,13 +521,12 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
         }
         setLikedComments(newLikedComments);
         
-        // Rollback like count and isLiked
+        // Rollback like count
         setComments(prevComments => 
           prevComments.map(comment => {
             if (comment.id === commentId || comment._id === commentId) {
               return {
                 ...comment,
-                isLiked: wasLiked,
                 likesCount: (comment.likesCount || 0) + (wasLiked ? 1 : -1)
               };
             }
@@ -624,7 +537,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                   if (reply.id === commentId || reply._id === commentId) {
                     return {
                       ...reply,
-                      isLiked: wasLiked,
                       likesCount: (reply.likesCount || 0) + (wasLiked ? 1 : -1)
                     };
                   }
@@ -638,9 +550,6 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
       }
     } catch (error) {
       console.error("Error toggling comment like:", error);
-    } finally {
-      // Release the lock for this commentId
-      locks.delete(commentId);
     }
   };
 
@@ -852,9 +761,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                 src={post.author?.profilePicture}
                 alt={post.author?.fullName || "User"}
                 onClick={() => {
-                  const userId = post.author?._id || post.author?.id;
+                  const userId = post.author?.publicId || post.author?.id;
                   if (userId) {
-                    navigate('/profile', { state: { userId } });
+                    navigate(`/profile/${userId}`);
                   }
                 }}
                 sx={{
@@ -878,9 +787,9 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                 variant="subtitle1" 
                 fontWeight="bold"
                 onClick={() => {
-                  const userId = post.author?._id || post.author?.id;
+                  const userId = post.author?.publicId || post.author?.id;
                   if (userId) {
-                    navigate('/profile', { state: { userId } });
+                    navigate(`/profile/${userId}`);
                   }
                 }}
                 sx={{
@@ -1334,12 +1243,10 @@ const Post = ({ post, onLike, onComment, onShare, onDelete, onEdit }) => {
                           sx={{ display: "flex", gap: 1, alignItems: "center" }}
                         >
                           <Avatar
-                                src={currentUser?.profilePicture}
-                                alt={currentUser?.fullName || "User"}
-                                sx={{ width: 24, height: 24, mr: 1, flexShrink: 0 }}
-                              >
-                                {(currentUser?.fullName || "U").charAt(0)}
-                              </Avatar>
+                            sx={{ width: 24, height: 24, mr: 1, flexShrink: 0 }}
+                          >
+                            U
+                          </Avatar>
                           <Box sx={{ flex: 1 }}>
                             <CommentInput
                               fullWidth
